@@ -1,0 +1,85 @@
+[
+  {
+    "id": "1744426532758",
+    "name": "Admin",
+    "lastname": "Didapptic",
+    "email": "admin@didapptic.com",
+    "password": "$2b$10$SCOL6Yb6sL0TA0L8NwCXguAWocAVhohjL6Cl049u4elAH97B/xQNy",
+    "membership": "admin",
+    "createdAt": "2025-04-12T02:55:32.758Z",
+    "updatedAt": "2025-04-20T23:19:43.010Z",
+    "subscriptionEnd": "2025-05-20T23:19:43.010Z"
+  },
+  {
+    "id": "1744426555831",
+    "name": "Luz del Carmen",
+    "lastname": "Mendoza Moreno",
+    "email": "luz_carmen_mm@outlook.com",
+    "password": "$2b$10$eK038Osx8ijkpqAfydp35OQ0j69X2N2IyNoTsBNJ.ArECmAwIDy56",
+    "membership": "premium",
+    "subscriptionEnd": "2025-05-12T02:55:55.831Z",
+    "createdAt": "2025-04-12T02:55:55.831Z",
+    "updatedAt": "2025-04-12T02:55:55.831Z"
+  },
+  {
+    "id": "1744426572095",
+    "name": "Jose Sebastian",
+    "lastname": "Perez Chapa",
+    "email": "jspc1305@hotmail.com",
+    "password": "$2b$10$oaOXjgzBI6KtMslju9sfIevCLRDH3ZjVU0g.t76Pf0HNeqDwgHOOi",
+    "membership": "basic",
+    "subscriptionEnd": null,
+    "createdAt": "2025-04-12T02:56:12.095Z",
+    "updatedAt": "2025-04-21T04:21:14.631Z"
+  },
+  {
+    "id": "1744428646301",
+    "name": "Francisco",
+    "lastname": "Perez",
+    "email": "franciscoperez@gmail.com",
+    "password": "$2b$10$SkUkEDmHzhfCZkLPsQDSkOk0z7Ut/t8keG1qG3iUKn4zDLnYNa4Iu",
+    "membership": "basic",
+    "subscriptionEnd": null,
+    "createdAt": "2025-04-12T03:30:46.301Z",
+    "updatedAt": "2025-04-12T03:30:46.301Z"
+  },
+  {
+    "id": "1744428660307",
+    "name": "Guadalupe",
+    "lastname": "Perez Rojano",
+    "email": "gperro@gmail.com",
+    "password": "$2b$10$6C4Tiu6/wbyqaRRO/wNGl.H.lKO.uJSBE/4rbY0LAXkcgd3sQVjCe",
+    "membership": "premium",
+    "subscriptionEnd": "2025-05-12T03:31:00.306Z",
+    "createdAt": "2025-04-12T03:31:00.307Z",
+    "updatedAt": "2025-04-12T03:31:00.307Z"
+  },
+  {
+    "id": "1745263916199",
+    "name": "Jose Sebastian",
+    "lastname": "Perez Chapa",
+    "email": "jspc1305@gmail.com",
+    "password": "$2b$10$.hhJ5m4y9CYCAIa3kXl2su8r49OpnpseXO3n9LaYDXZEBM9ejH8FW",
+    "membership": "basic",
+    "originalMembership": "premium",
+    "telegramChatId": "6417794464",
+    "telegramVerified": true,
+    "createdAt": "2025-04-21T19:31:56.199Z",
+    "updatedAt": "2025-04-21T19:31:56.199Z",
+    "subscriptionEnd": null
+  },
+  {
+    "id": "1745289236550",
+    "name": "Luis Antonio",
+    "lastname": "Gutiérrez",
+    "email": "la_gutierrezs@gmail.com",
+    "password": "$2b$10$8BIyAFH/wl8ntnlhHIdN2uqKfIoqm2uyDj/72nkaulpQGmSKXds8.",
+    "membership": "premium",
+    "originalMembership": "premium",
+    "telegramChatId": "7865959896",
+    "telegramVerified": true,
+    "createdAt": "2025-04-22T02:33:56.550Z",
+    "updatedAt": "2025-04-22T02:35:27.397Z",
+    "subscriptionEnd": "2025-05-22T02:35:27.397Z"
+  }
+]

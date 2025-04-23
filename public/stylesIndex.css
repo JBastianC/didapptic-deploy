@@ -1,0 +1,220 @@
+:root {
+    --primary-color: #eb4625;
+    --secondary-color: #af361e;
+    --text-dark: #1e293b;
+    --text-light: #64748b;
+    --shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+    --border-radius: 12px;
+    --transition: all 0.3s ease;
+    --bg-light: #f8fafc;
+  }
+  
+  * {
+    box-sizing: border-box;
+  }
+  
+  body {
+    margin: 0;
+    font-family: 'Segoe UI', sans-serif;
+    color: var(--text-dark);
+    scroll-behavior: smooth;
+    overflow-x: hidden;
+  }
+  
+  .section {
+    padding: 4rem 2rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background-color: var(--bg-light);
+  }
+  
+  .full-screen {
+    height: 100vh;
+    position: relative;
+  }
+  
+  .welcome {
+    background: radial-gradient(at center, #ff6a00, #ffcc00);
+    transition: background 0.3s ease;
+  }
+  
+  .navbar {
+    position: fixed;
+    top: 0;
+    width: 100%;
+    padding: 1rem 2rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: transparent;
+    z-index: 1000;
+    transition: background 0.4s ease, box-shadow 0.4s ease;
+  }
+  
+  .navbar.scrolled {
+    background-color: #1e293b;
+    box-shadow: var(--shadow);
+  }
+  
+  .navbar .logo {
+    font-size: 1.8rem;
+    font-weight: bold;
+    color: white;
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
+    transition: var(--transition);
+  }
+  
+  .navbar.scrolled .logo {
+    color: white;
+    text-shadow: none;
+  }
+  
+  .nav-buttons a {
+    margin-left: 1rem;
+  }
+  
+  .btn {
+    padding: 0.75rem 1.5rem;
+    border-radius: var(--border-radius);
+    border: none;
+    cursor: pointer;
+    font-weight: bold;
+    transition: var(--transition);
+    text-decoration: none;
+    display: inline-block;
+  }
+  
+  .btn-primary {
+    background: var(--primary-color);
+    color: white;
+  }
+  
+  .btn-light {
+    background: white;
+    color: var(--primary-color);
+    border: 2px solid white;
+  }
+  
+  .navbar.scrolled .btn-light {
+    background: white;
+    color: var(--primary-color);
+    border: 2px solid white;
+  }
+  
+  .hero-content {
+    text-align: center;
+    max-width: 700px;
+    margin-top: 6rem;
+  }
+  
+  .typing {
+    font-size: 2.5rem;
+    font-weight: bold;
+    color: white;
+    text-shadow: 1px 1px 3px rgba(0,0,0,0.3);
+    height: 80px;
+  }
+  
+  .subtext {
+    font-size: 1.2rem;
+    color: white;
+    margin-bottom: 2rem;
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
+  }
+  
+  .section-title {
+    font-size: 2.5rem;
+    margin-bottom: 2rem;
+    color: var(--primary-color);
+  }
+  
+  .cards {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 2rem;
+  }
+  
+  .card {
+    background: white;
+    padding: 2rem;
+    border-radius: var(--border-radius);
+    box-shadow: var(--shadow);
+    width: 300px;
+    transition: var(--transition);
+  }
+  
+  .elegant-card {
+    background: linear-gradient(135deg, #fff4e6, #ffe6cc);
+    border: 1px solid #ffd6ad;
+  }
+  
+  .card:hover {
+    transform: translateY(-10px);
+  }
+  
+  .price {
+    font-size: 1.5rem;
+    color: var(--secondary-color);
+    margin-bottom: 1rem;
+  }
+  
+  ul {
+    padding-left: 1.2rem;
+  }
+  
+  .faq-container {
+    max-width: 800px;
+    width: 100%;
+    padding: 1rem;
+  }
+  
+  .faq-item {
+    margin-bottom: 1rem;
+    border-bottom: 1px solid #ddd;
+  }
+  
+  .faq-header {
+    display: flex;
+    justify-content: space-between;
+    cursor: pointer;
+    font-weight: bold;
+    font-size: 1.1rem;
+  }
+  
+  .faq-toggle {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    color: var(--primary-color);
+    cursor: pointer;
+  }
+  
+  .faq-answer {
+    display: none;
+    padding: 0.5rem 0;
+    color: var(--text-light);
+  }
+  
+  .contact-section {
+    text-align: center;
+    margin-top: 3rem;
+  }
+  
+  .animate-fade-in {
+    opacity: 0;
+    animation: fadeIn 1s forwards ease-in;
+  }
+  
+  .animate-fade-in.delay {
+    animation-delay: 0.5s;
+  }
+  
+  @keyframes fadeIn {
+    to {
+      opacity: 1;
+    }
+  }
+  

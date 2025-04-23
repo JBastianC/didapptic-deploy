@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Plano Didáctico</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="https://unpkg.com/jsplumb@2.15.6/dist/js/jsplumb.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+</head>
+<body class="mode-move">
+  <!-- Popup -->
+  <div id="premiumPopup" class="popup hidden">
+    <div class="popup-content">
+      <span class="close-popup">&times;</span>
+      <h2>Suscribete para obtener acceso Premium</h2>
+      <div id="subscription-content">
+        <h3>Actualizar a Premium</h3>
+        <p>Desbloquea todas las funciones premium con tu suscripción</p>
+        <div style="text-align:center;">
+          <button id="open-payment" class="blue-button">Suscribirme ahora</button>
+        </div>
+        <p class="info-text">Puedes cancelar cuando quieras</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Mensaje de estado -->
+  <div id="premiumStatusMessage" class="status-message hidden"></div>
+  
+  <div class="container">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="logo">
+        <svg class="logo-icon" viewBox="0 0 24 24">
+          <path d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+        </svg>
+        <span>DidAppTic</span>
+      </div>
+      <nav class="menu" id="main-menu"></nav>
+      <div class="sidebar-footer">
+        <a href="configuracion.html" style="text-decoration: none; color: inherit;">
+          <div class="first-steps">
+            <span>Configuración</span>
+            <div class="help-icon">?</div>
+          </div>
+        </a>
+        <button id="logoutBtn" class="logout-btn">Cerrar Sesión</button>
+      </div>
+    </aside>
+
+    <!-- Contenido Principal -->
+    <main class="main-content">
+      <!-- Barra Superior -->
+      <div class="top-bar">
+        <div class="user-info">
+          <span id="userEmail"></span>
+          <span id="userMembership" class="membership-badge"></span>
+        </div>
+        <div class="action-buttons">
+          <button class="btn-premium">¡Suscríbete a Premium!</button>
+          <button class="btn-profile"></button>
+        </div>
+      </div>
+
+      <!-- Encabezado -->
+      <div class="content-header">
+        <h1>Plano Didáctico</h1>
+      </div>
+
+      <!-- Sección de Canvas -->
+      <div class="canvas-section">
+        <!-- PALETA -->
+        <div id="palette">
+          <div class="palette-item" data-type="Entrada" draggable="true">Entrada</div>
+          <div class="palette-item" data-type="Campos Formativos" draggable="true">Campos Formativos</div>
+          <div class="palette-item" data-type="Fase" draggable="true">Fase</div>
+          <div class="palette-item" data-type="Contenido" draggable="true">Contenido</div>
+          <div class="palette-item" data-type="PDA" draggable="true">PDA</div>
+          <div class="palette-item" data-type="Metodología" draggable="true">Metodología</div>
+          <div class="palette-item" data-type="Nodo IA" draggable="true">Nodo IA</div>
+          <div class="palette-item" data-type="Nota" draggable="true">Nota</div>
+        </div>
+
+        <!-- CANVAS -->
+        <div id="canvasContainer">
+          <div id="canvas">
+            <h1 id="canvasTitle" contenteditable="false">Plan Didáctico</h1>
+            <!-- PANEL DE PROPIEDADES -->
+            <div id="propertiesPanel" class="hidden">
+              <h3 id="propTitle"></h3>
+              <div id="propContent"></div>
+              <button id="saveNodeData">Guardar</button>
+
+              <!-- Panel IA dentro del Nodo IA -->
+              <div id="ia-panel" class="hidden">
+                <div id="ia-counter">Solicitudes IA hoy: <span id="iaCount">0</span></div>
+                <div id="ia-status">Estatus: <span id="iaStatus">—</span></div>
+                <progress id="iaProgress" max="4" value="0"></progress>
+                <ul id="ia-steps">
+                  <li>Solicitud enviada</li>
+                  <li>Respuesta recibida</li>
+                  <li>Plan parseado</li>
+                  <li>Finalizado</li>
+                </ul>
+                <button id="sendToIA">Enviar a IA</button>
+                <button id="visualizarPlanPanel">Visualizar Plan</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- BOTONES DE MODO -->
+        <div id="toolButtons">
+          <button id="btnMove" class="mode-btn active">🖐 Mover</button>
+          <button id="btnConnect" class="mode-btn">✚ Conectar</button>
+          <button id="btnDelete" class="mode-btn">🗑 Eliminar</button>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- GENERAR / CARGAR CONFIG -->
+  <button id="generarPlan" class="floating-btn">Generar Plan</button>
+  <input id="uploadPlan" type="file" accept=".html,.json" class="floating-btn"/>
+
+  <script src="script4.js"></script>
+</body>
+</html>

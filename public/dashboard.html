@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Plataforma Educativa</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <!-- Popup -->
+    <div id="premiumPopup" class="popup hidden">
+        <div class="popup-content">
+        <span class="close-popup">&times;</span>
+        <h2>Suscribete para obtener acceso Premium</h2>
+          <div id="subscription-content">
+            <h3>Actualizar a Premium</h3>
+            <p>Desbloquea todas las funciones premium con tu suscripción</p>
+            <div style="text-align:center;">
+                <button id="open-payment" class="blue-button">Suscribirme ahora</button>
+            </div>
+            <p class="info-text">Puedes cancelar cuando quieras</p>
+        </div>
+        
+        <div id="payment-modal">
+            <div class="modal-box">
+                <button id="close-payment-modal" class="close-btn">×</button>
+                <iframe id="mp-iframe" src="about:blank" frameborder="0" allowfullscreen></iframe>
+            </div>
+        </div>
+        
+        <style>
+          #subscription-content {
+            position: relative;
+            background: #fff;
+            border-radius: 8px;
+            padding: 20px;
+            max-width: 400px;
+            margin: 0 auto;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            text-align: center;
+          }
+          .blue-button {
+            background: #3483FA;
+            color: #fff;
+            padding: 12px 30px;
+            border-radius: 5px;
+            font-size: 16px;
+            font-weight: bold;
+            border: none;
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(52,131,250,0.3);
+            transition: all 0.3s;
+          }
+          .blue-button:hover {
+            background: #2a68c8;
+            transform: translateY(-2px);
+          }
+          .close-btn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            font-size: 18px;
+            background: none;
+            border: none;
+            color: #666;
+            cursor: pointer;
+          }
+          .info-text {
+            font-size: 12px;
+            color: #999;
+            margin-top: 15px;
+          }
+          #payment-modal {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.6);
+            z-index: 9999;
+            justify-content: center;
+            align-items: center;
+          }
+          .modal-box {
+            position: relative;
+            width: 90%;
+            max-width: 600px;
+            background: #fff;
+            border-radius: 10px;
+            overflow: hidden;
+          }
+          .modal-box iframe {
+            width: 100%;
+            height: 600px;
+            border: none;
+          }
+        </style>
+        
+        <script>
+            document.getElementById('open-payment').onclick = () => {
+                // Obtener token de autenticación
+                const token = localStorage.getItem('token');
+                
+                if (!token) {
+                    alert('Por favor inicia sesión para suscribirte');
+                    return;
+                }
+                
+                // Configurar URL de Mercado Pago con URL de retorno
+                const successUrl = encodeURIComponent(window.location.origin + '/success.html');
+                const iframeSrc = `https://www.mercadopago.com.mx/subscriptions/checkout?preapproval_plan_id=2c938084964485e501965643c4cb071c&back_url=${successUrl}`;
+                
+                document.getElementById('mp-iframe').src = iframeSrc;
+                document.getElementById('payment-modal').style.display = 'flex';
+            };
+        
+            document.getElementById('close-payment-modal').onclick = () => {
+                document.getElementById('mp-iframe').src = 'about:blank';
+                document.getElementById('payment-modal').style.display = 'none';
+            };
+        
+            // Verificar si venimos de una redirección de Mercado Pago
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.has('payment_status')) {
+                // Mostrar mensaje de estado de pago
+                const paymentStatus = urlParams.get('payment_status');
+                if (paymentStatus === 'approved') {
+                    alert('Pago aprobado. Tu cuenta será actualizada a Premium.');
+                } else if (paymentStatus === 'pending') {
+                    alert('Pago pendiente. Tu cuenta se actualizará cuando se complete el pago.');
+                } else if (paymentStatus === 'rejected') {
+                    alert('Pago rechazado. Por favor intenta con otro método de pago.');
+                }
+            }
+        </script>
+          
+        <p>Recuerda integrar al chatbot <strong><a href="https://web.telegram.org/k/#@DidappticBot">@DidappticBot</a></strong>, de Telegram.</p>
+        </div>
+    </div>
+  
+  <!-- Mensaje de estado -->
+  <div id="premiumStatusMessage" class="status-message hidden"></div>
+    <div class="container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="logo">
+                <svg class="logo-icon" viewBox="0 0 24 24">
+                    <path d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                </svg>
+                <span>DidAppTic</span>
+            </div>
+
+            <nav class="menu" id="main-menu"></nav>
+
+            <div class="sidebar-footer">
+                <a href="configuracion.html" style="text-decoration: none; color: inherit;">
+                    <div class="first-steps">
+                        <span>Configuración</span>
+                        <div class="help-icon">?</div>
+                    </div>
+                </a>
+                <button id="logoutBtn" class="logout-btn">Cerrar Sesión</button>
+            </div>
+        </aside>
+
+        <!-- Contenido Principal -->
+        <main class="main-content">
+            <!-- Barra Superior -->
+            <div class="top-bar">
+                <div class="user-info">
+                    <span id="userEmail"></span>
+                    <span id="userMembership" class="membership-badge"></span>
+                </div>
+                <div class="action-buttons">
+                    <button class="btn-premium">¡Suscríbete a Premium!</button>
+                    <button class="btn-profile">
+                    </button>
+                </div>
+            </div>
+
+            <!-- Banner Principal -->
+            <div class="main-banner">
+                <div class="text-container">
+                    <h2 id="typing-text"></h2>
+                    <p>Y mejora todas tus clases creadas con Didapptic</p>
+                    <a href="plano-didactico.html">
+                        <button class="btn-plan">Comienza a planificar</button>
+                    </a>
+                </div>
+                <div class="checklist-container">
+                    <div class="checklist-item">
+                        <span class="checkmark"></span>
+                        <span>Establecer objetivos</span>
+                    </div>
+                    <div class="checklist-item">
+                        <span class="checkmark"></span>
+                        <span>Crear cronograma</span>
+                    </div>
+                    <div class="checklist-item">
+                        <span class="checkmark"></span>
+                        <span>Asignar tareas</span>
+                    </div>
+                    <div class="moving-element"></div>
+                </div>
+            </div>
+            
+            <!-- Sección Herramientas -->
+            <div class="tools-grid" id="tools-container"></div>
+        </main>
+    </div>
+
+    <script src="script.js"></script>
+    <script src="auth.js"></script>
+</body>
+</html>

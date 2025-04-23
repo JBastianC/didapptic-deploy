@@ -1,0 +1,330 @@
+{
+  "1744426555831": {
+    "plans": [
+      {
+        "id": "1744674577912",
+        "name": "Tema1",
+        "description": "descripcion tema 1",
+        "situations": [
+          {
+            "description": "situacion 1",
+            "problems": [
+              "probelma 1"
+            ]
+          }
+        ]
+      },
+      {
+        "id": "1744674599024",
+        "name": "Tema 2",
+        "description": "descripcion tema 2",
+        "situations": [
+          {
+            "description": "situacion 2",
+            "problems": [
+              "problema 2"
+            ]
+          }
+        ]
+      },
+      {
+        "id": "1744724347008",
+        "name": "Tema 1",
+        "description": "gggggggggg",
+        "situations": [
+          {
+            "description": "gggggggggggggggg",
+            "problems": [
+              "gggggggggggggggg"
+            ]
+          }
+        ]
+      }
+    ],
+    "context": [
+      {
+        "rowId": "row_1",
+        "problemas": "problema 2",
+        "fase": "Fase 3",
+        "campos": "Lenguajes",
+        "contenidos": "Escritura de nombres en la lengua materna.",
+        "pda": "1º: Escribe su nombre y lo compara con los nombres de sus compañeros, lo usa para indicar la autoría de sus trabajos, marcar sus útiles escolares, registrar su asistencia, entre otros.",
+        "eje": "Eje 1",
+        "nivel": "Nivel 1",
+        "objeto": "1234",
+        "evidencia": "1234"
+      }
+    ],
+    "didacticCards": [
+      {
+        "id": "card-1744676409740-799",
+        "name": "ooooo",
+        "methodology": "indagacion-steam",
+        "selectedItems": [
+          {
+            "title": "problema 2",
+            "campo": "Lenguajes",
+            "rowId": "row_9"
+          }
+        ]
+      },
+      {
+        "id": "card-1744676431319-424",
+        "name": "uuuuuuuu",
+        "methodology": "indagacion-steam",
+        "selectedItems": [
+          {
+            "title": "problema 2",
+            "campo": "Lenguajes",
+            "rowId": "row_8"
+          }
+        ]
+      }
+    ],
+    "config": {
+      "nivelEducativo": "Primaria",
+      "centroTrabajo": "Colegio José María Lafragua",
+      "zonaEscolar": "Zona 1",
+      "sectorEducativo": "Publico",
+      "fase": "Fase 1",
+      "grado": "2do",
+      "grupo": "A",
+      "nombreDocente": "José Sebastián Pérez Chapa",
+      "nombreDirector": "Juan Manuel Márquez",
+      "inicioPeriodo": "2025-01-22",
+      "finPeriodo": "2025-07-22",
+      "imagenColegio": null
+    }
+  },
+  "1744426572095": {
+    "plans": [
+      {
+        "id": "1745269099546",
+        "name": "Problematica de Operaciones Matemáticas Básicas",
+        "description": "Los alumnos no comprender el proceso metodico de como desarrollar operaciones de suma, resta, multiplicación y división.",
+        "situations": [
+          {
+            "description": "Se da la siguiente situación",
+            "problems": [
+              "problema 1"
+            ]
+          }
+        ]
+      }
+    ],
+    "context": [
+      {
+        "rowId": "row_2",
+        "problemas": "",
+        "fase": "Fase 3",
+        "campos": "Saberes y Pensamiento Científico",
+        "contenidos": "",
+        "pda": "",
+        "eje": "Eje 1",
+        "nivel": "Nivel 2",
+        "objeto": "sdfsdf",
+        "evidencia": ""
+      }
+    ],
+    "didacticCards": [
+      {
+        "id": "1744675995741",
+        "name": "ssdfsdf",
+        "methodology": "problemas-abp",
+        "selectedItems": []
+      },
+      {
+        "id": "1744675998453",
+        "name": "ssdfsdf",
+        "methodology": "problemas-abp",
+        "selectedItems": [
+          {
+            "title": "Sin título",
+            "campo": "Lenguajes",
+            "rowId": "row_1"
+          }
+        ]
+      }
+    ]
+  },
+  "1744428646301": {
+    "plans": [
+      {
+        "id": "1744429205131",
+        "name": "svvsd",
+        "description": "svdsdvsdv",
+        "situations": [
+          {
+            "description": "sdsdvsdv",
+            "problems": [
+              "sdvsdv"
+            ]
+          }
+        ]
+      }
+    ],
+    "context": [
+      {
+        "rowId": "row_1",
+        "problemas": "",
+        "fase": "",
+        "campos": "",
+        "contenidos": "",
+        "pda": "",
+        "eje": "",
+        "nivel": "",
+        "objeto": "",
+        "evidencia": ""
+      }
+    ],
+    "didacticCards": [
+      {
+        "id": "1744429217725",
+        "name": "sdvsdvsv",
+        "methodology": "problemas-abp",
+        "selectedItems": []
+      }
+    ]
+  },
+  "1744428660307": {
+    "plans": [],
+    "context": [],
+    "didacticCards": []
+  },
+  "1744426532758": {
+    "plans": [
+      {
+        "id": "1745269319634",
+        "name": "Tema 1",
+        "description": "sdfsdf",
+        "situations": [
+          {
+            "description": "sdfsdfsdf",
+            "problems": [
+              "Problema1"
+            ]
+          }
+        ]
+      }
+    ],
+    "context": [
+      {
+        "rowId": "row_2",
+        "problemas": "",
+        "fase": "Fase 3",
+        "campos": "Lenguajes",
+        "contenidos": "Escritura de nombres en la lengua materna.",
+        "pda": "1º: Escribe su nombre y lo compara con los nombres de sus compañeros, lo usa para indicar la autoría de sus trabajos, marcar sus útiles escolares, registrar su asistencia, entre otros.",
+        "eje": "Eje 1",
+        "nivel": "Nivel 1",
+        "objeto": "asdfg",
+        "evidencia": "asdfg"
+      },
+      {
+        "rowId": "row_3",
+        "problemas": "",
+        "fase": "Fase 3",
+        "campos": "Lenguajes",
+        "contenidos": "Narración de actividades y eventos relevantes que tengan lugar en la familia, la escuela o el resto de la comunidad.",
+        "pda": "1º: Relata historias relacionadas con actividaddes y eventos que tienen lugar en su entorno inmediato, cuidando el orden lógico de los hechos y el volumen de voz.",
+        "eje": "Eje 1",
+        "nivel": "Nivel 1",
+        "objeto": "asdfg",
+        "evidencia": "asdfg"
+      }
+    ],
+    "didacticCards": [],
+    "config": {
+      "nivelEducativo": "Primaria",
+      "centroTrabajo": "Colegio José María Lafragua",
+      "zonaEscolar": "Zona 1",
+      "sectorEducativo": "Publico",
+      "fase": "Fase 1",
+      "grado": "2do",
+      "grupo": "A",
+      "nombreDocente": "José Sebastián Pérez Chapa",
+      "nombreDirector": "Juan Manuel Márquez",
+      "inicioPeriodo": "2025-01-13",
+      "finPeriodo": "2025-07-17",
+      "imagenColegio": null
+    }
+  },
+  "1745263916199": {
+    "plans": [
+      {
+        "id": "1745269927021",
+        "name": "sdf",
+        "description": "sdfsdf",
+        "situations": [
+          {
+            "description": "sdfsdfsdf",
+            "problems": [
+              "sdfsdfsdfsdfsdf"
+            ]
+          }
+        ]
+      }
+    ],
+    "context": [
+      {
+        "rowId": "row_1",
+        "problemas": "",
+        "fase": "Fase 3",
+        "campos": "Saberes y Pensamiento Científico",
+        "contenidos": "",
+        "pda": "",
+        "eje": "",
+        "nivel": "",
+        "objeto": "",
+        "evidencia": ""
+      }
+    ],
+    "didacticCards": []
+  },
+  "1745289236550": {
+    "plans": [
+      {
+        "id": "1745289439705",
+        "name": "jkdfjñjaf",
+        "description": "fjkajfsdkajfñljfas",
+        "situations": [
+          {
+            "description": "fajkdfjakdñfjajdfa",
+            "problems": [
+              "La contaminación ambiental"
+            ]
+          }
+        ]
+      }
+    ],
+    "context": [
+      {
+        "rowId": "row_1",
+        "problemas": "",
+        "fase": "Fase 3",
+        "campos": "Lenguajes",
+        "contenidos": "Escritura de nombres en la lengua materna.",
+        "pda": "1º: Escribe su nombre y lo compara con los nombres de sus compañeros, lo usa para indicar la autoría de sus trabajos, marcar sus útiles escolares, registrar su asistencia, entre otros., 1º: Identifica nombres más largos o cortos que el suyo, nombres que empiezan o terminan con la misma letra que el propio, sus iniciales, el diminutivo de su mundo etcétera., 2º: Escribe su nombre y apellidos y de sus familiares, profesoras y profesores, pares y otras personas de su entonro para indicar autoría, pertenencia e identidad., 2º: Compara características de c, s, z, b, v, h, g, j, i, y, ll, k, q, r, rr, w, x, etcétera.",
+        "eje": "",
+        "nivel": "",
+        "objeto": "jklhkñhlhsd",
+        "evidencia": "jkjlkjalfjadñ"
+      }
+    ],
+    "didacticCards": [],
+    "config": {
+      "nivelEducativo": "Primaria",
+      "centroTrabajo": "Juan B. Diosdado",
+      "zonaEscolar": "533",
+      "sectorEducativo": "001",
+      "fase": "Fase 2",
+      "grado": "2do",
+      "grupo": "A",
+      "nombreDocente": "Luis Antonio Gutiérrez Soria",
+      "nombreDirector": "José Luis Piña",
+      "inicioPeriodo": "2025-04-24",
+      "finPeriodo": "2025-04-28",
+      "imagenColegio": null
+    }
+  }
+}

@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Plano de la Realidad</title>
+    <link rel="stylesheet" href="styles2.css">
+</head>
+<body>
+    <!-- Popup -->
+    <div id="premiumPopup" class="popup hidden">
+        <div class="popup-content">
+        <span class="close-popup">&times;</span>
+        <h2>Suscribete para obtener acceso Premium</h2>
+        <div id="subscription-content">
+          <h3>Actualizar a Premium</h3>
+          <p>Desbloquea todas las funciones premium con tu suscripción</p>
+          <div style="text-align:center;">
+              <button id="open-payment" class="blue-button">Suscribirme ahora</button>
+          </div>
+          <p class="info-text">Puedes cancelar cuando quieras</p>
+      </div>
+      
+      <div id="payment-modal">
+          <div class="modal-box">
+              <button id="close-payment-modal" class="close-btn">×</button>
+              <iframe id="mp-iframe" src="about:blank" frameborder="0" allowfullscreen></iframe>
+          </div>
+      </div>
+      
+      <style>
+        #subscription-content {
+          position: relative;
+          background: #fff;
+          border-radius: 8px;
+          padding: 20px;
+          max-width: 400px;
+          margin: 0 auto;
+          box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+          text-align: center;
+        }
+        .blue-button {
+          background: #3483FA;
+          color: #fff;
+          padding: 12px 30px;
+          border-radius: 5px;
+          font-size: 16px;
+          font-weight: bold;
+          border: none;
+          cursor: pointer;
+          box-shadow: 0 2px 8px rgba(52,131,250,0.3);
+          transition: all 0.3s;
+        }
+        .blue-button:hover {
+          background: #2a68c8;
+          transform: translateY(-2px);
+        }
+        .close-btn {
+          position: absolute;
+          top: 10px;
+          right: 10px;
+          font-size: 18px;
+          background: none;
+          border: none;
+          color: #666;
+          cursor: pointer;
+        }
+        .info-text {
+          font-size: 12px;
+          color: #999;
+          margin-top: 15px;
+        }
+        #payment-modal {
+          display: none;
+          position: fixed;
+          inset: 0;
+          background: rgba(0,0,0,0.6);
+          z-index: 9999;
+          justify-content: center;
+          align-items: center;
+        }
+        .modal-box {
+          position: relative;
+          width: 90%;
+          max-width: 600px;
+          background: #fff;
+          border-radius: 10px;
+          overflow: hidden;
+        }
+        .modal-box iframe {
+          width: 100%;
+          height: 600px;
+          border: none;
+        }
+      </style>
+      
+      <script>
+          document.getElementById('open-payment').onclick = () => {
+              // Obtener token de autenticación
+              const token = localStorage.getItem('token');
+              
+              if (!token) {
+                  alert('Por favor inicia sesión para suscribirte');
+                  return;
+              }
+              
+              // Configurar URL de Mercado Pago con URL de retorno
+              const successUrl = encodeURIComponent(window.location.origin + '/success.html');
+              const iframeSrc = `https://www.mercadopago.com.mx/subscriptions/checkout?preapproval_plan_id=2c938084964485e501965643c4cb071c&back_url=${successUrl}`;
+              
+              document.getElementById('mp-iframe').src = iframeSrc;
+              document.getElementById('payment-modal').style.display = 'flex';
+          };
+      
+          document.getElementById('close-payment-modal').onclick = () => {
+              document.getElementById('mp-iframe').src = 'about:blank';
+              document.getElementById('payment-modal').style.display = 'none';
+          };
+      
+          // Verificar si venimos de una redirección de Mercado Pago
+          const urlParams = new URLSearchParams(window.location.search);
+          if (urlParams.has('payment_status')) {
+              // Mostrar mensaje de estado de pago
+              const paymentStatus = urlParams.get('payment_status');
+              if (paymentStatus === 'approved') {
+                  alert('Pago aprobado. Tu cuenta será actualizada a Premium.');
+              } else if (paymentStatus === 'pending') {
+                  alert('Pago pendiente. Tu cuenta se actualizará cuando se complete el pago.');
+              } else if (paymentStatus === 'rejected') {
+                  alert('Pago rechazado. Por favor intenta con otro método de pago.');
+              }
+          }
+      </script>
+          
+        <p>Recuerda integrar al chatbot <strong><a href="https://web.telegram.org/k/#@DidappticBot">@DidappticBot</a></strong>, de Telegram.</p>
+        </div>
+    </div>
+  
+    <!-- Mensaje de estado -->
+    <div id="premiumStatusMessage" class="status-message hidden"></div>
+    
+    <div class="container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="logo">
+                <svg class="logo-icon" viewBox="0 0 24 24">
+                    <path d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                </svg>
+                <span>DidAppTic</span>
+            </div>
+
+            <nav class="menu" id="main-menu"></nav>
+
+            <div class="sidebar-footer">
+                <a href="configuracion.html" style="text-decoration: none; color: inherit;">
+                    <div class="first-steps">
+                        <span>Configuración</span>
+                        <div class="help-icon">?</div>
+                    </div>
+                </a>
+                <button id="logoutBtn" class="logout-btn">Cerrar Sesión</button>
+            </div>
+        </aside>
+
+        <!-- Contenido Principal -->
+        <main class="main-content">
+            <!-- Barra Superior -->
+            <div class="top-bar">
+                <div class="user-info">
+                    <span id="userEmail"></span>
+                    <span id="userMembership" class="membership-badge"></span>
+                </div>
+                <div class="action-buttons">
+                    <button class="btn-premium">¡Suscríbete a Premium!</button>
+                    <button class="btn-profile"></button>
+                </div>
+            </div>
+
+            <!-- Título y Botón -->
+            <div class="content-header">
+                <h1>Plano de la Realidad</h1>
+                <button class="btn-description" id="btn-description">+ Descripción del Tema</button>
+            </div>
+
+            <!-- Tarjetas Generadas -->
+            <div class="tools-grid" id="tools-container"></div>
+
+            <!-- Popup Formulario -->
+            <div class="popup-overlay" id="popup-overlay">
+                <div class="popup-content">
+                    <div class="popup-header">
+                        <h2>Descripción del Tema</h2>
+                        <button class="btn-close-popup" id="btn-close-popup">×</button>
+                    </div>
+
+                    <form id="topic-form">
+                        <div class="form-group">
+                            <label for="topic-name">Nombre del Tema</label>
+                            <input type="text" id="topic-name" placeholder="Nombre del tema" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="topic-description">Descripción del Tema</label>
+                            <textarea id="topic-description" placeholder="Escribe una descripción general del tema..." required></textarea>
+                        </div>
+
+                        <!-- Pestañas de Situaciones -->
+                        <div class="tabs-container" id="tabs-container">
+                            <div class="tabs" id="tabs"></div>
+                            <button type="button" class="btn-add-tab" id="btn-add-tab">+ Agregar Situación</button>
+                        </div>
+
+                        <!-- Contenido de Pestañas -->
+                        <div class="tab-content" id="tab-content"></div>
+
+                        <!-- Botones de Acción -->
+                        <div class="popup-actions">
+                            <button type="submit" class="btn-save">Guardar</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="auth.js"></script>
+    <script src="scriptPlanoRealidad.js"></script>
+</body>
+</html>

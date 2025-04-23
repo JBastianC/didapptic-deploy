@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Configuración</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="styles6.css">
+</head>
+<body class="bg-gray-100 min-h-screen flex flex-col text-gray-800">
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="logo">
+      <svg class="logo-icon" viewBox="0 0 24 24">
+        <path d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+      </svg>
+      <span>DidAppTic</span>
+    </div>
+    <nav class="menu" id="main-menu">
+      <!-- Menú dinámico -->
+    </nav>
+    <div class="user-info">
+      <span id="userEmail"></span>
+      <span id="userMembership" class="membership-badge"></span>
+      <button id="logoutBtn" class="btn-logout">Cerrar sesión <i class="fas fa-sign-out-alt"></i></button>
+    </div>
+  </aside>
+
+  <!-- Contenido Principal -->
+  <main class="main-content">
+    <section id="config">
+      <div class="header-section">
+        <h2 class="text-2xl font-bold">Configuración</h2>
+        <div class="premium-status" id="premiumStatusMessage"></div>
+      </div>
+      <hr class="border-gray-300 my-6">
+
+      <!-- Formulario de Configuración -->
+      <form id="config-form" class="space-y-4">
+        <div class="form-grid">
+          <!-- Columna 1 -->
+          <div class="form-column">
+            <!-- Nivel Educativo -->
+            <div class="form-group">
+              <label for="nivelEducativo">Nivel Educativo:</label>
+              <select id="nivelEducativo" class="input">
+                <option value="">Seleccione...</option>
+                <option value="Primaria">Primaria</option>
+                <option value="Secundaria">Secundaria</option>
+              </select>
+            </div>
+
+            <!-- Centro de Trabajo -->
+            <div class="form-group">
+              <label for="centroTrabajo">Nombre del Centro de Trabajo:</label>
+              <input id="centroTrabajo" type="text" class="input" placeholder="Nombre del Centro">
+            </div>
+
+            <!-- Zona Escolar -->
+            <div class="form-group">
+              <label for="zonaEscolar">Zona Escolar:</label>
+              <input id="zonaEscolar" type="text" class="input" placeholder="Zona Escolar">
+            </div>
+
+            <!-- Sector Educativo -->
+            <div class="form-group">
+              <label for="sectorEducativo">Sector Educativo:</label>
+              <input id="sectorEducativo" type="text" class="input" placeholder="Sector Educativo">
+            </div>
+          </div>
+
+          <!-- Columna 2 -->
+          <div class="form-column">
+            <!-- Fase -->
+            <div class="form-group">
+              <label for="fase">Fase:</label>
+              <select id="fase" class="input">
+                <option value="">Seleccione...</option>
+              </select>
+            </div>
+
+            <!-- Grado -->
+            <div class="form-group">
+              <label for="grado">Grado:</label>
+              <select id="grado" class="input">
+                <option value="">Seleccione...</option>
+              </select>
+            </div>
+
+            <!-- Grupo -->
+            <div class="form-group">
+              <label for="grupo">Grupo:</label>
+              <select id="grupo" class="input">
+                <option value="">Seleccione...</option>
+                <option value="A">A</option>
+                <option value="B">B</option>
+                <option value="C">C</option>
+                <option value="D">D</option>
+                <option value="E">E</option>
+                <option value="F">F</option>
+                <option value="G">G</option>
+                <option value="H">H</option>
+                <option value="I">I</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Columna 3 -->
+          <div class="form-column">
+            <!-- Nombre del Docente -->
+            <div class="form-group">
+              <label for="nombreDocente">Nombre del Docente:</label>
+              <input id="nombreDocente" type="text" class="input" placeholder="Nombre del Docente">
+            </div>
+
+            <!-- Nombre del Director -->
+            <div class="form-group">
+              <label for="nombreDirector">Nombre del Director:</label>
+              <input id="nombreDirector" type="text" class="input" placeholder="Nombre del Director">
+            </div>
+
+            <!-- Periodo de Realización -->
+            <div class="form-group">
+              <label>Periodo de Realización:</label>
+              <div class="date-range">
+                <input id="inicioPeriodo" type="date" class="input">
+                <span>a</span>
+                <input id="finPeriodo" type="date" class="input">
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Imagen del Colegio -->
+        <div class="form-group image-upload">
+          <label for="imagenColegio">Imagen del Colegio:</label>
+          <div class="image-upload-container">
+            <div class="image-preview" id="imagePreview">
+              <img id="previewImage" src="" alt="Vista previa de la imagen">
+              <span id="noImageText">No hay imagen seleccionada</span>
+            </div>
+            <div class="upload-controls">
+              <label for="imagenColegio" class="btn-upload">
+                <i class="fas fa-upload"></i> Seleccionar Imagen
+              </label>
+              <input id="imagenColegio" type="file" accept="image/*" style="display: none;">
+              <button type="button" id="removeImageBtn" class="btn-remove" disabled>
+                <i class="fas fa-trash"></i> Eliminar
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Botón de Guardar -->
+        <div class="form-buttons">
+          <button type="submit" class="btn-save">
+            <i class="fas fa-save"></i> Guardar Configuración
+          </button>
+        </div>
+      </form>
+    </section>
+  </main>
+
+  <!-- Notificación -->
+  <div id="notification" class="notification hidden"></div>
+
+  <script src="script6.js"></script>
+</body>
+</html>
