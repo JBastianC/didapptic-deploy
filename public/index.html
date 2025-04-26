@@ -4,11 +4,28 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>DidAppTic - Herramientas para Docentes</title>
+  <link rel="icon" href="/fav/favicon.ico" type="image/x-icon">
   <link rel="stylesheet" href="stylesIndex.css"/>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
+  <link rel="stylesheet" href="https://unpkg.com/aos@next/dist/aos.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
+  <!-- Partículas de fondo -->
+  <div id="particles-js" class="particles-welcome"></div>
+
+  <!-- Preloader -->
+  <div class="preloader">
+    <div class="loader">
+      <svg viewBox="0 0 80 80">
+        <circle id="loader-circle" cx="40" cy="40" r="32"></circle>
+      </svg>
+      <div class="loader-text">DidAppTic</div>
+    </div>
+  </div>
+
   <section class="section full-screen welcome" id="inicio">
-    <nav class="navbar">
+    <nav class="navbar animate__animated animate__fadeInDown">
       <h1 class="logo">📚 DidAppTic</h1>
       <div class="nav-buttons">
         <a href="login.html" class="btn btn-light">Iniciar Sesión</a>
@@ -16,72 +33,228 @@
       </div>
     </nav>
     <div class="hero-content">
-      <h2 class="typing" id="typing-text"></h2>
-      <p class="subtext">La herramienta definitiva para transformar tu experiencia docente.</p>
-      <a href="#membresias" class="btn btn-primary">Explorar Membresías</a>
+      <h2 class="typing animate__animated animate__fadeIn" id="typing-text"></h2>
+      <p class="subtext animate__animated animate__fadeIn animate__delay-1s">La herramienta definitiva para transformar tu experiencia docente.</p>
+      <div class="hero-features animate__animated animate__fadeIn animate__delay-2s">
+        <div class="feature-item">
+          <div class="feature-icon">🧠</div>
+          <div class="feature-text">IA Educativa</div>
+        </div>
+        <div class="feature-item">
+          <div class="feature-icon">📝</div>
+          <div class="feature-text">Planes Didácticos</div>
+        </div>
+        <div class="feature-item">
+          <div class="feature-icon">📊</div>
+          <div class="feature-text">Evaluación</div>
+        </div>
+      </div>
+      <a href="#membresias" class="btn btn-primary animate__animated animate__fadeIn animate__delay-2s">Explorar Membresías</a>
+    </div>
+    <div class="scroll-indicator animate__animated animate__fadeIn animate__delay-3s">
+      <div class="mouse">
+        <div class="wheel"></div>
+      </div>
+      <div class="arrow">
+        <span></span>
+      </div>
     </div>
   </section>
 
-  <section class="section full-screen" id="membresias">
+  <section class="section full-screen" id="membresias" data-aos="fade-up">
     <h2 class="section-title">Planes de Membresía</h2>
     <div class="cards">
-      <div class="card elegant-card animate-fade-in">
+      <div class="card elegant-card" data-aos="fade-right" data-aos-delay="100">
+        <div class="card-badge">Popular</div>
         <h3>🌱 Básica</h3>
         <p class="price">💸 <strong>Gratis</strong></p>
+        <div class="card-divider"></div>
         <ul>
-          <li>✔️ Plano de la Realidad</li>
-          <li>✔️ Plano Contextual</li>
-          <li>✔️ Plano Didáctico</li>
-          <li>🚫 Sin almacenamiento</li>
-          <li>🧠 1 herramienta IA (Plan de Clase)</li>
+          <li><span class="check">✓</span> Plano de la Realidad</li>
+          <li><span class="check">✓</span> Plano Contextual</li>
+          <li><span class="check">✓</span> Plano Didáctico</li>
+          <li><span class="limit">3</span> solicitudes IA diarias</li>
+          <li><span class="check">✓</span> Soporte básico</li>
         </ul>
+        <a href="register.html" class="card-button">Comenzar Gratis</a>
       </div>
-      <div class="card elegant-card animate-fade-in delay">
+      <div class="card elegant-card premium-card" data-aos="fade-left" data-aos-delay="200">
+        <div class="card-badge premium-badge">Sugerido</div>
         <h3>🚀 Premium</h3>
         <p class="price">✨ <strong>MXN $89.90/mes</strong></p>
+        <div class="card-divider"></div>
         <ul>
-          <li>✔️ Todo lo de la cuenta básica</li>
-          <li>🤖 Todas las herramientas IA</li>
-          <li>🗃️ Gestión y almacenamiento</li>
-          <li>📄 Formatos personalizables</li>
+          <li><span class="check">✓</span> Todo lo de la cuenta básica</li>
+          <li><span class="check">✓</span> Todas las herramientas IA</li>
+          <li><span class="limit">10</span> solicitudes IA diarias</li>
+          <li><span class="check">✓</span> Gestión y almacenamiento</li>
+          <li><span class="check">✓</span> Formatos personalizables</li>
+          <li><span class="check">✓</span> Soporte prioritario</li>
         </ul>
+        <a href="register.html?plan=premium" class="card-button premium-button">Obtener Premium</a>
       </div>
     </div>
   </section>
 
-  <section class="section full-screen" id="faq">
+  <section class="section full-screen" id="beneficios" data-aos="fade-up">
+    <h2 class="section-title">Beneficios para Docentes</h2>
+    <div class="benefits-container">
+      <div class="benefit-card" data-aos="zoom-in" data-aos-delay="100">
+        <div class="benefit-icon">⏱️</div>
+        <h3>Ahorra Tiempo</h3>
+        <p>Reduce hasta un 70% el tiempo de planificación con nuestras herramientas automatizadas.</p>
+      </div>
+      <div class="benefit-card" data-aos="zoom-in" data-aos-delay="200">
+        <div class="benefit-icon">🎯</div>
+        <h3>Personalización</h3>
+        <p>Adapta tus planes a las necesidades específicas de tus estudiantes con ayuda de IA.</p>
+      </div>
+      <div class="benefit-card" data-aos="zoom-in" data-aos-delay="300">
+        <div class="benefit-icon">📊</div>
+        <h3>Evaluación Integral</h3>
+        <p>Crea evaluaciones alineadas con los objetivos de aprendizaje y competencias.</p>
+      </div>
+      <div class="benefit-card" data-aos="zoom-in" data-aos-delay="400">
+        <div class="benefit-icon">🔄</div>
+        <h3>Mejora Continua</h3>
+        <p>Analiza resultados y optimiza tus estrategias didácticas con cada iteración.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="section full-screen" id="testimonios" data-aos="fade-up">
+    <h2 class="section-title">Lo que dicen nuestros usuarios</h2>
+    <div class="testimonials-container">
+      <div class="testimonial" data-aos="fade-right" data-aos-delay="100">
+        <div class="testimonial-content">
+          <p>"DidAppTic ha transformado mi forma de planificar clases. Ahora puedo crear planes didácticos completos en minutos, no horas."</p>
+        </div>
+        <div class="testimonial-author">
+          <div class="testimonial-avatar">MR</div>
+          <div class="testimonial-info">
+            <h4>María Rodríguez</h4>
+            <p>Profesora de Primaria</p>
+          </div>
+        </div>
+      </div>
+      <div class="testimonial" data-aos="fade-left" data-aos-delay="200">
+        <div class="testimonial-content">
+          <p>"La integración de IA en la planificación educativa es revolucionaria. Mis estudiantes están más comprometidos con las actividades generadas."</p>
+        </div>
+        <div class="testimonial-author">
+          <div class="testimonial-avatar">JL</div>
+          <div class="testimonial-info">
+            <h4>Juan López</h4>
+            <p>Profesor de Secundaria</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section full-screen" id="faq" data-aos="fade-up">
     <h2 class="section-title">Preguntas Frecuentes</h2>
     <div class="faq-container">
-      <div class="faq-item">
+      <div class="faq-item" data-aos="fade-up" data-aos-delay="100">
         <div class="faq-header">
           <span>🔄 ¿Puedo cambiar de plan luego?</span>
           <button class="faq-toggle">+</button>
         </div>
-        <div class="faq-answer">Sí, puedes cambiar de membresía en cualquier momento desde tu perfil.</div>
+        <div class="faq-answer">Sí, puedes cambiar de membresía en cualquier momento desde tu perfil, actualizando o degradando según tus necesidades.</div>
       </div>
-      <div class="faq-item">
+      <div class="faq-item" data-aos="fade-up" data-aos-delay="200">
         <div class="faq-header">
           <span>🧠 ¿Qué herramientas IA incluye?</span>
           <button class="faq-toggle">+</button>
         </div>
-        <div class="faq-answer">Desde generadores de planes hasta asistentes pedagógicos, contextualizadores, analistas de texto, y más.</div>
+        <div class="faq-answer">Incluye generadores de planes didácticos, asistentes para diseño de actividades, creador de evaluaciones, contextualizador de contenidos curriculares y más herramientas especializadas para docentes.</div>
       </div>
-      <div class="faq-item">
+      <div class="faq-item" data-aos="fade-up" data-aos-delay="300">
         <div class="faq-header">
           <span>🔐 ¿Mis datos están seguros?</span>
           <button class="faq-toggle">+</button>
         </div>
-        <div class="faq-answer">Sí, utilizamos cifrado de datos y cumplimos con estándares de seguridad educativa.</div>
+        <div class="faq-answer">Absolutamente. Utilizamos cifrado de extremo a extremo y cumplimos con los estándares más altos de seguridad educativa para proteger toda tu información.</div>
+      </div>
+      <div class="faq-item" data-aos="fade-up" data-aos-delay="400">
+        <div class="faq-header">
+          <span>📱 ¿Funciona en dispositivos móviles?</span>
+          <button class="faq-toggle">+</button>
+        </div>
+        <div class="faq-answer">Sí, la plataforma es completamente responsiva y funciona en smartphones y tablets, con excepción del editor de canvas en el Plano Didáctico que requiere una pantalla más amplia.</div>
       </div>
     </div>
 
-    <div class="contact-section">
+    <div class="contact-section" data-aos="fade-up" data-aos-delay="500">
       <h3>📩 Contacto</h3>
       <p>¿Tienes dudas o sugerencias? Escríbenos por Telegram:</p>
       <a href="https://t.me/DidAppTic" target="_blank" class="btn btn-primary">💬 Contactar en Telegram</a>
     </div>
   </section>
+  
+  <footer class="site-footer" data-aos="fade-up">
+    <div class="footer-content">
+      <div class="footer-logo">📚 DidAppTic</div>
+      <p class="footer-tagline">Transformando la educación con tecnología</p>
+      <div class="footer-links">
+        <a href="#inicio">Inicio</a>
+        <a href="#beneficios">Beneficios</a>
+        <a href="#membresias">Membresías</a>
+        <a href="#faq">FAQ</a>
+        <a href="login.html">Iniciar Sesión</a>
+      </div>
+      <p class="copyright">© 2025 DidAppTic. Todos los derechos reservados.</p>
+    </div>
+  </footer>
 
+  <script src="https://unpkg.com/particles.js@2.0.0/particles.js"></script>
+  <script src="https://unpkg.com/aos@next/dist/aos.js"></script>
   <script src="scriptIndex.js"></script>
+  <script>
+    // Inicializar AOS (Animate On Scroll)
+    AOS.init({
+      duration: 800,
+      easing: 'ease-in-out',
+      once: true
+    });
+
+    // Preloader
+    window.addEventListener('load', function() {
+      const preloader = document.querySelector('.preloader');
+      preloader.classList.add('preloader-hidden');
+      setTimeout(() => {
+        preloader.style.display = 'none';
+      }, 1000);
+    });
+
+    // Inicializar partículas
+    particlesJS('particles-js', {
+      particles: {
+        number: { value: 80, density: { enable: true, value_area: 800 } },
+        color: { value: '#5e72e4' },
+        shape: { type: 'circle' },
+        opacity: { value: 0.5, random: false },
+        size: { value: 3, random: true },
+        line_linked: { enable: true, distance: 150, color: '#5e72e4', opacity: 0.4, width: 1 },
+        move: { enable: true, speed: 2, direction: 'none', random: false, straight: false, out_mode: 'out', bounce: false }
+      },
+      interactivity: {
+        detect_on: 'canvas',
+        events: { onhover: { enable: true, mode: 'grab' }, onclick: { enable: true, mode: 'push' }, resize: true },
+        modes: { grab: { distance: 140, line_linked: { opacity: 1 } }, push: { particles_nb: 4 } }
+      },
+      retina_detect: true
+    });
+
+    // Scroll suave para enlaces internos
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+      anchor.addEventListener('click', function(e) {
+        e.preventDefault();
+        document.querySelector(this.getAttribute('href')).scrollIntoView({
+          behavior: 'smooth'
+        });
+      });
+    });
+  </script>
 </body>
 </html>

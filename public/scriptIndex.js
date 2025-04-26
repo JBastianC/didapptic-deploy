@@ -11,16 +11,56 @@ document.addEventListener('mousemove', (e) => {
         document.querySelector('.welcome').style.background = `radial-gradient(at ${x}% ${y}%, #ff6a00, #ffcc00)`;
     }
   });
+
+  if (document.querySelector('.particles-welcome')) {
+    particlesJS('particles-js', {
+      particles: {
+        number: { value: 80, density: { enable: true, value_area: 800 } },
+        color: { value: '#5e72e4' },
+        shape: { type: 'circle' },
+        opacity: { value: 0.5, random: false },
+        size: { value: 3, random: true },
+        line_linked: { enable: true, distance: 150, color: '#5e72e4', opacity: 0.4, width: 1 },
+        move: { enable: true, speed: 2, direction: 'none', random: false, straight: false, out_mode: 'out', bounce: false }
+      },
+      interactivity: {
+        detect_on: 'canvas',
+        events: { 
+          onhover: { enable: true, mode: 'grab' }, 
+          onclick: { enable: true, mode: 'push' }, 
+          resize: true 
+        },
+        modes: { 
+          grab: { distance: 140, line_linked: { opacity: 1 } }, 
+          push: { particles_nb: 4 } 
+        }
+      },
+      retina_detect: true
+    });
+  }
   
   // Cambiar estilo de navbar según el scroll
   window.addEventListener('scroll', () => {
     const navbar = document.querySelector('.navbar');
-    const welcomeHeight = document.querySelector('.welcome').offsetHeight;
-  
-    if (window.scrollY > welcomeHeight - 80) {
+    const navButtons = document.querySelectorAll('.nav-buttons a');
+    
+    if (window.scrollY > 50) {
       navbar.classList.add('scrolled');
+      // Asegurar que los botones mantengan su estilo interactivo
+      navButtons.forEach(btn => {
+        btn.style.pointerEvents = 'auto';
+        btn.style.opacity = '1';
+      });
     } else {
       navbar.classList.remove('scrolled');
+    }
+  });
+  
+  // Aplicar estilos de navbar al cargar la página
+  document.addEventListener('DOMContentLoaded', () => {
+    const navbar = document.querySelector('.navbar');
+    if (window.scrollY > 50) {
+      navbar.classList.add('scrolled');
     }
   });
   
@@ -36,10 +76,10 @@ document.addEventListener('mousemove', (e) => {
   
   // Efecto de escritura tipo máquina en la sección de bienvenida
   const messages = [
-    "Bienvenido a DidAppTic 👩‍🏫",
-    "Tu aliado en la planificación docente 📚",
-    "Simplifica, innova, transforma 🚀",
-    "Herramientas con IA para cada reto educativo 💡"
+    "Bienvenido a DidAppTic",
+    "Tu aliado en la planificación docente",
+    "Simplifica, innova, transforma",
+    "Herramientas con IA para cada reto educativo"
   ];
   
   let index = 0;
