@@ -25,8 +25,8 @@ const PLANS_DIR = path.join(__dirname, 'plans');
 if (!fs.existsSync(PLANS_DIR)) fs.mkdirSync(PLANS_DIR);
 
 // Configuración de IA
-const IA_BASE_URL = 'https://fcvl4puzeomz4jzdfussnmqa.agents.do-ai.run/';
-const IA_ACCESS_KEY = process.env.IA_ACCESS_KEY || 'Zg4xH8tUp0NMBnjzxcWjxR3LfXY7uvY3'; // Usa variable de entorno o reemplaza por tu key
+const IA_BASE_URL = '';
+const IA_ACCESS_KEY = process.env.IA_ACCESS_KEY || ''; // Usa variable de entorno o reemplaza por tu key
 
 const iaClient = axios.create({
   baseURL: IA_BASE_URL,
