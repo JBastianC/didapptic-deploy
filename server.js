@@ -25,33 +25,39 @@ const PLANS_DIR = path.join(__dirname, 'plans');
 if (!fs.existsSync(PLANS_DIR)) fs.mkdirSync(PLANS_DIR);
 
 // Configuración de IA
-const IA_BASE_URL = 'https://5ce8-34-124-216-153.ngrok-free.app/';
+const IA_BASE_URL = 'https://fcvl4puzeomz4jzdfussnmqa.agents.do-ai.run/';
+const IA_ACCESS_KEY = process.env.IA_ACCESS_KEY || 'Zg4xH8tUp0NMBnjzxcWjxR3LfXY7uvY3'; // Usa variable de entorno o reemplaza por tu key
+
 const iaClient = axios.create({
   baseURL: IA_BASE_URL,
-  httpsAgent: new https.Agent({ rejectUnauthorized: false }),
-  headers: { 'Content-Type': 'application/json' },
+  headers: {
+    'Content-Type': 'application/json',
+    'Authorization': `Bearer ${IA_ACCESS_KEY}`
+  },
   timeout: 60000
 });
 
-function callIA(endpoint, prompt) {
+// Modificado para el nuevo endpoint y modelo Llama 3.3 Instruct (70B)
+function callIA(prompt) {
+  // prompt es un string
   return new Promise((resolve, reject) => {
-    iaClient.post(endpoint, { model: 'qwen2.5-coder:7b', prompt, stream: true }, { responseType: 'stream' })
-      .then(resp => {
-        let full = '';
-        resp.data.on('data', chunk => {
-          chunk.toString().split('\n').forEach(l => {
-            if (l.trim()) {
-              try {
-                const j = JSON.parse(l);
-                if (j.response) full += j.response;
-              } catch { }
-            }
-          });
-        });
-        resp.data.on('end', () => resolve(full || '❌ Sin respuesta válida.'));
-        resp.data.on('error', err => reject(err));
-      })
-      .catch(err => reject(err));
+    iaClient.post('/api/v1/chat/completions', {
+      model: 'llama-3-70b-instruct',
+      messages: [
+        { role: 'user', content: prompt }
+      ]
+    })
+    .then(resp => {
+      // El resultado esperado está en resp.data.choices[0].message.content
+      if (resp.data && Array.isArray(resp.data.choices) && resp.data.choices[0]?.message?.content) {
+        resolve(resp.data.choices[0].message.content);
+      } else {
+        resolve('❌ Sin respuesta válida.');
+      }
+    })
+    .catch(err => {
+      reject(err.response?.data || err.message || err);
+    });
   });
 }
 
@@ -611,10 +617,21 @@ app.post('/api/ia/generatePlan', async (req, res) => {
   try {
     const { prompt } = req.body;
     if (!prompt) return res.status(400).json({ error: 'Prompt obligatorio.' });
-    const iaResp = await callIA('/api/generate', prompt);
+    let iaResp;
+    try {
+      iaResp = await callIA(prompt);
+    } catch (err) {
+      console.error('Error al consultar la IA:', err);
+      return res.status(502).json({ error: 'Error al comunicarse con el servicio de IA', details: err });
+    }
+    if (!iaResp || typeof iaResp !== 'string') {
+      console.error('Respuesta inesperada de la IA:', iaResp);
+      return res.status(500).json({ error: 'Respuesta inesperada de la IA', details: iaResp });
+    }
     res.json({ response: iaResp });
   } catch (e) {
-    res.status(500).json({ error: e.message });
+    console.error('Error interno en /api/ia/generatePlan:', e);
+    res.status(500).json({ error: e.message, details: e });
   }
 });
 
