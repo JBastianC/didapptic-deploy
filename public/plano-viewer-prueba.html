@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Visor Prueba IA</title>
+  <link rel="stylesheet" href="plano-viewer-prueba.css">
+</head>
+<body>
+  <div class="container">
+    <div class="toolbar" id="topMenu">
+  <button id="btnGuardarFormato">Guardar Formato</button>
+  <button id="btnDescargarOriginal">Descargar JSON Original</button>
+  <button id="btnModoImpresion">Modo Impresión</button>
+  <input type="file" id="logoInput" accept="image/*" style="display:none">
+  <button id="btnLogo">Agregar Logotipo</button>
+</div>
+<div class="logo-container">
+  <img id="customLogo" class="logo-img" src="" alt="Logotipo" style="display:none;max-height:80px;">
+  <div id="fechaActual" class="fecha-actual"></div>
+</div>
+    <section id="datosGeneralesSection">
+      <h2>Datos Generales</h2>
+      <table id="tablaDatosGenerales" class="plan-table">
+        <tbody id="datosGeneralesBody"></tbody>
+      </table>
+    </section>
+    <section id="ubicacionCurricularSection">
+      <h2>Ubicación Curricular</h2>
+      <table id="tablaUbicacion" class="plan-table"></table>
+    </section>
+    
+    <section id="tablasIASection"></section>
+    <section id="firmasSection">
+      <h2>Firmas</h2>
+      <table class="plan-table firmas-table">
+        <tr>
+          <td style="width:50%;text-align:center;padding-top:40px;">
+            <div style="border-top:1px solid #222;padding-top:10px;"></div>
+            <div id="firmaDocenteNombre" style="margin-top:4px;font-weight:bold;"></div>
+            <div>Docente</div>
+          </td>
+          <td style="width:50%;text-align:center;padding-top:40px;">
+            <div style="border-top:1px solid #222;padding-top:10px;"></div>
+            <div id="firmaDirectorNombre" style="margin-top:4px;font-weight:bold;"></div>
+            <div>Director</div>
+          </td>
+        </tr>
+      </table>
+    </section>
+  </div>
+  <script src="plano-viewer-prueba.js"></script>
+</body>
+</html>

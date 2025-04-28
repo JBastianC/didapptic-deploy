@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Herramientas de IA</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
@@ -154,11 +155,14 @@
             <div class="sidebar-footer">
                 <a href="configuracion.html" style="text-decoration: none; color: inherit;">
                     <div class="first-steps">
-                        <span>Configuración</span>
-                        <div class="help-icon">?</div>
+                        <i class="fas fa-cog menu-icon"></i>
+                        <span>Configuración</span>    
                     </div>
                 </a>
-                <button id="logoutBtn" class="logout-btn">Cerrar Sesión</button>
+                <button id="logoutBtn" class="logout-btn">
+                    <i class="fas fa-sign-out-alt menu-icon"></i>
+                    <span>Cerrar Sesión</span>
+                </button>
             </div>
         </aside>
 
@@ -188,6 +192,7 @@
     </div>
 
     <script src="auth.js"></script>
+    <script src="sidebar.js"></script>
     <script src="scriptAI.js"></script>
 </body>
 </html>

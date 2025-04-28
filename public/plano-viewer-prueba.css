@@ -1,0 +1,170 @@
+body {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  line-height: 1.6;
+  color: #333;
+  margin: 0;
+  padding: 20px;
+  background-color: #f9f9f9;
+}
+
+.logo-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  margin: 20px 0;
+}
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+  background-color: white;
+  box-shadow: 0 0 10px rgba(0,0,0,0.1);
+  border-radius: 10px;
+}
+
+h1, h2, h3 {
+  color: #2c3e50;
+  margin-top: 30px;
+}
+
+h1, h2 {
+  font-size: 14pt;
+  font-weight: bold;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 20px 0;
+  background: #fff;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  border: 1px solid #bbb;
+}
+
+th, td {
+  border: 1px solid #bbb;
+  padding: 12px;
+  text-align: left;
+  background: white !important;
+}
+
+.plan-table thead tr {
+  border-bottom: 2px solid #999;
+}
+
+.plan-table tbody tr {
+  border-bottom: 1px solid #ddd;
+}
+
+.concepto-gris {
+  background: #f2f2f2 !important;
+  font-weight: bold;
+}
+
+/* Estilo para valores normales (fondo blanco, texto normal) */
+.valor-normal {
+  background: white !important;
+  font-weight: normal !important;
+}
+
+.editable {
+  min-height: 20px;
+  padding: 8px;
+  border: 1px dashed transparent;
+}
+
+.editable:hover {
+  border-color: #ccc;
+}
+
+.editable:focus {
+  outline: none;
+  border-color: #007bff;
+}
+
+.toolbar {
+  background: #f8f9fa;
+  padding: 10px;
+  margin-bottom: 20px;
+  border-radius: 5px;
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+}
+
+.toolbar button {
+  padding: 8px 20px;
+  background: #fff;
+  color: #2c3e50;
+  border: none;
+  border-radius: 20px;
+  cursor: pointer;
+  font-size: 15px;
+  box-shadow: 0 1px 4px rgba(44,62,80,0.06);
+}
+
+.table-actions {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+  gap: 10px;
+  margin: 15px auto;
+  padding: 10px 0;
+  background-color: #f8f9fa;
+  border-radius: 5px;
+}
+
+.add-row-btn, .remove-row-btn {
+  background: none;
+  color: #2a5d9f;
+  border: 1px solid #2a5d9f;
+  border-radius: 4px;
+  padding: 8px 16px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s;
+  margin: 0 5px;
+}
+
+.add-row-btn:hover, .remove-row-btn:hover {
+  background: #2a5d9f;
+  color: white;
+}
+
+.firmas-table td {
+  border: none;
+  background: transparent !important;
+}
+
+.plan-reflex {
+  background: #fff !important;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 20px;
+  min-height: 60px;
+  margin-bottom: 32px;
+}
+
+.print-mode .toolbar,
+.print-mode .table-actions {
+  display: none !important;
+}
+
+/* Asegúrate que el nuevo botón tenga el mismo estilo que los demás */
+#btnDescargarOriginal {
+  padding: 8px 20px;
+  background: #fff;
+  color: #2c3e50;
+  border: none;
+  border-radius: 20px;
+  cursor: pointer;
+  font-size: 15px;
+  box-shadow: 0 1px 4px rgba(44,62,80,0.06);
+  transition: all 0.2s;
+}
+
+#btnDescargarOriginal:hover {
+  background: #e9ecef;
+}

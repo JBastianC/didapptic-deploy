@@ -88,7 +88,7 @@ document.addEventListener('DOMContentLoaded', () => {
         logoutBtn.addEventListener('click', () => {
             localStorage.removeItem('token');
             localStorage.removeItem('userData');
-            window.location.href = 'login.html';
+            window.location.href = 'index.html';
         });
         
         // Mostrar información del usuario

@@ -162,42 +162,6 @@ document.addEventListener('DOMContentLoaded', async function() {
     });
   }
 
-  // [Añadido] Función para abrir el selector de contenidos/PDA
-  function openContenidosSelector(rowId, button) {
-    currentPdaButton = button;
-    currentPdaRowId = rowId;
-    document.getElementById('pda-selector-overlay').classList.add('active');
-    
-    // Resetear el selector
-    document.getElementById('contenidosList').innerHTML = '';
-    document.getElementById('pdasList').innerHTML = '';
-    document.getElementById('selectedPdasList').innerHTML = '';
-    
-    // Auto-completar fase y campo basado en la fila
-    const rowData = rowsState[rowId];
-    if (rowData) {
-      const faseSelect = document.getElementById('fase-pda');
-      const campoSelect = document.getElementById('campo-pda');
-      
-      if (rowData.fase) {
-        faseSelect.value = rowData.fase;
-        // Disparar evento change para cargar campos
-        const event = new Event('change');
-        faseSelect.dispatchEvent(event);
-        
-        if (rowData.campos) {
-          // Esperar un momento para que se carguen las opciones de campo
-          setTimeout(() => {
-            campoSelect.value = rowData.campos;
-            // Disparar evento change para cargar contenidos
-            const event = new Event('change');
-            campoSelect.dispatchEvent(event);
-          }, 100);
-        }
-      }
-    }
-  }
-
   // Verificar autenticación y cargar datos del usuario
   const userData = JSON.parse(localStorage.getItem('userData'));
   if (!userData) {
@@ -407,6 +371,96 @@ document.addEventListener('DOMContentLoaded', async function() {
   addRowBtn.addEventListener('click', function() {
     addPrimaryRow();
   });
+
+  // Evento para el botón hoja: abrir visor contextual
+const openViewerBtn = document.getElementById('open-viewer-btn');
+if (openViewerBtn) {
+  openViewerBtn.addEventListener('click', async function () {
+    try {
+      // 1. Obtener datos generales desde configuracion.html/localStorage
+      let datosGenerales = {};
+      try {
+        const configStr = localStorage.getItem('userConfig');
+        if (configStr) {
+          datosGenerales = JSON.parse(configStr);
+        } else if (window.userData) {
+          datosGenerales = {
+            nivelEducativo: window.userData.nivelEducativo || '',
+            centroTrabajo: window.userData.centroTrabajo || '',
+            zonaEscolar: window.userData.zonaEscolar || '',
+            sectorEducativo: window.userData.sectorEducativo || '',
+            fase: window.userData.fase || '',
+            grado: window.userData.grado || '',
+            grupo: window.userData.grupo || '',
+            nombreDocente: window.userData.nombreDocente || '',
+            nombreDirector: window.userData.nombreDirector || ''
+          };
+        }
+      } catch (e) { datosGenerales = {}; }
+
+      // 2. Obtener planoProblematizacion desde localStorage o backend
+      let planoProblematizacion = {};
+      try {
+        const realidadStr = localStorage.getItem('planoRealidad');
+        if (realidadStr) {
+          planoProblematizacion = JSON.parse(realidadStr);
+        }
+      } catch (e) { planoProblematizacion = {}; }
+
+      // 3. Filtrar solo renglones primarios completados (verdes)
+      // Consideramos "completado" si la fila tiene todos los campos clave llenos
+      const tablaContextualizacion = Object.values(rowsState)
+        .filter(row => {
+          // Puedes ajustar la lógica de completitud aquí si hay una bandera específica
+          return (
+            row &&
+            row.problemas &&
+            row.campos &&
+            row.contenidos &&
+            row.pda &&
+            row.eje
+          );
+        })
+        .map(row => ({
+          problema: row.problemas,
+          camposFormativos: row.campos,
+          contenidos: row.contenidos,
+          pdas: row.pda,
+          ejesArticuladores: row.eje
+        }));
+
+      // 4. Armar el JSON final
+      const jsonContextual = {
+        datosGenerales,
+        planoProblematizacion,
+        planoContextualizacion: tablaContextualizacion
+      };
+
+      // 5. Abrir la nueva pestaña y enviar el JSON via postMessage
+      const viewer = window.open('plano-contextual-viewer.html', '_blank');
+      if (viewer) {
+        // Esperar a que cargue la nueva pestaña
+        const sendData = () => {
+          viewer.postMessage({ type: 'loadContextualData', data: jsonContextual }, '*');
+        };
+        // Intentar varias veces por compatibilidad cross-origin
+        let tries = 0;
+        const interval = setInterval(() => {
+          if (viewer.closed) { clearInterval(interval); return; }
+          try {
+            sendData();
+            clearInterval(interval);
+          } catch (e) {
+            tries++;
+            if (tries > 10) clearInterval(interval);
+          }
+        }, 300);
+      }
+    } catch (err) {
+      console.error('No se pudo generar ni enviar el JSON al visor contextual', err);
+    }
+  });
+}
 
   // [Añadido] Configurar eventos para el selector de contenidos/PDA
   setupContenidosCheckboxes();

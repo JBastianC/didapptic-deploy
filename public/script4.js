@@ -45,18 +45,31 @@ document.addEventListener('DOMContentLoaded', async function () {
   let idCnt = 0;
   let currentNode = null;
   let latestIAPlan = '';
+  const globalVars = {
+    proyecto: '',
+    metodologia: '',
+    entrada: '',
+    pdas: [],
+    campos: [],
+    contenidos: [],
+    fases: []
+  };
 
-  // IA request counter reset logic
+  // IA request counter reset logic - ahora basado en cuenta de usuario
   const today = new Date().toISOString().slice(0,10);
-  if (localStorage.getItem('iaRequestDate') !== today) {
-    localStorage.setItem('iaRequestDate', today);
-    localStorage.setItem('iaRequestCount', '0');
+  const userRequestKey = `iaRequestCount_${userData.email}`;
+  const userRequestDateKey = `iaRequestDate_${userData.email}`;
+  
+  if (localStorage.getItem(userRequestDateKey) !== today) {
+    localStorage.setItem(userRequestDateKey, today);
+    localStorage.setItem(userRequestKey, '0');
   }
   
   function updateCounterUI() {
-    const count = parseInt(localStorage.getItem('iaRequestCount') || '0',10);
-    iaCounterEl.textContent = count;
-    sendToIA.disabled = count >= 10;
+    const maxRequests = userData.membership === 'premium' ? 10 : 4;
+    const count = parseInt(localStorage.getItem(userRequestKey) || '0',10);
+    iaCounterEl.textContent = `${count}/${maxRequests}`;
+    sendToIA.disabled = count >= maxRequests;
   }
   updateCounterUI();
 
@@ -333,25 +346,33 @@ document.addEventListener('DOMContentLoaded', async function () {
           });
       }
     }
-    if (type==='PDA') {
-      ['Fase: '+node.dataset.fase,'Campo: '+node.dataset.campo,'Contenido: '+node.dataset.contenido]
-        .forEach(txt=> div.append(Object.assign(document.createElement('p'),{textContent:txt})));
+    if (type === 'PDA') {
+      ['Fase: ' + node.dataset.fase, 'Campo: ' + node.dataset.campo, 'Contenido: ' + node.dataset.contenido]
+        .forEach(txt => {
+          const p = document.createElement('p');
+          p.textContent = txt;
+          div.appendChild(p);
+        });
+      
       sel3 = document.createElement('select');
-      sel3.append(new Option('Elige PDA',''));
+      sel3.appendChild(new Option('Elige PDA', ''));
       div.appendChild(sel3);
+      
       if (node.dataset.campoFile && node.dataset.contenido) {
         fetch(`/api/fileContent?name=${node.dataset.campoFile}`)
-          .then(r=> r.json())
-          .then(j=>{
+          .then(r => r.json())
+          .then(j => {
             const d = parseTxt(j.content)[node.dataset.contenido] || {};
-            Object.values(d).flat().forEach(p=> sel3.append(new Option(p,p)));
+            Object.values(d).flat().forEach(p => {
+              sel3.appendChild(new Option(p, p));
+            });
             sel3.value = node.dataset.pdas || '';
           });
       }
     }
     if (type==='Metodología') {
       sel1 = document.createElement('select');
-      ['Aprendizaje Basado en Projectos','Aprendizaje basado en indagación','Aprendizaje basado en problemas','Aprendizaje servicio']
+      ['Aprendizaje Basado en Proyectos','Aprendizaje basado en indagación','Aprendizaje basado en problemas','Aprendizaje servicio']
         .forEach(m=> sel1.append(new Option(m,m)));
       sel1.value = node.dataset.value || '';
       div.appendChild(sel1);
@@ -559,407 +580,338 @@ document.addEventListener('DOMContentLoaded', async function () {
   });
 
   // 13) Send to IA (con colección de todos los PDAs, entradas, metodologías…)
+  // === HISTORIAL DE CONVERSACIÓN PARA CONTEXTO ACUMULATIVO ===
+  let conversationHistory = [];
+
   sendToIA.onclick = async () => {
+  // Fetch user config for Datos Generales fields BEFORE try block, so it's always defined
+  let userConfig = {};
+  try {
+    const res = await fetch('/api/config', {
+      headers: {
+        'Authorization': `Bearer ${localStorage.getItem('token')}`
+      }
+    });
+    const data = await res.json();
+    if (data.success && data.config) {
+      userConfig = {
+        nivelEducativo: data.config.nivelEducativo || '',
+        centroTrabajo: data.config.centroTrabajo || '',
+        sectorEducativo: data.config.sectorEducativo || '',
+        zonaEscolar: data.config.zonaEscolar || '',
+        fase: data.config.fase || '',
+        grado: data.config.grado || '',
+        grupo: data.config.grupo || '',
+        docente: data.config.nombreDocente || '',
+        director: data.config.nombreDirector || '',
+        inicioPeriodo: data.config.inicioPeriodo || '',
+        finPeriodo: data.config.finPeriodo || ''
+      };
+    }
+  } catch (e) {
+    userConfig = {};
+  }
+    const maxRequests = userData.membership === 'premium' ? 10 : 4;
+    const currentCount = parseInt(localStorage.getItem(userRequestKey) || '0', 10);
+    
+    if (currentCount >= maxRequests) {
+      alert(`Has alcanzado el límite de ${maxRequests} solicitudes diarias. ${userData.membership === 'basic' ? 'Actualiza a Premium para aumentar el límite.' : ''}`);
+      return;
+    }
+
     iaStatusEl.textContent = 'Enviando…';
-    iaSteps[0].classList.add('completed');
+    if (iaSteps && iaSteps[0]) iaSteps[0].classList.add('completed');
     iaProgress.value = 1;
 
-    // Recolectar datos de todos los nodos conectados al Nodo IA
-    const conns = instance.getConnections({ target: currentNode });
-    const entradas     = conns.filter(c => c.source.dataset.type==='Entrada').map(c=>c.source.dataset.text).join('; ');
-    const pdasList     = conns.filter(c => c.source.dataset.type==='PDA').map(c=>c.source.dataset.pdas).join('; ');
-    const metodologias = conns.filter(c => c.source.dataset.type==='Metodología').map(c=>c.source.dataset.value).join('; ');
-    const campos       = conns.filter(c => c.source.dataset.type==='Campos Formativos').map(c=>c.source.dataset.campo).join('; ');
-    const contenidos   = conns.filter(c => c.source.dataset.type==='Contenido').map(c=>c.source.dataset.contenido).join('; ');
+    // Recolectar datos globales (recorriendo TODOS los nodos del canvas, no solo conexiones)
+    const nodeList = canvas.querySelectorAll('.node');
+    globalVars.entrada = Array.from(nodeList)
+      .filter(n => n.dataset.type === 'Entrada' && n.dataset.text)
+      .map(n => n.dataset.text).join('; ');
+    globalVars.pdas = Array.from(nodeList)
+      .filter(n => n.dataset.type === 'PDA' && n.dataset.pdas)
+      .map(n => n.dataset.pdas);
+    globalVars.campos = Array.from(nodeList)
+      .filter(n => n.dataset.type === 'Campos Formativos' && n.dataset.campo)
+      .map(n => n.dataset.campo);
+    globalVars.contenidos = Array.from(nodeList)
+      .filter(n => n.dataset.type === 'Contenido' && n.dataset.contenido)
+      .map(n => n.dataset.contenido);
+    globalVars.metodologia = Array.from(nodeList)
+      .filter(n => n.dataset.type === 'Metodología' && n.dataset.value)
+      .map(n => n.dataset.value).join('; ');
+    globalVars.proyecto = canvasTitle.textContent;
+    globalVars.fases = Array.from(nodeList)
+      .filter(n => n.dataset.type === 'Fase' && n.dataset.fase)
+      .map(n => n.dataset.fase);
 
-    const prompt = `
-Como experto en diseño pedagógico, desarrolla un plan didáctico interdisciplinar completo que aborde la problemática: "${entradas}", 
-considerando los siguientes elementos:
-
-1. Campos Formativos: ${campos}
-2. Contenidos: ${contenidos}
-3. Procesos de Aprendizaje (PDA): ${pdasList}
-4. Metodologías: ${metodologias}
-
-El plan debe incluir:
-- Una solución pedagógica efectiva
-- Conexiones interdisciplinares claras
-- Actividades alineadas con los PDA
-- Evaluaciones formativas
-- Recursos y materiales necesarios
-
-Organiza la respuesta en formato Markdown con las siguientes secciones:
-1. Datos Generales (rellenar con información de configuración)
-2. Ubicación Curricular (problema, PDA, contenidos, campos formativos)
-3. Evaluación (procesos de pensamiento, evidencias, niveles de logro)
-4. Secuencia Didáctica (proyecto, metodología, fases, actividades)
-5. Organización (tiempos, espacios, recursos)
-6. Registro de Actividades
-7. Reflexiones finales
-
-Sé preciso y estructurado en la respuesta, asegurando que cada sección tenga la información relevante para implementar el plan en el aula.
-`;
-
-    try {
-      const resp = await fetch('/api/ia/generatePlan', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ prompt })
-      });
-      iaStatusEl.textContent = 'Recibiendo…';
-      iaSteps[1].classList.add('completed');
-      iaProgress.value = 2;
-
-      const json = await resp.json();
-      latestIAPlan = json.response || '';
-      iaStatusEl.textContent = 'Parseando…';
-      iaSteps[2].classList.add('completed');
-      iaProgress.value = 3;
-
-      iaStatusEl.textContent = 'Finalizado';
-      iaSteps[3].classList.add('completed');
-      iaProgress.value = 4;
-
-      let cnt = parseInt(localStorage.getItem('iaRequestCount') || '0', 10) + 1;
-      localStorage.setItem('iaRequestCount', cnt);
-      updateCounterUI();
-    } catch (e) {
-      iaStatusEl.textContent = 'Error';
-      console.error(e);
-    }
-  };
-
-  // 14) Visualizar plan en nueva pestaña con formato completo y editable
-  vizPlanBtn.onclick = async () => {
-    // Obtener configuración del usuario
-    let config = {};
-    try {
-      const response = await fetch('/api/config', {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        }
-      });
-      if (response.ok) {
-        const data = await response.json();
-        if (data.success && data.config) {
-          config = data.config;
-        }
-      }
-    } catch (error) {
-      console.error('Error al cargar configuración:', error);
-    }
-
-    // Formatear fechas
-    const formatDate = (dateStr) => {
-      if (!dateStr) return '';
-      const date = new Date(dateStr);
-      return date.toLocaleDateString('es-MX', { 
-        year: 'numeric', 
-        month: 'long', 
-        day: 'numeric' 
-      });
+    // Inicializar almacenamiento de resultados IA
+    window.iaResults = {
+      evaluacion: null,
+      secuencia: null,
+      organizacion: null,
+      actividades: null,
+      reflexiones: null
     };
 
-    // Crear nueva ventana con el formato completo y editable
-    const nuevaVentana = window.open('', '_blank');
-    nuevaVentana.document.open();
-    nuevaVentana.document.write(`
-<!DOCTYPE html>
-<html lang="es">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Planificación Didáctica</title>
-  <style>
-    body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      line-height: 1.6;
-      color: #333;
-      margin: 0;
-      padding: 0;
-      background-color: #f9f9f9;
-    }
-    .container {
-      max-width: 1200px;
-      margin: 0 auto;
-      padding: 20px;
-      background-color: white;
-      box-shadow: 0 0 10px rgba(0,0,0,0.1);
-    }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin: 15px 0;
-    }
-    th, td {
-      border: 1px solid #ddd;
-      padding: 8px;
-      text-align: left;
-    }
-    .bold-column {
-      font-weight: bold;
-      background-color: #f2f2f2;
-    }
-    h1, h2, h3 {
-      color: #2c3e50;
-    }
-    .border-b {
-      border-bottom: 1px solid #eee;
-      padding-bottom: 10px;
-      margin-bottom: 15px;
-    }
-    .text-center {
-      text-align: center;
-    }
-    .text-right {
-      text-align: right;
-    }
-    .mt-6 {
-      margin-top: 1.5rem;
-    }
-    .py-2 {
-      padding-top: 0.5rem;
-      padding-bottom: 0.5rem;
-    }
-    .py-4 {
-      padding-top: 1rem;
-      padding-bottom: 1rem;
-    }
-    .px-2 {
-      padding-left: 0.5rem;
-      padding-right: 0.5rem;
-    }
-    .py-6 {
-      padding-top: 1.5rem;
-      padding-bottom: 1.5rem;
-    }
-    .shadow-lg {
-      box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1);
-    }
-    .rounded-lg {
-      border-radius: 0.5rem;
-    }
-    .bg-white {
-      background-color: white;
-    }
-    footer {
-      margin-top: 2rem;
-      text-align: center;
-      font-size: 0.8rem;
-      color: #666;
-    }
-    .logo-container {
-      position: relative;
-      display: inline-block;
-    }
-    .logo-upload-btn {
-      position: absolute;
-      bottom: 0;
-      right: 0;
-      background: #007bff;
-      color: white;
-      border-radius: 50%;
-      width: 24px;
-      height: 24px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      font-size: 12px;
-    }
-    .logo-upload-btn:hover {
-      background: #0056b3;
-    }
-    #logoInput {
-      display: none;
-    }
-    .editable {
-      min-height: 20px;
-      padding: 5px;
-      border: 1px dashed transparent;
-    }
-    .editable:hover {
-      border-color: #ccc;
-    }
-    .editable:focus {
-      outline: none;
-      border-color: #007bff;
-      background-color: #f8f9fa;
-    }
-    .toolbar {
-      background: #f8f9fa;
-      padding: 10px;
-      margin-bottom: 15px;
-      border-radius: 5px;
-      display: flex;
-      gap: 10px;
-    }
-    .toolbar button {
-      padding: 5px 10px;
-      background: #007bff;
-      color: white;
-      border: none;
-      border-radius: 3px;
-      cursor: pointer;
-    }
-    .toolbar button:hover {
-      background: #0056b3;
-    }
-  </style>
-</head>
-<body>
-  <div class="container">
-    <!-- Barra de herramientas -->
-    <div class="toolbar">
-      <button onclick="window.print()">Imprimir</button>
-      <button onclick="savePlan()">Guardar Plan</button>
-    </div>
+    let todoOk = true;
 
-    <!-- Encabezado -->
-    <div class="flex justify-between items-center py-4 border-b">
-      <div class="logo-container">
-        <img id="logoImage" src="assets/Ddapptic.svg" alt="Logo" class="h-12">
-        <div class="logo-upload-btn" title="Cambiar logo" onclick="document.getElementById('logoInput').click()">+</div>
-        <input type="file" id="logoInput" accept="image/*" onchange="handleLogoUpload(event)">
-      </div>
-      <div id="current-date-time" class="text-sm text-right">
-        <p class="text-slate-400">Fecha</p>
-        <p class="font-bold text-gray-700">${new Date().toLocaleDateString('es-MX', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
-      </div>
-    </div>
-
-    <!-- Datos Generales -->
-    <div class="bg-white mt-6 shadow-lg rounded-lg p-6">
-      <h2 class="text-lg font-semibold text-gray-700 border-b pb-2 mb-4">Datos Generales</h2>
-      <table class="w-full text-sm border border-gray-300">
-        <tbody>
-          <tr>
-            <td class="py-2 bold-column">Nivel Educativo:</td>
-            <td class="py-2 editable" contenteditable="true">${config.nivelEducativo || ''}</td>
-            <td class="py-2 bold-column">Nombre del Centro de Trabajo:</td>
-            <td class="py-2 editable" contenteditable="true">${config.centroTrabajo || ''}</td>
-            <td class="py-2 bold-column">Zona Escolar:</td>
-            <td class="py-2 editable" contenteditable="true">${config.zonaEscolar || ''}</td>
-          </tr>
-          <tr>
-            <td class="py-2 bold-column">Sector Educativo:</td>
-            <td class="py-2 editable" contenteditable="true">${config.sectorEducativo || ''}</td>
-            <td class="py-2 bold-column">Fase:</td>
-            <td class="py-2 editable" contenteditable="true">${config.fase || ''}</td>
-            <td class="py-2 bold-column">Grado:</td>
-            <td class="py-2 editable" contenteditable="true">${config.grado || ''}</td>
-          </tr>
-          <tr>
-            <td class="py-2 bold-column">Grupo:</td>
-            <td class="py-2 editable" contenteditable="true">${config.grupo || ''}</td>
-            <td class="py-2 bold-column">Nombre del Docente:</td>
-            <td class="py-2 editable" contenteditable="true">${config.nombreDocente || ''}</td>
-            <td class="py-2 bold-column">Nombre del Director:</td>
-            <td class="py-2 editable" contenteditable="true">${config.nombreDirector || ''}</td>
-          </tr>
-          <tr>
-            <td colspan="6" class="py-4 text-center bold-column">
-              Periodo de realización
-            </td>
-          </tr>
-          <tr>
-            <td class="py-2 bold-column">Inicio:</td>
-            <td class="py-2 editable" contenteditable="true">${formatDate(config.inicioPeriodo) || ''}</td>
-            <td class="py-2 border border-gray-300"></td>
-            <td class="py-2 font-bold border border-gray-300"></td>
-            <td class="py-2 bold-column">Fin:</td>
-            <td class="py-2 editable" contenteditable="true">${formatDate(config.finPeriodo) || ''}</td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-
-    <!-- Respuesta de la IA -->
-    <div class="bg-white mt-6 shadow-lg rounded-lg p-6">
-      <div id="iaContent" contenteditable="true">
-        ${marked.parse(latestIAPlan)}
-      </div>
-    </div>
-
-    <!-- Footer -->
-    <footer class="mt-10 text-center text-xs text-neutral-600">
-      <p>DidAppTic | contacto@didapptic.com</p>
-    </footer>
-  </div>
-
-  <script>
-    // Función para manejar la carga del logo
-    function handleLogoUpload(event) {
-      const file = event.target.files[0];
-      if (!file) return;
-      
-      const reader = new FileReader();
-      reader.onload = function(e) {
-        document.getElementById('logoImage').src = e.target.result;
-        // Guardar en localStorage para persistencia
-        localStorage.setItem('customLogo', e.target.result);
-      };
-      reader.readAsDataURL(file);
-    }
-
-    // Cargar logo personalizado si existe
-    const savedLogo = localStorage.getItem('customLogo');
-    if (savedLogo) {
-      document.getElementById('logoImage').src = savedLogo;
-    }
-
-    // Función para guardar el plan editado
-    function savePlan() {
-      const planContent = {
-        datosGenerales: {},
-        iaContent: document.getElementById('iaContent').innerHTML
-      };
-
-      // Recopilar datos editables
-      document.querySelectorAll('.editable').forEach(el => {
-        const key = el.previousElementSibling?.textContent.trim().replace(':', '') || 
-                    el.parentElement.previousElementSibling?.textContent.trim().replace(':', '');
-        if (key) {
-          planContent.datosGenerales[key] = el.textContent;
+    try {
+      // 1. Construir historial acumulativo y contexto reforzado
+      const contexto = `Proyecto: ${globalVars.proyecto}\nMetodología: ${globalVars.metodologia}\nFases: ${globalVars.fases.join(', ')}\nPDAs: ${globalVars.pdas.join(', ')}\nCampos Formativos: ${globalVars.campos.join(', ')}\nContenidos: ${globalVars.contenidos.join(', ')}\nEntrada (problema): ${globalVars.entrada}`;
+      // Contexto enriquecido para la IA
+      const contextoResumen = `ERES UNA PLATAFORMA EXPERTA EN SOLUCIONES PEDAGÓGICAS Y DIDÁCTICAS.\nDebes analizar, proponer y reflexionar como un especialista en educación y didáctica.\nTienes la tarea de crear un plan didáctico completo, coherente y personalizado, usando TODA la siguiente información y contexto:\n${contexto}\n\nREQUISITOS: \n- Usa todos los datos proporcionados para generar soluciones didácticas precisas.\n- Todas las tablas, actividades y reflexiones deben estar alineadas con el contexto y problemática.\n- No generes respuestas genéricas.\n- Las reflexiones deben ser profundas, personalizadas y basadas en el plan generado.\n- Mantén la coherencia y continuidad temática en cada paso.\n- Actúa como una plataforma que ayuda a docentes a planear, analizar y mejorar su práctica.\n`;
+      // Primer mensaje del historial: contexto + solicitud de primera tabla
+      if (conversationHistory.length === 0) {
+        conversationHistory.push({ role: "user", content: `${contextoResumen}\n\nPRIMERA TAREA: Genera la tabla EVALUACIÓN en JSON con la estructura [{\"Problema\":\"[entrada]\",\"Proceso de pensamiento\":\"\",\"Evidencia de aprendizaje\":\"\",\"Nivel de logro\":\"\"}], máximo 5 filas. SOLO JSON, sin texto extra.` });
+      }
+      const totalSteps = 5;
+      let currentStep = 1;
+      iaProgress.value = Math.round((currentStep/totalSteps)*100);
+      iaStatusEl.textContent = 'Generando tabla Evaluación...';
+      // Enviar historial truncado (máximo 13000 tokens aprox)
+      function estimateTokens(str) { return Math.ceil(str.length / 3.5); }
+      function truncateHistory(history, maxTokens) {
+        let total = 0;
+        const out = [];
+        for (let i = history.length - 1; i >= 0; i--) {
+          total += estimateTokens(history[i].content);
+          if (total > maxTokens) break;
+          out.unshift(history[i]);
         }
+        return out;
+      }
+      let truncatedHistory = truncateHistory(conversationHistory, 13000);
+      // Construcción de historial para aprovechar 'Step Back' (contexto ampliado)
+      // Refuerza el contexto general al inicio, pero cada solicitud es autocontenida y específica
+      function buildPromptForStep(stepInstruction) {
+        return (
+          contextoResumen +
+          '\n\nINSTRUCCIÓN ESPECÍFICA PARA ESTA TABLA:\n' +
+          stepInstruction +
+          '\n\nCONVERSACIÓN RELEVANTE PREVIA:\n' +
+          truncatedHistory.map(m => (m.role === 'user' ? 'Usuario: ' : 'Asistente: ') + m.content).join('\n')
+        );
+      }
+      // Solicitud de tabla Evaluación
+      const evalPrompt = buildPromptForStep(
+        'Genera la tabla EVALUACIÓN en JSON con la estructura [{"Problema":"[entrada]","Proceso de pensamiento":"","Evidencia de aprendizaje":"","Nivel de logro":""}], máximo 5 filas. El campo "Nivel de logro" debe permanecer vacío en todas las filas. SOLO JSON, sin texto extra.'
+      );
+      let resp = await fetch('/api/ia/generatePlan', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ prompt: evalPrompt, max_tokens: 4000 })
       });
-
-      // Crear blob para descarga
-      const blob = new Blob([JSON.stringify(planContent, null, 2)], { type: 'application/json' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = 'plan-didactico-editado.json';
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-
-      alert('Plan guardado correctamente');
-    }
-
-    // Hacer que las tablas generadas por marked sean editables
-    document.addEventListener('DOMContentLoaded', function() {
-      const tables = document.querySelectorAll('#iaContent table');
-      tables.forEach(table => {
-        table.setAttribute('contenteditable', 'true');
-        table.style.borderCollapse = 'collapse';
-        table.style.width = '100%';
-        const cells = table.querySelectorAll('th, td');
-        cells.forEach(cell => {
-          cell.style.border = '1px solid #ddd';
-          cell.style.padding = '8px';
-          cell.style.textAlign = 'left';
+      let txt = await resp.text();
+      // Guardar respuesta en historial
+      conversationHistory.push({ role: "assistant", content: txt });
+      // Parsear tabla evaluación
+      window.iaResults.evaluacion = JSON.parse(txt.replace(/```json|```/g, '').trim());
+      // Forzar campo 'Nivel de logro' vacío en todas las filas
+      if (Array.isArray(window.iaResults.evaluacion)) {
+        window.iaResults.evaluacion.forEach(row => {
+          if ('Nivel de logro' in row) row['Nivel de logro'] = '';
         });
+      }
+      iaProgress.value = 35;
+
+      // 3. SECUENCIA DIDÁCTICA
+      currentStep++;
+      iaProgress.value = Math.round((currentStep/totalSteps)*100);
+      iaStatusEl.textContent = 'Generando tabla Secuencia Didáctica...';
+      const secuenciaPrompt = buildPromptForStep(
+        'Genera la tabla SECUENCIA DIDÁCTICA en JSON. Estructura: [{"Fase":"","Etapa":"","Actividades":"","Evaluación formativa":""}]. Máximo 5 filas. SOLO JSON, sin texto extra.'
+      );
+      resp = await fetch('/api/ia/generatePlan', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ prompt: secuenciaPrompt, max_tokens: 4000 })
       });
-    });
-  </script>
-</body>
-</html>
-    `);
-    nuevaVentana.document.close();
+      txt = await resp.text();
+      window.iaResults.secuencia = JSON.parse(txt.replace(/```json|```/g, '').trim());
+
+      // 4. ORGANIZACIÓN
+      currentStep++;
+      iaProgress.value = Math.round((currentStep/totalSteps)*100);
+      iaStatusEl.textContent = 'Generando tabla Organización...';
+      const organizacionPrompt = buildPromptForStep(
+        'Genera la tabla ORGANIZACIÓN en JSON. Estructura: [{"Fase":"","Tiempo":"","Espacio":"","Recursos/Materiales":""}]. Máximo 5 filas. SOLO JSON, sin texto extra.'
+      );
+      resp = await fetch('/api/ia/generatePlan', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ prompt: organizacionPrompt, max_tokens: 4000 })
+      });
+      txt = await resp.text();
+      window.iaResults.organizacion = JSON.parse(txt.replace(/```json|```/g, '').trim());
+
+      // 5. REGISTRO DE ACTIVIDADES
+      currentStep++;
+      iaProgress.value = Math.round((currentStep/totalSteps)*100);
+      iaStatusEl.textContent = 'Generando lista de Actividades...';
+      const actividadesPrompt = buildPromptForStep(
+        'Genera una lista JSON de ACTIVIDADES didácticas relevantes, concretas y alineadas al plan. SOLO completa el campo "Actividad" (no llenes "Fecha" ni "Observaciones"). Estructura: [{"Actividad": ""}]. Máximo 5 actividades. SOLO JSON, sin texto extra ni explicación.'
+      );
+      resp = await fetch('/api/ia/generatePlan', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ prompt: actividadesPrompt, max_tokens: 4000 })
+      });
+      txt = await resp.text();
+      window.iaResults.actividades = JSON.parse(txt.replace(/```json|```/g, '').trim());
+
+      // 6. REFLEXIONES
+      currentStep++;
+      iaProgress.value = Math.round((currentStep/totalSteps)*100);
+      iaStatusEl.textContent = 'Generando reflexiones...';
+      window.iaResults.reflexiones = 'Agregar Reflexiones';
+      iaProgress.value = Math.round((currentStep/totalSteps)*100);
+
+      // Si llegamos aquí, todo fue exitoso: marcar los pasos de la UI
+      if (iaSteps && iaSteps.length) {
+        for (let i = 0; i < iaSteps.length; i++) {
+          if (iaSteps[i]) iaSteps[i].classList.add('completed');
+        }
+      }
+      // Habilitar botón Visualizar Plan SOLO al finalizar
+      if (vizPlanBtn) vizPlanBtn.disabled = false;
+
+      // Guardar datos para Visualizar Plan
+      // Merge userConfig fields into globalVars for viewer
+      const mergedConfig = { ...userConfig, ...globalVars };
+      window.iaGeneratedData = {
+        config: mergedConfig,
+        tables: {
+          evaluacion: window.iaResults.evaluacion,
+          secuencia: window.iaResults.secuencia,
+          organizacion: window.iaResults.organizacion,
+          actividades: window.iaResults.actividades,
+          reflexiones: window.iaResults.reflexiones
+        },
+        fecha: new Date().toLocaleDateString('es-MX', { 
+          weekday: 'long', 
+          year: 'numeric', 
+          month: 'long', 
+          day: 'numeric' 
+        })
+      };
+      iaStatusEl.textContent = 'Completado';
+    // Deshabilitar botón Visualizar Plan durante el proceso
+    if (vizPlanBtn) vizPlanBtn.disabled = true;
+
+      // Actualizar contador
+      localStorage.setItem(userRequestKey, (currentCount + 1).toString());
+      updateCounterUI();
+    } catch (e) {
+      todoOk = false;
+      console.error('Error en el proceso IA:', e);
+      iaStatusEl.textContent = 'Error';
+      alert('Error en el proceso IA: ' + e.message);
+    }
   };
 
+  function parseIAResponse(response) {
+    try {
+      // Eliminar posibles marcadores de código y convertir a JSON
+      const jsonStr = response.replace(/```json|```/g, '').trim();
+      const data = JSON.parse(jsonStr);
+      
+      // Estructura mínima requerida
+      return {
+        evaluacion: data.EVALUACIÓN || [],
+        secuencia: data["SECUENCIA DIDÁCTICA"] || [],
+        organizacion: data.ORGANIZACIÓN || [],
+        actividades: data["REGISTRO DE ACTIVIDADES"] || [],
+        reflexiones: data.REFLEXIONES || "No se generaron reflexiones"
+      };
+    } catch (e) {
+      console.error('Error al parsear respuesta IA:', e);
+      return {
+        evaluacion: [],
+        secuencia: [],
+        organizacion: [],
+        actividades: [],
+        reflexiones: "Error al procesar la respuesta de IA"
+      };
+    }
+  }
+
+  // 14) Visualizar Plan
+  vizPlanBtn.onclick = () => {
+    if (!window.iaGeneratedData) {
+      alert('Primero debes generar un plan con IA');
+      return;
+    }
+    
+    const viewerUrl = `plano-viewer-prueba.html?proyecto=${encodeURIComponent(window.iaGeneratedData.config.proyecto)}&metodologia=${encodeURIComponent(window.iaGeneratedData.config.metodologia)}`;
+    const nuevaVentana = window.open(viewerUrl, '_blank');
+    
+    // Usar postMessage solo después de que la ventana esté cargada
+    async function getUserConfig() {
+      try {
+        const res = await fetch('/api/config', {
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('token')}`
+          }
+        });
+        const data = await res.json();
+        if (!data.success || !data.config) return {};
+        // Adaptar nombres para el visor
+        return {
+          nivelEducativo: data.config.nivelEducativo || '',
+          centroTrabajo: data.config.centroTrabajo || '',
+          sectorEducativo: data.config.sectorEducativo || '',
+          zonaEscolar: data.config.zonaEscolar || '',
+          fase: data.config.fase || '',
+          grado: data.config.grado || '',
+          grupo: data.config.grupo || '',
+          docente: data.config.nombreDocente || '',
+          director: data.config.nombreDirector || '',
+          inicioPeriodo: data.config.inicioPeriodo || '',
+          finPeriodo: data.config.finPeriodo || ''
+        };
+      } catch (e) {
+        return {};
+      }
+    }
+
+    // Reimplementación del setInterval para postMessage con config extendido
+    const checkLoad = setInterval(async () => {
+      if (nuevaVentana.closed) {
+        clearInterval(checkLoad);
+        return;
+      }
+      try {
+        const config = await getUserConfig();
+        // EXTRAER SIEMPRE los valores actuales del canvas para campos, contenidos y fases
+        const nodeList = canvas.querySelectorAll('.node');
+        const camposCanvas = Array.from(nodeList)
+          .filter(n => n.dataset.type === 'Campos Formativos' && n.dataset.campo)
+          .map(n => n.dataset.campo).filter(Boolean);
+        const contenidosCanvas = Array.from(nodeList)
+          .filter(n => n.dataset.type === 'Contenido' && n.dataset.contenido)
+          .map(n => n.dataset.contenido).filter(Boolean);
+        const fasesCanvas = Array.from(nodeList)
+          .filter(n => n.dataset.type === 'Fase' && n.dataset.fase)
+          .map(n => n.dataset.fase).filter(Boolean);
+        const mergedConfig = {
+          ...config,
+          proyecto: globalVars.proyecto || (window.iaGeneratedData?.config?.proyecto ?? ''),
+          metodologia: globalVars.metodologia || (window.iaGeneratedData?.config?.metodologia ?? ''),
+          entrada: globalVars.entrada || (window.iaGeneratedData?.config?.entrada ?? ''),
+          pdas: Array.isArray(globalVars.pdas) ? globalVars.pdas : (window.iaGeneratedData?.config?.pdas ?? []),
+          campos: camposCanvas.length ? camposCanvas : (Array.isArray(globalVars.campos) ? globalVars.campos : (window.iaGeneratedData?.config?.campos ?? [])),
+          contenidos: contenidosCanvas.length ? contenidosCanvas : (Array.isArray(globalVars.contenidos) ? globalVars.contenidos : (window.iaGeneratedData?.config?.contenidos ?? [])),
+          fases: fasesCanvas.length ? fasesCanvas : (Array.isArray(globalVars.fases) ? globalVars.fases : (window.iaGeneratedData?.config?.fases ?? []))
+        };
+        nuevaVentana.postMessage({
+          type: 'loadData',
+          config: mergedConfig,
+          ...window.iaGeneratedData
+        }, '*');
+        clearInterval(checkLoad);
+      } catch (e) {
+        // La ventana aún no está lista
+      }
+    }, 100);
+  };
   // 15) Carga configuración o plan
   uploadPlan.addEventListener('change', e => {
     const file = e.target.files[0];

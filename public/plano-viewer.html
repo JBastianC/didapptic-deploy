@@ -1,0 +1,585 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Planificación Didáctica</title>
+<style>
+  body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    line-height: 1.6;
+    color: #333;
+    margin: 0;
+    padding: 20px;
+    background-color: #f9f9f9;
+  }
+  .container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+    background-color: white;
+    box-shadow: 0 0 10px rgba(0,0,0,0.1);
+  }
+  h1, h2, h3 {
+    color: #2c3e50;
+    margin-top: 30px;
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 20px 0;
+  }
+  th, td {
+    border: 1px solid #ddd;
+    padding: 12px;
+    text-align: left;
+  }
+  th {
+    background-color: #f2f2f2;
+    font-weight: bold;
+  }
+  .editable {
+    min-height: 20px;
+    padding: 8px;
+    border: 1px dashed transparent;
+  }
+  .editable:hover {
+    border-color: #ccc;
+  }
+  .editable:focus {
+    outline: none;
+    border-color: #007bff;
+    background-color: #f8f9fa;
+  }
+  .toolbar {
+    background: #f8f9fa;
+    padding: 10px;
+    margin-bottom: 20px;
+    border-radius: 5px;
+    display: flex;
+    gap: 10px;
+  }
+  .toolbar button {
+    padding: 8px 16px;
+    background: #007bff;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+  }
+  .toolbar button:hover {
+    background: #0056b3;
+  }
+  .logo-container {
+    text-align: center;
+    margin: 20px 0;
+  }
+  .logo-img {
+    max-height: 80px;
+  }
+  footer {
+    margin-top: 40px;
+    text-align: center;
+    font-size: 14px;
+    color: #666;
+    padding-top: 20px;
+    border-top: 1px solid #eee;
+  }
+  /* Estilos para modo impresión */
+  body.print-mode {
+    width: 21.59cm;
+    margin: 0 auto;
+    padding: 1cm;
+    background-color: white;
+    box-shadow: none;
+  }
+  .print-mode .container {
+    max-width: 100%;
+    padding: 0;
+    box-shadow: none;
+  }
+  .print-mode .toolbar {
+    display: none;
+  }
+  .no-print {
+    display: none;
+  }
+  .print-mode .no-print {
+    display: table-cell;
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <!-- Barra de herramientas -->
+  <div class="toolbar">
+    <button onclick="window.print()">Imprimir</button>
+    <button onclick="savePlan()">Guardar Plan</button>
+    <button onclick="togglePrintMode()">Modo Impresión</button>
+  </div>
+
+  <!-- Logo y fecha -->
+  <div class="logo-container">
+    <img id="customLogo" src="assets/Ddapptic.svg" alt="Logo" class="logo-img">
+    <p id="currentDate" class="editable" contenteditable="true"></p>
+  </div>
+
+  <!-- Datos Generales -->
+  <h1>Datos Generales</h1>
+  <table>
+    <tr>
+      <th>Nivel Educativo</th>
+      <td id="nivelEducativo" class="editable" contenteditable="true"></td>
+      <th>Nombre del Centro</th>
+      <td id="centroTrabajo" class="editable" contenteditable="true"></td>
+    </tr>
+    <tr>
+      <th>Sector Educativo</th>
+      <td id="sectorEducativo" class="editable" contenteditable="true"></td>
+      <th>Zona Escolar</th>
+      <td id="zonaEscolar" class="editable" contenteditable="true"></td>
+    </tr>
+    <tr>
+      <th>Fase</th>
+      <td id="fase" class="editable" contenteditable="true"></td>
+      <th>Grado</th>
+      <td id="grado" class="editable" contenteditable="true"></td>
+    </tr>
+    <tr>
+      <th>Grupo</th>
+      <td id="grupo" class="editable" contenteditable="true"></td>
+      <th>Nombre del Docente</th>
+      <td id="nombreDocente" class="editable" contenteditable="true"></td>
+    </tr>
+    <tr>
+      <th>Nombre del Director</th>
+      <td id="nombreDirector" class="editable" contenteditable="true" colspan="3"></td>
+    </tr>
+    <tr>
+      <th>Periodo de realización</th>
+      <td colspan="3">
+        <span id="inicioPeriodo" class="editable" contenteditable="true"></span> al 
+        <span id="finPeriodo" class="editable" contenteditable="true"></span>
+      </td>
+    </tr>
+  </table>
+
+  <!-- Ubicación Curricular -->
+  <h1>Ubicación Curricular</h1>
+  <table id="ubicacionTable">
+    <tr>
+      <th>Problema</th>
+      <th>PDA(s)</th>
+      <th>Contenido(s)</th>
+      <th>Campo(s) Formativo(s)</th>
+    </tr>
+  </table>
+
+  <!-- Evaluación -->
+  <h1>Evaluación</h1>
+  <table id="evaluacionTable">
+    <tr>
+      <th>Problema</th>
+      <th>Proceso de pensamiento</th>
+      <th>Evidencia de aprendizaje</th>
+      <th>Nivel de logro</th>
+      <th class="no-print"></th>
+    </tr>
+    <!-- 5 filas vacías por defecto -->
+    <tr><td class="editable" contenteditable="true"></td><td class="editable" contenteditable="true"></td><td class="editable" contenteditable="true"></td><td class="editable" contenteditable="true"></td><td class="no-print"><button onclick="removeRow(this)">🗑️</button></td></tr>
+    <tr><td class="editable" contenteditable="true"></td><td class="editable" contenteditable="true"></td><td class="editable" contenteditable="true"></td><td class="editable" contenteditable="true"></td><td class="no-print"><button onclick="removeRow(this)">🗑️</button></td></tr>
+    <tr><td class="editable" contenteditable="true"></td><td class="editable" contenteditable="true"></td><td class="editable" contenteditable="true"></td><td class="editable" contenteditable="true"></td><td class="no-print"><button onclick="removeRow(this)">🗑️</button></td></tr>
+    <tr><td class="editable" contenteditable="true"></td><td class="editable" contenteditable="true"></td><td class="editable" contenteditable="true"></td><td class="editable" contenteditable="true"></td><td class="no-print"><button onclick="removeRow(this)">🗑️</button></td></tr>
+    <tr><td class="editable" contenteditable="true"></td><td class="editable" contenteditable="true"></td><td class="editable" contenteditable="true"></td><td class="editable" contenteditable="true"></td><td class="no-print"><button onclick="removeRow(this)">🗑️</button></td></tr>
+    <tr class="no-print"><td colspan="5" style="text-align:right"><button onclick="addRow('evaluacionTable')">➕ Añadir fila</button></td></tr>
+  </table>
+
+  <!-- Secuencia Didáctica -->
+  <h1>Secuencia Didáctica</h1>
+  <table>
+    <tr>
+      <th>Nombre del proyecto</th>
+      <td id="nombreProyecto" class="editable" contenteditable="true"></td>
+    </tr>
+    <tr>
+      <th>Metodología/Estrategia</th>
+      <td id="metodologia" class="editable" contenteditable="true"></td>
+    </tr>
+  </table>
+  <table id="secuenciaTable">
+    <tr>
+      <th>Fase</th>
+      <th>Etapa</th>
+      <th>Actividades</th>
+      <th>Evaluación formativa</th>
+      <th class="no-print"></th>
+    </tr>
+    <!-- 5 filas vacías por defecto -->
+    <tr><td class="editable" contenteditable="true"></td><td class="editable" contenteditable="true"></td><td class="editable" contenteditable="true"></td><td class="editable" contenteditable="true"></td><td class="no-print"><button onclick="removeRow(this)">🗑️</button></td></tr>
+    <tr><td class="editable" contenteditable="true"></td><td class="editable" contenteditable="true"></td><td class="editable" contenteditable="true"></td><td class="editable" contenteditable="true"></td><td class="no-print"><button onclick="removeRow(this)">🗑️</button></td></tr>
+    <tr><td class="editable" contenteditable="true"></td><td class="editable" contenteditable="true"></td><td class="editable" contenteditable="true"></td><td class="editable" contenteditable="true"></td><td class="no-print"><button onclick="removeRow(this)">🗑️</button></td></tr>
+    <tr><td class="editable" contenteditable="true"></td><td class="editable" contenteditable="true"></td><td class="editable" contenteditable="true"></td><td class="editable" contenteditable="true"></td><td class="no-print"><button onclick="removeRow(this)">🗑️</button></td></tr>
+    <tr><td class="editable" contenteditable="true"></td><td class="editable" contenteditable="true"></td><td class="editable" contenteditable="true"></td><td class="editable" contenteditable="true"></td><td class="no-print"><button onclick="removeRow(this)">🗑️</button></td></tr>
+    <tr class="no-print"><td colspan="5" style="text-align:right"><button onclick="addRow('secuenciaTable')">➕ Añadir fila</button></td></tr>
+  </table>
+
+  <!-- Organización -->
+  <h1>Organización</h1>
+  <table id="organizacionTable">
+    <tr>
+      <th>Fase</th>
+      <th>Tiempo</th>
+      <th>Espacio</th>
+      <th>Recursos/Materiales</th>
+      <th class="no-print"></th>
+    </tr>
+    <!-- 5 filas vacías por defecto -->
+    <tr><td class="editable" contenteditable="true"></td><td class="editable" contenteditable="true"></td><td class="editable" contenteditable="true"></td><td class="editable" contenteditable="true"></td><td class="no-print"><button onclick="removeRow(this)">🗑️</button></td></tr>
+    <tr><td class="editable" contenteditable="true"></td><td class="editable" contenteditable="true"></td><td class="editable" contenteditable="true"></td><td class="editable" contenteditable="true"></td><td class="no-print"><button onclick="removeRow(this)">🗑️</button></td></tr>
+    <tr><td class="editable" contenteditable="true"></td><td class="editable" contenteditable="true"></td><td class="editable" contenteditable="true"></td><td class="editable" contenteditable="true"></td><td class="no-print"><button onclick="removeRow(this)">🗑️</button></td></tr>
+    <tr><td class="editable" contenteditable="true"></td><td class="editable" contenteditable="true"></td><td class="editable" contenteditable="true"></td><td class="editable" contenteditable="true"></td><td class="no-print"><button onclick="removeRow(this)">🗑️</button></td></tr>
+    <tr><td class="editable" contenteditable="true"></td><td class="editable" contenteditable="true"></td><td class="editable" contenteditable="true"></td><td class="editable" contenteditable="true"></td><td class="no-print"><button onclick="removeRow(this)">🗑️</button></td></tr>
+    <tr class="no-print"><td colspan="5" style="text-align:right"><button onclick="addRow('organizacionTable')">➕ Añadir fila</button></td></tr>
+  </table>
+
+  <!-- Registro de Actividades -->
+  <h1>Registro de Actividades</h1>
+  <table id="actividadesTable">
+    <tr>
+      <th>Actividad</th>
+      <th>Fecha</th>
+      <th>Observaciones</th>
+      <th class="no-print"></th>
+    </tr>
+    <!-- 5 filas vacías por defecto -->
+    <tr><td class="editable" contenteditable="true"></td><td class="editable" contenteditable="true"></td><td class="editable" contenteditable="true"></td><td class="no-print"><button onclick="removeRow(this)">🗑️</button></td></tr>
+    <tr><td class="editable" contenteditable="true"></td><td class="editable" contenteditable="true"></td><td class="editable" contenteditable="true"></td><td class="no-print"><button onclick="removeRow(this)">🗑️</button></td></tr>
+    <tr><td class="editable" contenteditable="true"></td><td class="editable" contenteditable="true"></td><td class="editable" contenteditable="true"></td><td class="no-print"><button onclick="removeRow(this)">🗑️</button></td></tr>
+    <tr><td class="editable" contenteditable="true"></td><td class="editable" contenteditable="true"></td><td class="editable" contenteditable="true"></td><td class="no-print"><button onclick="removeRow(this)">🗑️</button></td></tr>
+    <tr><td class="editable" contenteditable="true"></td><td class="editable" contenteditable="true"></td><td class="editable" contenteditable="true"></td><td class="no-print"><button onclick="removeRow(this)">🗑️</button></td></tr>
+    <tr class="no-print"><td colspan="4" style="text-align:right"><button onclick="addRow('actividadesTable')">➕ Añadir fila</button></td></tr>
+  </table>
+
+  <!-- Reflexiones -->
+  <h1>Reflexiones</h1>
+  <div id="reflexiones" class="editable" contenteditable="true"></div>
+
+  <!-- Firmas -->
+<table style="margin-top: 40px;">
+  <tr>
+    <td style="width: 50%; text-align: center; padding-top: 60px;">
+      <div class="editable" contenteditable="true" style="border-top: 1px solid #000; padding-top: 10px;"></div>
+      <div id="firmaDocenteNombre" style="margin-top:4px;font-weight:bold;"></div>
+    </td>
+    <td id="nombreDocente" class="editable" contenteditable="true"></td>
+    <td style="width: 50%; text-align: center; padding-top: 60px;">
+      <div class="editable" contenteditable="true" style="border-top: 1px solid #000; padding-top: 10px;"></div>
+      <div id="firmaDirectorNombre" style="margin-top:4px;font-weight:bold;"></div>
+    </td>
+    <td id="nombreDirector" class="editable" contenteditable="true"></td>
+  </tr>
+</table>
+
+  <footer>
+    <p>DidAppTic | contacto@didapptic.com</p>
+  </footer>
+</div>
+
+<script>
+  // Función para cargar datos desde localStorage y API
+  async function loadUserData() {
+    const userData = JSON.parse(localStorage.getItem('userData'));
+    if (!userData) {
+      console.warn('No se encontraron datos de usuario');
+      return;
+    }
+
+    try {
+      const response = await fetch('/api/config', {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      });
+      
+      if (!response.ok) throw new Error('Error al cargar configuración');
+      
+      const data = await response.json();
+      
+      if (data.success && data.config) {
+        // Asignar valores a los campos editables
+        setEditableContent('nivelEducativo', data.config.nivelEducativo);
+        setEditableContent('centroTrabajo', data.config.centroTrabajo);
+        setEditableContent('sectorEducativo', data.config.sectorEducativo);
+        setEditableContent('zonaEscolar', data.config.zonaEscolar);
+        setEditableContent('fase', data.config.fase);
+        setEditableContent('grado', data.config.grado);
+        setEditableContent('grupo', data.config.grupo);
+        setEditableContent('nombreDocente', data.config.nombreDocente);
+        setEditableContent('nombreDirector', data.config.nombreDirector);
+        setEditableContent('inicioPeriodo', data.config.inicioPeriodo);
+        setEditableContent('finPeriodo', data.config.finPeriodo);
+        
+        // Fecha actual editable
+        setEditableContent('currentDate', new Date().toLocaleDateString('es-MX', { 
+          weekday: 'long', 
+          year: 'numeric', 
+          month: 'long', 
+          day: 'numeric' 
+        }));
+      }
+    } catch (error) {
+      console.error('Error al cargar configuración:', error);
+    }
+  }
+
+  // Función para establecer contenido en elementos editables
+  function setEditableContent(id, content) {
+    const element = document.getElementById(id);
+    if (element) {
+      element.textContent = content || '';
+      element.setAttribute('contenteditable', 'true');
+      element.classList.add('editable');
+    }
+  }
+
+  // Hacer todas las celdas de tabla editables
+  function makeAllCellsEditable() {
+    document.querySelectorAll('td').forEach(td => {
+      if (!td.hasAttribute('contenteditable')) {
+        td.setAttribute('contenteditable', 'true');
+        td.classList.add('editable');
+      }
+    });
+  }
+
+  // Cargar datos cuando el DOM esté listo
+  document.addEventListener('DOMContentLoaded', () => {
+    loadUserData();
+    makeAllCellsEditable();
+  });
+
+  // Función para alternar modo impresión
+  function togglePrintMode() {
+    document.body.classList.toggle('print-mode');
+    const btn = document.querySelector('.toolbar button:nth-child(3)');
+    if (document.body.classList.contains('print-mode')) {
+      btn.textContent = 'Modo Edición';
+    } else {
+      btn.textContent = 'Modo Impresión';
+    }
+  }
+
+  // Función para guardar el plan
+  function savePlan() {
+    const planContent = {
+      datosGenerales: {},
+      ubicacionCurricular: [],
+      evaluacion: [],
+      secuenciaDidactica: [],
+      organizacion: [],
+      actividades: [],
+      reflexiones: document.getElementById('reflexiones').innerHTML
+    };
+
+    // Recopilar datos de tablas
+    document.querySelectorAll('table').forEach(table => {
+      const rows = Array.from(table.rows).slice(1); // Saltar encabezados
+      rows.forEach(row => {
+        const rowData = {};
+        Array.from(row.cells).forEach((cell, i) => {
+          if (!cell.querySelector('button')) { // Excluir botones de eliminar
+            const header = table.rows[0].cells[i].textContent;
+            rowData[header] = cell.textContent;
+          }
+        });
+        
+        if (table.id === 'ubicacionTable') planContent.ubicacionCurricular.push(rowData);
+        else if (table.id === 'evaluacionTable') planContent.evaluacion.push(rowData);
+        else if (table.id === 'secuenciaTable') planContent.secuenciaDidactica.push(rowData);
+        else if (table.id === 'organizacionTable') planContent.organizacion.push(rowData);
+        else if (table.id === 'actividadesTable') planContent.actividades.push(rowData);
+      });
+    });
+
+    // Crear blob para descarga
+    const blob = new Blob([JSON.stringify(planContent, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'plan-didactico-' + new Date().toISOString().slice(0,10) + '.json';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+
+    alert('Plan guardado correctamente');
+  }
+
+  // Función populateTable mejorada
+  function populateTable(tableId, data) {
+    const table = document.getElementById(tableId);
+    if (!table) return;
+    // Limpiar tabla excepto encabezados
+    while (table.rows.length > 1) {
+      table.deleteRow(1);
+    }
+    // Verificar si data es un array
+    if (!Array.isArray(data)) {
+      console.error('Datos para tabla no son un array:', data);
+      data = [];
+    }
+    // Determinar columnas (sin contar columna de acciones)
+    const colCount = table.rows[0].cells.length - 1;
+    // Rellenar filas con datos
+    data.forEach(row => {
+      if (typeof row !== 'object') return;
+      const tr = table.insertRow();
+      Object.values(row).forEach((value, idx) => {
+        if (idx < colCount) {
+          const td = tr.insertCell();
+          td.className = 'editable';
+          td.setAttribute('contenteditable', 'true');
+          td.textContent = value || '';
+        }
+      });
+      // Columna de acciones
+      const tdBtn = tr.insertCell();
+      tdBtn.className = 'no-print';
+      tdBtn.innerHTML = '<button onclick="removeRow(this)">🗑️</button>';
+    });
+    // Completar hasta 5 filas
+    for (let i = data.length; i < 5; i++) {
+      const tr = table.insertRow();
+      for (let j = 0; j < colCount; j++) {
+        const td = tr.insertCell();
+        td.className = 'editable';
+        td.setAttribute('contenteditable', 'true');
+      }
+      const tdBtn = tr.insertCell();
+      tdBtn.className = 'no-print';
+      tdBtn.innerHTML = '<button onclick="removeRow(this)">🗑️</button>';
+    }
+    // Fila de añadir
+    let addRowTr = table.querySelector('.no-print-add-row');
+    if (addRowTr) table.deleteRow(addRowTr.rowIndex);
+    const trAdd = table.insertRow();
+    trAdd.className = 'no-print no-print-add-row';
+    const tdAdd = trAdd.insertCell();
+    tdAdd.colSpan = colCount + 1;
+    tdAdd.style.textAlign = 'right';
+    tdAdd.innerHTML = `<button onclick="addRow('${tableId}')">➕ Añadir fila</button>`;
+  }
+
+  // Añadir una fila a la tabla
+  function addRow(tableId) {
+    const table = document.getElementById(tableId);
+    if (!table) return;
+    const colCount = table.rows[0].cells.length - 1;
+    const tr = table.insertRow(table.rows.length - 1); // antes de la fila de añadir
+    for (let i = 0; i < colCount; i++) {
+      const td = tr.insertCell();
+      td.className = 'editable';
+      td.setAttribute('contenteditable', 'true');
+    }
+    const tdBtn = tr.insertCell();
+    tdBtn.className = 'no-print';
+    tdBtn.innerHTML = '<button onclick="removeRow(this)">🗑️</button>';
+  }
+
+  // Eliminar una fila de la tabla
+  function removeRow(btn) {
+    const tr = btn.closest('tr');
+    if (!tr) return;
+    const table = tr.closest('table');
+    if (!table) return;
+    // No permitir menos de 1 fila
+    if (table.rows.length <= 2) return;
+    // No eliminar encabezado ni la fila de añadir
+    if (tr.rowIndex === 0 || tr.classList.contains('no-print-add-row')) return;
+    table.deleteRow(tr.rowIndex);
+  }
+
+  // Modificar el event listener para message
+  window.addEventListener('message', (event) => {
+    if (event.data.type === 'loadData') {
+      try {
+        // 1. Llenar datos generales (existente)
+        // Firmas: mostrar nombres debajo de las líneas
+        document.getElementById('firmaDocenteNombre').textContent = event.data.config.docente || '';
+        document.getElementById('firmaDirectorNombre').textContent = event.data.config.director || '';
+
+        
+        // 2. Llenar Ubicación Curricular SIEMPRE con datos del canvas
+        const ubicacionTable = document.getElementById('ubicacionTable');
+        ubicacionTable.innerHTML = `
+          <tr>
+            <th>Problema</th>
+            <th>PDA(s)</th>
+            <th>Contenido(s)</th>
+            <th>Campo(s) Formativo(s)</th>
+          </tr>
+          <tr>
+            <td class="editable" contenteditable="true">${event.data.config.entrada || ''}</td>
+            <td class="editable" contenteditable="true">${event.data.config.pdas.join(', ') || ''}</td>
+            <td class="editable" contenteditable="true">${event.data.config.contenidos.join(', ') || ''}</td>
+            <td class="editable" contenteditable="true">${event.data.config.campos.join(', ') || ''}</td>
+          </tr>
+        `;
+
+        // 3. Llenar tablas con respuesta IA
+        if (event.data.tables) {
+          // Evaluación: columna Problema = Entrada SIEMPRE
+          let evaluacion = Array.isArray(event.data.tables?.evaluacion) ? event.data.tables.evaluacion : [];
+          // Si no hay datos IA, crear 5 filas solo con Problema
+          if (!evaluacion.length) {
+            for (let i = 0; i < 5; i++) {
+              evaluacion.push({
+                'Problema': event.data.config.entrada || '',
+                'Proceso de pensamiento': '',
+                'Evidencia de aprendizaje': '',
+                'Nivel de logro': ''
+              });
+            }
+          } else {
+            for (let i = 0; i < evaluacion.length; i++) {
+              evaluacion[i].Problema = event.data.config.entrada || evaluacion[i].Problema || '';
+            }
+          }
+          populateTable('evaluacionTable', evaluacion);
+
+          // Secuencia Didáctica
+          if (event.data.tables.secuencia) {
+            populateTable('secuenciaTable', event.data.tables.secuencia);
+          }
+
+          // Organización
+          if (event.data.tables.organizacion) {
+            populateTable('organizacionTable', event.data.tables.organizacion);
+          }
+
+          // Actividades
+          if (event.data.tables.actividades) {
+            populateTable('actividadesTable', event.data.tables.actividades);
+          }
+
+          // Reflexiones (texto completo)
+          if (event.data.tables.reflexiones) {
+            document.getElementById('reflexiones').innerHTML = 
+              event.data.tables.reflexiones.replace(/\n/g, '<br>');
+          }
+        }
+        
+        makeAllCellsEditable();
+        
+      } catch (error) {
+        console.error('Error al cargar datos:', error);
+        alert('Error al procesar los datos del plan');
+      }
+    }
+  });
+<!-- ... -->
+</script>
+  <script src="plano-viewer.js"></script>
+</body>
+</html>

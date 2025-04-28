@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Visor Prueba IA</title>
+  <link rel="stylesheet" href="plano-contextual-viewer.css">
+</head>
+<body>
+  <div class="container">
+    <div class="toolbar" id="topMenu">
+  <button id="btnGuardarFormato">Guardar Formato</button>
+  <button id="btnDescargarOriginal">Descargar JSON Original</button>
+  <button id="btnModoImpresion">Modo Impresión</button>
+  <input type="file" id="logoInput" accept="image/*" style="display:none">
+  <button id="btnLogo">Agregar Logotipo</button>
+</div>
+<div class="logo-container">
+  <img id="customLogo" class="logo-img" src="" alt="Logotipo" style="display:none;max-height:80px;">
+  <div id="fechaActual" class="fecha-actual"></div>
+</div>
+    <section id="datosGeneralesSection">
+      <h2>Datos Generales</h2>
+      <table id="tablaDatosGenerales" class="plan-table">
+        <tbody id="datosGeneralesBody"></tbody>
+      </table>
+    </section>
+
+    <section id="problematizacionSection">
+      <h2>Plano de la Problematización</h2>
+      <table id="tablaProblematizacion" class="plan-table">
+        <tbody id="problematizacionBody"></tbody>
+      </table>
+    </section>
+
+    <section id="contextualizacionSection">
+      <h2>Plano de la Contextualización</h2>
+      <table id="tablaContextualizacion" class="plan-table">
+        <thead>
+          <tr>
+            <th>Problema</th>
+            <th>Campos Formativos</th>
+            <th>Contenidos</th>
+            <th>PDAs</th>
+            <th>Ejes Articuladores</th>
+          </tr>
+        </thead>
+        <tbody id="contextualizacionBody"></tbody>
+      </table>
+    </section>
+
+    <section id="firmasSection">
+      <h2>Firmas</h2>
+      <table class="plan-table firmas-table">
+        <tr>
+          <td style="width:50%;text-align:center;padding-top:40px;">
+            <div style="border-top:1px solid #222;padding-top:10px;"></div>
+            <div id="firmaDocenteNombre" style="margin-top:4px;font-weight:bold;"></div>
+            <div>Docente</div>
+          </td>
+          <td style="width:50%;text-align:center;padding-top:40px;">
+            <div style="border-top:1px solid #222;padding-top:10px;"></div>
+            <div id="firmaDirectorNombre" style="margin-top:4px;font-weight:bold;"></div>
+            <div>Director</div>
+          </td>
+        </tr>
+      </table>
+    </section>
+  </div>
+  <script src="plano-contextual-viewer.js"></script>
+</body>
+</html>
