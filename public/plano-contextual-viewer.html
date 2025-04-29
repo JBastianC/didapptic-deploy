@@ -7,14 +7,6 @@
   <link rel="stylesheet" href="plano-contextual-viewer.css">
 </head>
 <body>
-  <div class="container">
-    <div class="toolbar" id="topMenu">
-  <button id="btnGuardarFormato">Guardar Formato</button>
-  <button id="btnDescargarOriginal">Descargar JSON Original</button>
-  <button id="btnModoImpresion">Modo Impresión</button>
-  <input type="file" id="logoInput" accept="image/*" style="display:none">
-  <button id="btnLogo">Agregar Logotipo</button>
-</div>
 <div class="logo-container">
   <img id="customLogo" class="logo-img" src="" alt="Logotipo" style="display:none;max-height:80px;">
   <div id="fechaActual" class="fecha-actual"></div>
@@ -37,13 +29,6 @@
       <h2>Plano de la Contextualización</h2>
       <table id="tablaContextualizacion" class="plan-table">
         <thead>
-          <tr>
-            <th>Problema</th>
-            <th>Campos Formativos</th>
-            <th>Contenidos</th>
-            <th>PDAs</th>
-            <th>Ejes Articuladores</th>
-          </tr>
         </thead>
         <tbody id="contextualizacionBody"></tbody>
       </table>

@@ -793,8 +793,6 @@ document.addEventListener('DOMContentLoaded', async function () {
         })
       };
       iaStatusEl.textContent = 'Completado';
-    // Deshabilitar botón Visualizar Plan durante el proceso
-    if (vizPlanBtn) vizPlanBtn.disabled = true;
 
       // Actualizar contador
       localStorage.setItem(userRequestKey, (currentCount + 1).toString());
