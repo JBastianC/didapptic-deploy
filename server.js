@@ -25,8 +25,8 @@ const PLANS_DIR = path.join(__dirname, 'plans');
 if (!fs.existsSync(PLANS_DIR)) fs.mkdirSync(PLANS_DIR);
 
 // Configuración de IA
-const IA_BASE_URL = '';
-const IA_ACCESS_KEY = process.env.IA_ACCESS_KEY || ''; // Usa variable de entorno o reemplaza por tu key
+const IA_BASE_URL = 'https://fcvl4puzeomz4jzdfussnmqa.agents.do-ai.run/';
+const IA_ACCESS_KEY = process.env.IA_ACCESS_KEY || 'Zg4xH8tUp0NMBnjzxcWjxR3LfXY7uvY3'; // Usa variable de entorno o reemplaza por tu key
 
 const iaClient = axios.create({
   baseURL: IA_BASE_URL,
@@ -1331,6 +1331,42 @@ app.post('/api/admin/users/:id/reset', authenticateToken, authenticateAdmin, (re
       message: 'Error al resetear datos de usuario'
     });
   }
+});
+
+// Endpoints para tarjetas de plano-realidad
+// Obtener tarjetas
+app.get('/api/plano-realidad', authenticateToken, (req, res) => {
+  const userId = req.user.userId;
+  let planoRealidad = [];
+  if (userPlans[userId]) {
+    if (Array.isArray(userPlans[userId].planoRealidad)) {
+      planoRealidad = userPlans[userId].planoRealidad;
+    } else if (Array.isArray(userPlans[userId].plans)) {
+      // Compatibilidad: mapear a formato de tarjetas
+      planoRealidad = userPlans[userId].plans.map(plan => ({
+        nombreTema: plan.name || '',
+        descripcionTema: plan.description || '',
+        situaciones: (plan.situations || []).map(sit => ({
+          descripcionSituacion: sit.description || '',
+          problemas: Array.isArray(sit.problems) ? sit.problems.map(prob => ({ descripcionProblema: prob })) : []
+        }))
+      }));
+    }
+  }
+  res.json({ success: true, planoRealidad });
+});
+
+// Guardar/actualizar tarjetas
+app.post('/api/plano-realidad', authenticateToken, (req, res) => {
+  const userId = req.user.userId;
+  const { planoRealidad } = req.body;
+  if (!Array.isArray(planoRealidad)) {
+    return res.status(400).json({ success: false, message: 'Formato inválido: planoRealidad debe ser un arreglo.' });
+  }
+  if (!userPlans[userId]) userPlans[userId] = { plans: [], context: [], didacticCards: [] };
+  userPlans[userId].planoRealidad = planoRealidad;
+  saveData(PLANS_FILE, userPlans);
+  res.json({ success: true });
 });
 
 // Servir archivos estáticos
