@@ -1,12 +1,12 @@
 document.addEventListener('DOMContentLoaded', async function() {
-  // [Añadido] Opciones de campos por fase
+  // Opciones de campos por fase
   const campoOptions = {
     F3: ["Lenguajes", "Saberes y pensamiento", "Ética, Naturaleza", "De lo humano"],
     F4: ["Lenguajes", "Saberes y pensamiento", "Ética, Naturaleza", "De lo humano"],
     F5: ["Lenguajes", "Saberes y pensamiento", "Ética, Naturaleza", "De lo humano"]
   };
 
-  // [Añadido] Función para sanitizar nombres de archivo
+  // Función para sanitizar nombres de archivo
   function sanitizeFilename(name) {
     return name
       .replace(/,/g, '')
@@ -14,7 +14,7 @@ document.addEventListener('DOMContentLoaded', async function() {
       .normalize("NFD").replace(/[\u0300-\u036f]/g, "");
   }
 
-  // [Modificada] Función para cargar contenidos
+  // Función para cargar contenidos
   async function loadContenidos(fase, campo) {
     try {
       const sanitizedCampo = sanitizeFilename(campo);
@@ -59,7 +59,7 @@ document.addEventListener('DOMContentLoaded', async function() {
     }
   }
 
-  // [Añadido] Función para cargar PDAs basados en contenido seleccionado
+  // Función para cargar PDAs basados en contenido seleccionado
   async function loadPdasForContenido(contenido) {
     try {
       const fase = document.getElementById('fase-pda').value;
@@ -113,7 +113,7 @@ document.addEventListener('DOMContentLoaded', async function() {
     }
   }
 
-  // [Añadido] Función para manejar la selección de contenidos
+  // Función para manejar la selección de contenidos
   function setupContenidosCheckboxes() {
     const contenidosList = document.getElementById('contenidosList');
     contenidosList.addEventListener('change', async function(e) {
@@ -136,7 +136,7 @@ document.addEventListener('DOMContentLoaded', async function() {
     });
   }
 
-  // [Añadido] Función para manejar la selección de PDAs
+  // Función para manejar la selección de PDAs
   function setupPdasCheckboxes() {
     const pdasList = document.getElementById('pdasList');
     pdasList.addEventListener('change', function(e) {
@@ -162,6 +162,42 @@ document.addEventListener('DOMContentLoaded', async function() {
     });
   }
 
+  // [Modificada] Función para abrir el selector de contenidos/PDA
+  function openContenidosSelector(rowId, button) {
+    currentPdaButton = button;
+    currentPdaRowId = rowId;
+    document.getElementById('pda-selector-overlay').classList.add('active');
+    
+    // Resetear el selector
+    document.getElementById('contenidosList').innerHTML = '';
+    document.getElementById('pdasList').innerHTML = '';
+    document.getElementById('selectedPdasList').innerHTML = '';
+    
+    // Obtener referencias a los selects del renglón principal
+    const rowFaseSelect = document.querySelector(`tr[data-row-id="${rowId}"] select:nth-of-type(1)`);
+    const rowCampoSelect = document.querySelector(`tr[data-row-id="${rowId}"] select:nth-of-type(2)`);
+    
+    // Obtener referencias a los selects del selector de PDA
+    const selectorFaseSelect = document.getElementById('fase-pda');
+    const selectorCampoSelect = document.getElementById('campo-pda');
+    
+    // Sincronizar valores iniciales
+    if (rowFaseSelect && rowCampoSelect) {
+        selectorFaseSelect.value = rowFaseSelect.value;
+        
+        // Forzar actualización de campos disponibles
+        if (selectorFaseSelect.value) {
+            const event = new Event('change');
+            selectorFaseSelect.dispatchEvent(event);
+            
+            // Esperar un breve momento para que se actualicen las opciones
+            setTimeout(() => {
+                selectorCampoSelect.value = rowCampoSelect.value;
+            }, 50);
+        }
+    }
+  }
+
   // Verificar autenticación y cargar datos del usuario
   const userData = JSON.parse(localStorage.getItem('userData'));
   if (!userData) {
@@ -169,13 +205,13 @@ document.addEventListener('DOMContentLoaded', async function() {
     return;
   }
 
-  // Mostrar información del usuario en la barra superior
+  // Mostrar información del usuario
   document.getElementById('userEmail').textContent = userData.email;
   const membershipBadge = document.getElementById('userMembership');
   membershipBadge.textContent = userData.membership === 'premium' ? 'Premium' : 'Básico';
   membershipBadge.classList.add(userData.membership === 'premium' ? 'premium' : 'basic');
 
-  // Configurar el botón premium y mensaje de estado
+  // Configurar el botón premium
   const btnPremium = document.querySelector('.btn-premium');
   const premiumStatusContainer = document.createElement('div');
   premiumStatusContainer.className = 'premium-status-container';
@@ -189,29 +225,28 @@ document.addEventListener('DOMContentLoaded', async function() {
     document.body.insertBefore(premiumStatusContainer, document.body.firstChild);
   }
 
-   // Botón premium
-   const popup = document.getElementById('premiumPopup');
-   const closePopup = document.querySelector('.close-popup');
-   const statusMessage = document.getElementById('premiumStatusMessage');
+  const popup = document.getElementById('premiumPopup');
+  const closePopup = document.querySelector('.close-popup');
+  const statusMessage = document.getElementById('premiumStatusMessage');
 
-   if (btnPremium) {
-       btnPremium.addEventListener('click', () => {
-           if (userData.membership !== 'premium') {
-               popup.classList.remove('hidden');
-           } else {
-               statusMessage.textContent = "✅ ¡Ya eres usuario Premium!";
-               statusMessage.classList.remove('hidden', 'error');
-               statusMessage.classList.add('success');
-               setTimeout(() => statusMessage.classList.add('hidden'), 3000);
-           }
-       });
-   }
+  if (btnPremium) {
+      btnPremium.addEventListener('click', () => {
+          if (userData.membership !== 'premium') {
+              popup.classList.remove('hidden');
+          } else {
+              statusMessage.textContent = "✅ ¡Ya eres usuario Premium!";
+              statusMessage.classList.remove('hidden', 'error');
+              statusMessage.classList.add('success');
+              setTimeout(() => statusMessage.classList.add('hidden'), 3000);
+          }
+      });
+  }
 
-   if (closePopup) {
-       closePopup.addEventListener('click', () => {
-           popup.classList.add('hidden');
-       });
-   }
+  if (closePopup) {
+      closePopup.addEventListener('click', () => {
+          popup.classList.add('hidden');
+      });
+  }
 
   // Obtener datos del usuario
   const isPremium = userData && userData.membership === 'premium';
@@ -226,7 +261,6 @@ document.addEventListener('DOMContentLoaded', async function() {
       }
   ];
   
-  // Solo agregar herramientas de IA si es premium
   if (isPremium) {
       menuItems.push({
           icon: '<path d="M13 10V3L4 14h7v7l9-11h-7z"/>',
@@ -278,7 +312,7 @@ document.addEventListener('DOMContentLoaded', async function() {
     });
   }
 
-  // --------------- Funciones para interactuar con el backend ---------------
+  // Funciones para interactuar con el backend
   async function loadContextData() {
     try {
       const res = await fetch('/api/context', {
@@ -311,7 +345,7 @@ document.addEventListener('DOMContentLoaded', async function() {
     }
   }
 
-  // Cargar problemas desde el Plano de la Realidad (backend)
+  // Cargar problemas desde el Plano de la Realidad
   async function loadProblemsFromReality() {
     try {
       const res = await fetch('/api/plans', {
@@ -337,12 +371,10 @@ document.addEventListener('DOMContentLoaded', async function() {
     }
   }
 
-  // --------------- Variables de estado ---------------
+  // Variables de estado
   let problemsFromSituation = await loadProblemsFromReality();
   let rowsState = {};
   let rowCounter = 0;
-
-  // [Añadido] Variables para el selector de PDA
   let currentPdaButton = null;
   let currentPdaRowId = null;
 
@@ -357,7 +389,7 @@ document.addEventListener('DOMContentLoaded', async function() {
     }, {});
   }
 
-  // --------------- UI Elements ---------------
+  // UI Elements
   const infoBox = createInfoBox();
   document.body.appendChild(infoBox);
   positionInfoBox();
@@ -373,99 +405,129 @@ document.addEventListener('DOMContentLoaded', async function() {
   });
 
   // Evento para el botón hoja: abrir visor contextual
-const openViewerBtn = document.getElementById('open-viewer-btn');
-if (openViewerBtn) {
-  openViewerBtn.addEventListener('click', async function () {
-    try {
-      // 1. Recopilar SIEMPRE los datos más recientes de la configuración
-      let datosGenerales = {};
-      let configuracion = {};
-      // Intentar obtener la configuración del backend primero (como en script4.js)
+  const openViewerBtn = document.getElementById('open-viewer-btn');
+  if (openViewerBtn) {
+    openViewerBtn.addEventListener('click', async function () {
       try {
-        const res = await fetch('/api/config', {
-          headers: {
-            'Authorization': `Bearer ${localStorage.getItem('token')}`
+        // Recopilar datos de configuración
+        let datosGenerales = {};
+        let configuracion = {};
+        try {
+          const res = await fetch('/api/config', {
+            headers: {
+              'Authorization': `Bearer ${localStorage.getItem('token')}`
+            }
+          });
+          const data = await res.json();
+          if (data.success && data.config) {
+            datosGenerales = {
+              nivelEducativo: data.config.nivelEducativo || '',
+              centroTrabajo: data.config.centroTrabajo || '',
+              sectorEducativo: data.config.sectorEducativo || '',
+              zonaEscolar: data.config.zonaEscolar || '',
+              fase: data.config.fase || '',
+              grado: data.config.grado || '',
+              grupo: data.config.grupo || '',
+              nombreDocente: data.config.nombreDocente || '',
+              nombreDirector: data.config.nombreDirector || '',
+              inicioPeriodo: data.config.inicioPeriodo || '',
+              finPeriodo: data.config.finPeriodo || ''
+            };
+            configuracion = { ...datosGenerales };
+          } else {
+            throw new Error('No config from backend');
           }
-        });
-        const data = await res.json();
-        if (data.success && data.config) {
-          // Adaptar nombres para el visor contextual
+        } catch (e) {
+          const getVal = id => {
+            const el = document.getElementById(id);
+            return el ? el.value || el.textContent || '' : '';
+          };
           datosGenerales = {
-            nivelEducativo: data.config.nivelEducativo || '',
-            centroTrabajo: data.config.centroTrabajo || '',
-            sectorEducativo: data.config.sectorEducativo || '',
-            zonaEscolar: data.config.zonaEscolar || '',
-            fase: data.config.fase || '',
-            grado: data.config.grado || '',
-            grupo: data.config.grupo || '',
-            nombreDocente: data.config.nombreDocente || '',
-            nombreDirector: data.config.nombreDirector || '',
-            inicioPeriodo: data.config.inicioPeriodo || '',
-            finPeriodo: data.config.finPeriodo || ''
+            nivelEducativo: getVal('nivelEducativo'),
+            centroTrabajo: getVal('centroTrabajo'),
+            sectorEducativo: getVal('sectorEducativo'),
+            zonaEscolar: getVal('zonaEscolar'),
+            fase: getVal('fase'),
+            grado: getVal('grado'),
+            grupo: getVal('grupo'),
+            nombreDocente: getVal('nombreDocente'),
+            nombreDirector: getVal('nombreDirector'),
+            inicioPeriodo: getVal('inicioPeriodo'),
+            finPeriodo: getVal('finPeriodo')
           };
           configuracion = { ...datosGenerales };
-        } else {
-          throw new Error('No config from backend');
+          if (!datosGenerales.nivelEducativo && localStorage.getItem('userConfig')) {
+            try {
+              const configObj = JSON.parse(localStorage.getItem('userConfig'));
+              datosGenerales = { ...configObj };
+              configuracion = { ...configObj };
+            } catch {}
+          }
         }
-      } catch (e) {
-        // Si falla el fetch, intentar leer del DOM como antes
-        const getVal = id => {
-          const el = document.getElementById(id);
-          return el ? el.value || el.textContent || '' : '';
-        };
-        datosGenerales = {
-          nivelEducativo: getVal('nivelEducativo'),
-          centroTrabajo: getVal('centroTrabajo'),
-          sectorEducativo: getVal('sectorEducativo'),
-          zonaEscolar: getVal('zonaEscolar'),
-          fase: getVal('fase'),
-          grado: getVal('grado'),
-          grupo: getVal('grupo'),
-          nombreDocente: getVal('nombreDocente'),
-          nombreDirector: getVal('nombreDirector'),
-          inicioPeriodo: getVal('inicioPeriodo'),
-          finPeriodo: getVal('finPeriodo')
-        };
-        configuracion = { ...datosGenerales };
-        // Si sigue vacío, intentar localStorage
-        if (!datosGenerales.nivelEducativo && localStorage.getItem('userConfig')) {
-          try {
-            const configObj = JSON.parse(localStorage.getItem('userConfig'));
-            datosGenerales = { ...configObj };
-            configuracion = { ...configObj };
-          } catch {}
-        }
+
+        window.open('plano-contextual-viewer.html', '_blank');
+      } catch (err) {
+        console.error('No se pudo generar ni enviar el JSON al visor contextual', err);
       }
+    });
+  }
 
-      // 2. Recopilar tarjetas de la realidad (temas y situaciones) desde el API
-      // Solo abrir la nueva pestaña del visor, sin enviar ningún JSON
-      window.open('plano-contextual-viewer.html', '_blank');
-    } catch (err) {
-      console.error('No se pudo generar ni enviar el JSON al visor contextual', err);
-    }
-  });
-}
-
-  // [Añadido] Configurar eventos para el selector de contenidos/PDA
+  // Configurar eventos para el selector de contenidos/PDA
   setupContenidosCheckboxes();
   setupPdasCheckboxes();
 
   // [Modificado] Selector de PDA - Evento cambio de fase
-  document.getElementById('fase-pda').addEventListener('change', function() {
+  document.getElementById('fase-pda').addEventListener('change', async function() {
     const fase = this.value;
     const campoSelect = document.getElementById('campo-pda');
     
     campoSelect.innerHTML = '<option value="">--Selecciona Campo--</option>';
     if (fase && campoOptions[fase]) {
-      campoSelect.disabled = false;
-      campoOptions[fase].forEach(campo => {
-        const opt = document.createElement('option');
-        opt.value = campo;
-        opt.textContent = campo;
-        campoSelect.appendChild(opt);
-      });
+        campoSelect.disabled = false;
+        campoOptions[fase].forEach(campo => {
+            const opt = document.createElement('option');
+            opt.value = campo;
+            opt.textContent = campo;
+            campoSelect.appendChild(opt);
+        });
     } else {
-      campoSelect.disabled = true;
+        campoSelect.disabled = true;
+    }
+    
+    // Actualizar el valor en el renglón principal si hay uno seleccionado
+    if (currentPdaRowId) {
+        const rowFaseSelect = document.querySelector(`tr[data-row-id="${currentPdaRowId}"] select:nth-of-type(1)`);
+        if (rowFaseSelect) {
+            rowFaseSelect.value = fase;
+            
+            // Actualizar el estado
+            if (rowsState[currentPdaRowId]) {
+                rowsState[currentPdaRowId].fase = fase;
+                // Limpiar el campo si no es compatible con la nueva fase
+                rowsState[currentPdaRowId].campos = '';
+                
+                // Actualizar el select de campos en el renglón principal
+                const rowCampoSelect = document.querySelector(`tr[data-row-id="${currentPdaRowId}"] select:nth-of-type(2)`);
+                if (rowCampoSelect) {
+                    rowCampoSelect.innerHTML = '<option value="">--Selecciona Campo--</option>';
+                    if (fase && campoOptions[fase]) {
+                        campoOptions[fase].forEach(campo => {
+                            const opt = document.createElement('option');
+                            opt.value = campo;
+                            opt.textContent = campo;
+                            rowCampoSelect.appendChild(opt);
+                        });
+                    }
+                    rowCampoSelect.value = '';
+                }
+            }
+            
+            // Forzar actualización de la interfaz
+            const rowElement = document.querySelector(`tr[data-row-id="${currentPdaRowId}"]`);
+            if (rowElement && typeof rowElement.checkCompletion === 'function') {
+                rowElement.checkCompletion();
+            }
+        }
     }
     
     // Limpiar contenidos y PDAs cuando cambia la fase
@@ -479,6 +541,23 @@ if (openViewerBtn) {
     const fase = document.getElementById('fase-pda').value;
     const campo = this.value;
     
+    // Actualizar el valor en el renglón principal si hay uno seleccionado
+    if (currentPdaRowId) {
+        const rowCampoSelect = document.querySelector(`tr[data-row-id="${currentPdaRowId}"] select:nth-of-type(2)`);
+        if (rowCampoSelect) {
+            rowCampoSelect.value = campo;
+            if (rowsState[currentPdaRowId]) {
+                rowsState[currentPdaRowId].campos = campo;
+                
+                // Forzar actualización de la interfaz
+                const rowElement = document.querySelector(`tr[data-row-id="${currentPdaRowId}"]`);
+                if (rowElement && typeof rowElement.checkCompletion === 'function') {
+                    rowElement.checkCompletion();
+                }
+            }
+        }
+    }
+    
     if (!fase || !campo) return;
 
     const contenidosData = await loadContenidos(fase, campo);
@@ -486,23 +565,23 @@ if (openViewerBtn) {
     contenidosList.innerHTML = '';
 
     if (contenidosData) {
-      Object.keys(contenidosData).forEach(contenido => {
-        const div = document.createElement('div');
-        div.className = 'contenido-item';
+        Object.keys(contenidosData).forEach(contenido => {
+            const div = document.createElement('div');
+            div.className = 'contenido-item';
 
-        const checkbox = document.createElement('input');
-        checkbox.type = 'checkbox';
-        checkbox.id = `cont-select-${sanitizeFilename(contenido)}`;
-        checkbox.value = contenido;
+            const checkbox = document.createElement('input');
+            checkbox.type = 'checkbox';
+            checkbox.id = `cont-select-${sanitizeFilename(contenido)}`;
+            checkbox.value = contenido;
 
-        const label = document.createElement('label');
-        label.htmlFor = checkbox.id;
-        label.textContent = contenido;
+            const label = document.createElement('label');
+            label.htmlFor = checkbox.id;
+            label.textContent = contenido;
 
-        div.appendChild(checkbox);
-        div.appendChild(label);
-        contenidosList.appendChild(div);
-      });
+            div.appendChild(checkbox);
+            div.appendChild(label);
+            contenidosList.appendChild(div);
+        });
     }
     
     // Limpiar PDAs cuando cambia el campo
@@ -510,8 +589,62 @@ if (openViewerBtn) {
     document.getElementById('selectedPdasList').innerHTML = '';
   });
 
-  // [Modificado] Selector de PDA - Botón guardar
-  document.getElementById('pda-selector-save').addEventListener('click', function() {
+  // [Modificado] Evento change para el select de Fase en el renglón principal
+  document.addEventListener('change', function(e) {
+    if (e.target && e.target.matches('tr.primary-row select:nth-of-type(1)')) {
+        const rowId = e.target.closest('tr').getAttribute('data-row-id');
+        const fase = e.target.value;
+        
+        // Actualizar el estado
+        if (rowsState[rowId]) {
+            rowsState[rowId].fase = fase;
+            rowsState[rowId].campos = ''; // Resetear campo al cambiar fase
+            
+            // Actualizar el select de campos en el mismo renglón
+            const campoSelect = e.target.closest('tr').querySelector('select:nth-of-type(2)');
+            if (campoSelect) {
+                campoSelect.innerHTML = '<option value="">--Selecciona Campo--</option>';
+                if (fase && campoOptions[fase]) {
+                    campoOptions[fase].forEach(campo => {
+                        const opt = document.createElement('option');
+                        opt.value = campo;
+                        opt.textContent = campo;
+                        campoSelect.appendChild(opt);
+                    });
+                }
+                campoSelect.value = '';
+            }
+            
+            // Forzar actualización de la interfaz
+            const rowElement = document.querySelector(`tr[data-row-id="${rowId}"]`);
+            if (rowElement && typeof rowElement.checkCompletion === 'function') {
+                rowElement.checkCompletion();
+            }
+        }
+    }
+  });
+
+  // [Modificado] Evento change para el select de Campos en el renglón principal
+  document.addEventListener('change', function(e) {
+    if (e.target && e.target.matches('tr.primary-row select:nth-of-type(2)')) {
+        const rowId = e.target.closest('tr').getAttribute('data-row-id');
+        const campo = e.target.value;
+        
+        // Actualizar el estado
+        if (rowsState[rowId]) {
+            rowsState[rowId].campos = campo;
+            
+            // Forzar actualización de la interfaz
+            const rowElement = document.querySelector(`tr[data-row-id="${rowId}"]`);
+            if (rowElement && typeof rowElement.checkCompletion === 'function') {
+                rowElement.checkCompletion();
+            }
+        }
+    }
+  });
+
+  // Selector de PDA - Botón guardar
+  document.getElementById('pda-selector-save').addEventListener('click', async function() {
     const selectedContenido = document.querySelector('#contenidosList input[type="checkbox"]:checked');
     const selectedPdas = Array.from(document.querySelectorAll('#selectedPdasList .pda-item')).map(item => item.textContent);
     
@@ -534,6 +667,14 @@ if (openViewerBtn) {
         }
       }
       
+      // Guardar los cambios
+      if (rowsState[currentPdaRowId]) {
+        const saveResult = await saveContextData(rowsState[currentPdaRowId]);
+        if (!saveResult.success) {
+          console.error('Error al guardar cambios:', saveResult.message);
+        }
+      }
+      
       // Actualizar estado de completitud
       const rowElement = document.querySelector(`tr[data-row-id="${currentPdaRowId}"]`);
       if (rowElement && typeof rowElement.checkCompletion === 'function') {
@@ -544,12 +685,12 @@ if (openViewerBtn) {
     document.getElementById('pda-selector-overlay').classList.remove('active');
   });
 
-  // [Añadido] Selector de PDA - Botón cancelar
+  // Selector de PDA - Botón cancelar
   document.getElementById('pda-selector-cancel').addEventListener('click', function() {
     document.getElementById('pda-selector-overlay').classList.remove('active');
   });
 
-  // --------------- Funciones de UI ---------------
+  // Funciones de UI
   function positionInfoBox() {
     const topBar = document.querySelector('.top-bar');
     if (topBar) {
@@ -642,7 +783,7 @@ if (openViewerBtn) {
     infoContent.textContent = concept + ": " + text;
   }
 
-  // --------------- Funciones para manejar filas ---------------
+  // Funciones para manejar filas
   function createFieldGroup(labelText, type) {
     const group = document.createElement('div');
     group.classList.add('field-group');
@@ -678,48 +819,7 @@ if (openViewerBtn) {
     });
   }
 
-  // --- API plano-realidad ---
-async function fetchPlanoRealidad() {
-  try {
-    const res = await fetch('/api/plano-realidad', {
-      headers: {
-        'Authorization': `Bearer ${localStorage.getItem('token')}`
-      }
-    });
-    const data = await res.json();
-    if (data.success) return data.planoRealidad;
-    return [];
-  } catch (err) {
-    console.error('Error al obtener plano-realidad:', err);
-    return [];
-  }
-}
-
-async function savePlanoRealidad(planoRealidadArr) {
-  try {
-    const res = await fetch('/api/plano-realidad', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${localStorage.getItem('token')}`
-      },
-      body: JSON.stringify({ planoRealidad: planoRealidadArr })
-    });
-    const data = await res.json();
-    return data.success;
-  } catch (err) {
-    console.error('Error al guardar plano-realidad:', err);
-    return false;
-  }
-}
-
-// Ejemplo de integración: al cargar las tablas de Problematización
-async function fillProblematizacionDesdeAPI() {
-  const tarjetas = await fetchPlanoRealidad();
-  fillProblematizacion(tarjetas); // Usa la función existente para poblar la UI
-}
-
-  // [Modificada] Función para añadir filas primarias
+  // Función para añadir filas primarias
   async function addPrimaryRow(data = null) {
     let rowId;
     if (data === null) {
@@ -860,7 +960,7 @@ async function fillProblematizacionDesdeAPI() {
       });
     }
 
-    // [Modificado] Field 4: Contenidos (ahora es un botón)
+    // Field 4: Contenidos
     const col4 = createFieldGroup("Contenidos", "button");
     contenidosBtn = col4.querySelector('button');
     contenidosBtn.textContent = data.contenidos ? data.contenidos : "Seleccionar Contenidos";
@@ -869,7 +969,7 @@ async function fillProblematizacionDesdeAPI() {
       openContenidosSelector(rowId, contenidosBtn);
     });
 
-    // [Modificado] Field 5: PDA (ahora muestra lo seleccionado)
+    // Field 5: PDA
     const col5 = createFieldGroup("PDA", "button");
     pdaBtn = col5.querySelector('button');
     pdaBtn.textContent = data.pda ? data.pda : "PDAs seleccionados";
@@ -907,7 +1007,7 @@ async function fillProblematizacionDesdeAPI() {
       });
     }
 
-    // Field 8: Objeto de Enseñanza (popup)
+    // Field 8: Objeto de Enseñanza
     const col8 = createFieldGroup("Objeto de Enseñanza", "button");
     objetoBtn = col8.querySelector('button');
     objetoBtn.textContent = data.objeto ? "Editar (Objeto)" : "Editar Objeto";
@@ -916,7 +1016,7 @@ async function fillProblematizacionDesdeAPI() {
       openPopup("objeto", rowId, objetoBtn);
     });
 
-    // Field 9: Evidencia de Aprendizaje (popup)
+    // Field 9: Evidencia de Aprendizaje
     const col9 = createFieldGroup("Evidencia de Aprendizaje", "button");
     evidenciaBtn = col9.querySelector('button');
     evidenciaBtn.textContent = data.evidencia ? "Editar (Evidencia)" : "Editar Evidencia";
@@ -973,7 +1073,7 @@ async function fillProblematizacionDesdeAPI() {
     checkCompletion();
   }
 
-  // --------------- Popup Functions ---------------
+  // Popup Functions
   const popupOverlay = document.getElementById("popup-overlay");
   const popupTitle = document.getElementById("popup-title");
   const popupText = document.getElementById("popup-text");

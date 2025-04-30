@@ -55,6 +55,33 @@ document.addEventListener('DOMContentLoaded', async function () {
     fases: []
   };
 
+  // Cargar problemas desde el Plano de la Realidad
+  let problemsFromSituation = [];
+  async function loadProblemsFromReality() {
+    try {
+      const res = await fetch('/api/plans', {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      });
+      const data = await res.json();
+      
+      if (data.success) {
+        const problems = [];
+        data.plans.forEach(plan => {
+          plan.situations?.forEach(situation => {
+            problems.push(...(situation.problems || []));
+          });
+        });
+        return problems.length > 0 ? problems : ["No hay problemas registrados"];
+      }
+      return ["No hay problemas registrados"];
+    } catch (error) {
+      console.error("Error al cargar problemas:", error);
+      return ["Error al cargar problemas"];
+    }
+  }
+
   // IA request counter reset logic - ahora basado en cuenta de usuario
   const today = new Date().toISOString().slice(0,10);
   const userRequestKey = `iaRequestCount_${userData.email}`;
@@ -270,7 +297,7 @@ document.addEventListener('DOMContentLoaded', async function () {
   }
 
   // 9) Properties panel
-  function openProperties(node) {
+  async function openProperties(node) {
     currentNode = node;
     const type = node.dataset.type;
     document.getElementById('propTitle').innerText = type;
@@ -278,7 +305,7 @@ document.addEventListener('DOMContentLoaded', async function () {
     div.innerHTML = '';
 
     const hints = {
-      'Entrada': 'Texto libre de entrada para el plan.',
+      'Entrada': 'Selecciona un problema redactado del Plano de la Realidad.',
       'Fase': 'Selecciona la fase didáctica.',
       'Campos Formativos': 'Elige el campo y hereda su color.',
       'Contenido': 'Selecciona un contenido.',
@@ -293,10 +320,22 @@ document.addEventListener('DOMContentLoaded', async function () {
     div.appendChild(pInfo);
 
     let sel1, sel2, sel3, ta;
-    if (type==='Nota' || type==='Entrada') {
+    if (type==='Nota') {
       ta = document.createElement('textarea');
       ta.value = node.dataset.text || '';
       div.appendChild(ta);
+    }
+    if (type==='Entrada') {
+      // Cargar problemas desde el Plano de la Realidad
+      problemsFromSituation = await loadProblemsFromReality();
+      
+      sel1 = document.createElement('select');
+      sel1.append(new Option('Selecciona un problema', ''));
+      problemsFromSituation.forEach(problem => {
+        sel1.append(new Option(problem, problem));
+      });
+      sel1.value = node.dataset.text || '';
+      div.appendChild(sel1);
     }
     if (type==='Fase') {
       sel1 = document.createElement('select');
@@ -391,6 +430,7 @@ document.addEventListener('DOMContentLoaded', async function () {
 
     saveBtn.onclick = () => {
       if (ta)                     node.dataset.text   = ta.value;
+      if (sel1 && type==='Entrada') node.dataset.text   = sel1.value;
       if (sel1 && type==='Fase')  node.dataset.fase   = sel1.value;
       if (sel1 && sel2 && type==='Campos Formativos') {
         node.dataset.fase      = sel1.value;
