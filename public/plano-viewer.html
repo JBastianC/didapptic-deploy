@@ -102,12 +102,6 @@
   .print-mode .toolbar {
     display: none;
   }
-  .no-print {
-    display: none;
-  }
-  .print-mode .no-print {
-    display: table-cell;
-  }
 </style>
 </head>
 <body>
@@ -184,15 +178,7 @@
       <th>Proceso de pensamiento</th>
       <th>Evidencia de aprendizaje</th>
       <th>Nivel de logro</th>
-      <th class="no-print"></th>
     </tr>
-    <!-- 5 filas vacías por defecto -->
-    <tr><td class="editable" contenteditable="true"></td><td class="editable" contenteditable="true"></td><td class="editable" contenteditable="true"></td><td class="editable" contenteditable="true"></td><td class="no-print"><button onclick="removeRow(this)">🗑️</button></td></tr>
-    <tr><td class="editable" contenteditable="true"></td><td class="editable" contenteditable="true"></td><td class="editable" contenteditable="true"></td><td class="editable" contenteditable="true"></td><td class="no-print"><button onclick="removeRow(this)">🗑️</button></td></tr>
-    <tr><td class="editable" contenteditable="true"></td><td class="editable" contenteditable="true"></td><td class="editable" contenteditable="true"></td><td class="editable" contenteditable="true"></td><td class="no-print"><button onclick="removeRow(this)">🗑️</button></td></tr>
-    <tr><td class="editable" contenteditable="true"></td><td class="editable" contenteditable="true"></td><td class="editable" contenteditable="true"></td><td class="editable" contenteditable="true"></td><td class="no-print"><button onclick="removeRow(this)">🗑️</button></td></tr>
-    <tr><td class="editable" contenteditable="true"></td><td class="editable" contenteditable="true"></td><td class="editable" contenteditable="true"></td><td class="editable" contenteditable="true"></td><td class="no-print"><button onclick="removeRow(this)">🗑️</button></td></tr>
-    <tr class="no-print"><td colspan="5" style="text-align:right"><button onclick="addRow('evaluacionTable')">➕ Añadir fila</button></td></tr>
   </table>
 
   <!-- Secuencia Didáctica -->
@@ -207,21 +193,14 @@
       <td id="metodologia" class="editable" contenteditable="true"></td>
     </tr>
   </table>
+  
   <table id="secuenciaTable">
     <tr>
       <th>Fase</th>
       <th>Etapa</th>
       <th>Actividades</th>
       <th>Evaluación formativa</th>
-      <th class="no-print"></th>
     </tr>
-    <!-- 5 filas vacías por defecto -->
-    <tr><td class="editable" contenteditable="true"></td><td class="editable" contenteditable="true"></td><td class="editable" contenteditable="true"></td><td class="editable" contenteditable="true"></td><td class="no-print"><button onclick="removeRow(this)">🗑️</button></td></tr>
-    <tr><td class="editable" contenteditable="true"></td><td class="editable" contenteditable="true"></td><td class="editable" contenteditable="true"></td><td class="editable" contenteditable="true"></td><td class="no-print"><button onclick="removeRow(this)">🗑️</button></td></tr>
-    <tr><td class="editable" contenteditable="true"></td><td class="editable" contenteditable="true"></td><td class="editable" contenteditable="true"></td><td class="editable" contenteditable="true"></td><td class="no-print"><button onclick="removeRow(this)">🗑️</button></td></tr>
-    <tr><td class="editable" contenteditable="true"></td><td class="editable" contenteditable="true"></td><td class="editable" contenteditable="true"></td><td class="editable" contenteditable="true"></td><td class="no-print"><button onclick="removeRow(this)">🗑️</button></td></tr>
-    <tr><td class="editable" contenteditable="true"></td><td class="editable" contenteditable="true"></td><td class="editable" contenteditable="true"></td><td class="editable" contenteditable="true"></td><td class="no-print"><button onclick="removeRow(this)">🗑️</button></td></tr>
-    <tr class="no-print"><td colspan="5" style="text-align:right"><button onclick="addRow('secuenciaTable')">➕ Añadir fila</button></td></tr>
   </table>
 
   <!-- Organización -->
@@ -232,15 +211,7 @@
       <th>Tiempo</th>
       <th>Espacio</th>
       <th>Recursos/Materiales</th>
-      <th class="no-print"></th>
     </tr>
-    <!-- 5 filas vacías por defecto -->
-    <tr><td class="editable" contenteditable="true"></td><td class="editable" contenteditable="true"></td><td class="editable" contenteditable="true"></td><td class="editable" contenteditable="true"></td><td class="no-print"><button onclick="removeRow(this)">🗑️</button></td></tr>
-    <tr><td class="editable" contenteditable="true"></td><td class="editable" contenteditable="true"></td><td class="editable" contenteditable="true"></td><td class="editable" contenteditable="true"></td><td class="no-print"><button onclick="removeRow(this)">🗑️</button></td></tr>
-    <tr><td class="editable" contenteditable="true"></td><td class="editable" contenteditable="true"></td><td class="editable" contenteditable="true"></td><td class="editable" contenteditable="true"></td><td class="no-print"><button onclick="removeRow(this)">🗑️</button></td></tr>
-    <tr><td class="editable" contenteditable="true"></td><td class="editable" contenteditable="true"></td><td class="editable" contenteditable="true"></td><td class="editable" contenteditable="true"></td><td class="no-print"><button onclick="removeRow(this)">🗑️</button></td></tr>
-    <tr><td class="editable" contenteditable="true"></td><td class="editable" contenteditable="true"></td><td class="editable" contenteditable="true"></td><td class="editable" contenteditable="true"></td><td class="no-print"><button onclick="removeRow(this)">🗑️</button></td></tr>
-    <tr class="no-print"><td colspan="5" style="text-align:right"><button onclick="addRow('organizacionTable')">➕ Añadir fila</button></td></tr>
   </table>
 
   <!-- Registro de Actividades -->
@@ -250,15 +221,7 @@
       <th>Actividad</th>
       <th>Fecha</th>
       <th>Observaciones</th>
-      <th class="no-print"></th>
     </tr>
-    <!-- 5 filas vacías por defecto -->
-    <tr><td class="editable" contenteditable="true"></td><td class="editable" contenteditable="true"></td><td class="editable" contenteditable="true"></td><td class="no-print"><button onclick="removeRow(this)">🗑️</button></td></tr>
-    <tr><td class="editable" contenteditable="true"></td><td class="editable" contenteditable="true"></td><td class="editable" contenteditable="true"></td><td class="no-print"><button onclick="removeRow(this)">🗑️</button></td></tr>
-    <tr><td class="editable" contenteditable="true"></td><td class="editable" contenteditable="true"></td><td class="editable" contenteditable="true"></td><td class="no-print"><button onclick="removeRow(this)">🗑️</button></td></tr>
-    <tr><td class="editable" contenteditable="true"></td><td class="editable" contenteditable="true"></td><td class="editable" contenteditable="true"></td><td class="no-print"><button onclick="removeRow(this)">🗑️</button></td></tr>
-    <tr><td class="editable" contenteditable="true"></td><td class="editable" contenteditable="true"></td><td class="editable" contenteditable="true"></td><td class="no-print"><button onclick="removeRow(this)">🗑️</button></td></tr>
-    <tr class="no-print"><td colspan="4" style="text-align:right"><button onclick="addRow('actividadesTable')">➕ Añadir fila</button></td></tr>
   </table>
 
   <!-- Reflexiones -->
@@ -270,12 +233,10 @@
   <tr>
     <td style="width: 50%; text-align: center; padding-top: 60px;">
       <div class="editable" contenteditable="true" style="border-top: 1px solid #000; padding-top: 10px;"></div>
-      <div id="firmaDocenteNombre" style="margin-top:4px;font-weight:bold;"></div>
     </td>
     <td id="nombreDocente" class="editable" contenteditable="true"></td>
     <td style="width: 50%; text-align: center; padding-top: 60px;">
       <div class="editable" contenteditable="true" style="border-top: 1px solid #000; padding-top: 10px;"></div>
-      <div id="firmaDirectorNombre" style="margin-top:4px;font-weight:bold;"></div>
     </td>
     <td id="nombreDirector" class="editable" contenteditable="true"></td>
   </tr>
@@ -416,170 +377,73 @@
     alert('Plan guardado correctamente');
   }
 
-  // Función populateTable mejorada
-  function populateTable(tableId, data) {
-    const table = document.getElementById(tableId);
-    if (!table) return;
-    // Limpiar tabla excepto encabezados
-    while (table.rows.length > 1) {
-      table.deleteRow(1);
-    }
-    // Verificar si data es un array
-    if (!Array.isArray(data)) {
-      console.error('Datos para tabla no son un array:', data);
-      data = [];
-    }
-    // Determinar columnas (sin contar columna de acciones)
-    const colCount = table.rows[0].cells.length - 1;
-    // Rellenar filas con datos
-    data.forEach(row => {
-      if (typeof row !== 'object') return;
-      const tr = table.insertRow();
-      Object.values(row).forEach((value, idx) => {
-        if (idx < colCount) {
-          const td = tr.insertCell();
-          td.className = 'editable';
-          td.setAttribute('contenteditable', 'true');
-          td.textContent = value || '';
-        }
-      });
-      // Columna de acciones
-      const tdBtn = tr.insertCell();
-      tdBtn.className = 'no-print';
-      tdBtn.innerHTML = '<button onclick="removeRow(this)">🗑️</button>';
-    });
-    // Completar hasta 5 filas
-    for (let i = data.length; i < 5; i++) {
-      const tr = table.insertRow();
-      for (let j = 0; j < colCount; j++) {
-        const td = tr.insertCell();
-        td.className = 'editable';
-        td.setAttribute('contenteditable', 'true');
-      }
-      const tdBtn = tr.insertCell();
-      tdBtn.className = 'no-print';
-      tdBtn.innerHTML = '<button onclick="removeRow(this)">🗑️</button>';
-    }
-    // Fila de añadir
-    let addRowTr = table.querySelector('.no-print-add-row');
-    if (addRowTr) table.deleteRow(addRowTr.rowIndex);
-    const trAdd = table.insertRow();
-    trAdd.className = 'no-print no-print-add-row';
-    const tdAdd = trAdd.insertCell();
-    tdAdd.colSpan = colCount + 1;
-    tdAdd.style.textAlign = 'right';
-    tdAdd.innerHTML = `<button onclick="addRow('${tableId}')">➕ Añadir fila</button>`;
-  }
-
-  // Añadir una fila a la tabla
-  function addRow(tableId) {
-    const table = document.getElementById(tableId);
-    if (!table) return;
-    const colCount = table.rows[0].cells.length - 1;
-    const tr = table.insertRow(table.rows.length - 1); // antes de la fila de añadir
-    for (let i = 0; i < colCount; i++) {
-      const td = tr.insertCell();
-      td.className = 'editable';
-      td.setAttribute('contenteditable', 'true');
-    }
-    const tdBtn = tr.insertCell();
-    tdBtn.className = 'no-print';
-    tdBtn.innerHTML = '<button onclick="removeRow(this)">🗑️</button>';
-  }
-
-  // Eliminar una fila de la tabla
-  function removeRow(btn) {
-    const tr = btn.closest('tr');
-    if (!tr) return;
-    const table = tr.closest('table');
-    if (!table) return;
-    // No permitir menos de 1 fila
-    if (table.rows.length <= 2) return;
-    // No eliminar encabezado ni la fila de añadir
-    if (tr.rowIndex === 0 || tr.classList.contains('no-print-add-row')) return;
-    table.deleteRow(tr.rowIndex);
-  }
-
   // Modificar el event listener para message
   window.addEventListener('message', (event) => {
     if (event.data.type === 'loadData') {
       try {
-        // 1. Llenar datos generales (existente)
-        // Firmas: mostrar nombres debajo de las líneas
-        document.getElementById('firmaDocenteNombre').textContent = event.data.config.docente || '';
-        document.getElementById('firmaDirectorNombre').textContent = event.data.config.director || '';
+        // Verificar si los datos tienen el formato esperado
+        if (!event.data.tables || !event.data.config) {
+          throw new Error('Formato de datos incorrecto');
+        }
 
+        // Cargar datos del proyecto
+        document.getElementById('nombreProyecto').textContent = event.data.config.proyecto || '';
+        document.getElementById('metodologia').textContent = event.data.config.metodologia || '';
         
-        // 2. Llenar Ubicación Curricular SIEMPRE con datos del canvas
-        const ubicacionTable = document.getElementById('ubicacionTable');
-        ubicacionTable.innerHTML = `
-          <tr>
-            <th>Problema</th>
-            <th>PDA(s)</th>
-            <th>Contenido(s)</th>
-            <th>Campo(s) Formativo(s)</th>
-          </tr>
-          <tr>
-            <td class="editable" contenteditable="true">${event.data.config.entrada || ''}</td>
-            <td class="editable" contenteditable="true">${event.data.config.pdas.join(', ') || ''}</td>
-            <td class="editable" contenteditable="true">${event.data.config.contenidos.join(', ') || ''}</td>
-            <td class="editable" contenteditable="true">${event.data.config.campos.join(', ') || ''}</td>
-          </tr>
-        `;
-
-        // 3. Llenar tablas con respuesta IA
-        if (event.data.tables) {
-          // Evaluación: columna Problema = Entrada SIEMPRE
-          let evaluacion = Array.isArray(event.data.tables?.evaluacion) ? event.data.tables.evaluacion : [];
-          // Si no hay datos IA, crear 5 filas solo con Problema
-          if (!evaluacion.length) {
-            for (let i = 0; i < 5; i++) {
-              evaluacion.push({
-                'Problema': event.data.config.entrada || '',
-                'Proceso de pensamiento': '',
-                'Evidencia de aprendizaje': '',
-                'Nivel de logro': ''
-              });
-            }
-          } else {
-            for (let i = 0; i < evaluacion.length; i++) {
-              evaluacion[i].Problema = event.data.config.entrada || evaluacion[i].Problema || '';
-            }
-          }
-          populateTable('evaluacionTable', evaluacion);
-
-          // Secuencia Didáctica
-          if (event.data.tables.secuencia) {
-            populateTable('secuenciaTable', event.data.tables.secuencia);
-          }
-
-          // Organización
-          if (event.data.tables.organizacion) {
-            populateTable('organizacionTable', event.data.tables.organizacion);
-          }
-
-          // Actividades
-          if (event.data.tables.actividades) {
-            populateTable('actividadesTable', event.data.tables.actividades);
-          }
-
-          // Reflexiones (texto completo)
-          if (event.data.tables.reflexiones) {
-            document.getElementById('reflexiones').innerHTML = 
-              event.data.tables.reflexiones.replace(/\n/g, '<br>');
-          }
+        // Cargar tablas solo si existen datos
+        if (event.data.tables.secuencia && event.data.tables.secuencia.length > 0) {
+          populateTable('secuenciaTable', event.data.tables.secuencia);
+        }
+        if (event.data.tables.organizacion && event.data.tables.organizacion.length > 0) {
+          populateTable('organizacionTable', event.data.tables.organizacion);
+        }
+        if (event.data.tables.actividades && event.data.tables.actividades.length > 0) {
+          populateTable('actividadesTable', event.data.tables.actividades);
         }
         
+        // Cargar reflexiones
+        if (event.data.reflexiones) {
+          document.getElementById('reflexiones').innerHTML = event.data.reflexiones;
+        }
+        
+        // Hacer todo editable
         makeAllCellsEditable();
         
       } catch (error) {
         console.error('Error al cargar datos:', error);
-        alert('Error al procesar los datos del plan');
+        alert('Error al cargar los datos generados por IA');
       }
     }
   });
-<!-- ... -->
+
+  // Función populateTable mejorada
+  function populateTable(tableId, data) {
+    const table = document.getElementById(tableId);
+    if (!table) return;
+    
+    // Limpiar tabla excepto encabezados
+    while (table.rows.length > 1) {
+      table.deleteRow(1);
+    }
+    
+    // Verificar si data es un array
+    if (!Array.isArray(data)) {
+      console.error('Datos para tabla no son un array:', data);
+      return;
+    }
+    
+    data.forEach(row => {
+      if (typeof row !== 'object') return;
+      
+      const tr = table.insertRow();
+      Object.values(row).forEach(value => {
+        const td = tr.insertCell();
+        td.className = 'editable';
+        td.setAttribute('contenteditable', 'true');
+        td.textContent = value || '';
+      });
+    });
+  }
 </script>
-  <script src="plano-viewer.js"></script>
 </body>
 </html>

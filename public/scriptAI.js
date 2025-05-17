@@ -1,18 +1,18 @@
 document.addEventListener('DOMContentLoaded', () => {
-    // Verificar autenticación
+    // 1. Verificación de autenticación
     const userData = JSON.parse(localStorage.getItem('userData'));
     if (!userData) {
         window.location.href = 'login.html';
         return;
     }
 
-    // Mostrar información del usuario
-    document.getElementById('userEmail').textContent = userData.email;
+    // 2. Configuración inicial
     const membershipBadge = document.getElementById('userMembership');
+    document.getElementById('userEmail').textContent = userData.email;
     membershipBadge.textContent = userData.membership === 'premium' ? 'Premium' : 'Básico';
     membershipBadge.classList.add(userData.membership === 'premium' ? 'premium' : 'basic');
 
-    // Datos del menú con enlaces
+    // 3. Menú de navegación
     const menuItems = [
         {
             icon: '<path d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>',
@@ -41,7 +41,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     ];
 
-    // Generar menú
     const menuContainer = document.getElementById('main-menu');
     menuItems.forEach(item => {
         const menuItem = document.createElement('a');
@@ -56,14 +55,13 @@ document.addEventListener('DOMContentLoaded', () => {
         menuContainer.appendChild(menuItem);
     });
 
-    // Datos de filtros
+    // 4. Filtros de herramientas
     const filters = [
         "Inteligencia Artificial", "Planificador", "Generación de contenido", 
         "Comunicación", "Gamificación", "Corrección automática", 
         "Evaluaciones", "Accesibilidad"
     ];
 
-    // Generar filtros
     const filtersContainer = document.getElementById('filters-container');
     filters.forEach(filter => {
         const filterTag = document.createElement('div');
@@ -72,94 +70,207 @@ document.addEventListener('DOMContentLoaded', () => {
         filtersContainer.appendChild(filterTag);
     });
 
-    // Datos herramientas
+    // 5. Herramientas disponibles
     const herramientas = [
         {
             nombre: 'Generador de Plan de clase',
-            url: 'generadorPlanClase.html',
-            emoji: '📝'
+            emoji: '📝',
+            toolId: 'generadorPlanClase'
         },
         {
             nombre: 'Generador de Mapas Mentales',
-            url: 'generadorMapaMental.html',
-            emoji: '🧠'
+            emoji: '🧠',
+            toolId: 'generadorMapaMental'
         },
         {
             nombre: 'Generador de Gamificación',
-            url: 'generadorCrucigrama.html',
-            emoji: '🧩'
+            emoji: '🧩',
+            toolId: 'generadorCrucigrama'
         },
         {
             nombre: 'Generador de Evaluación',
-            url: 'generadorEvaluacion.html',
-            emoji: '📊'
+            emoji: '📊',
+            toolId: 'generadorEvaluacion'
         },
         {
             nombre: 'Pizarra Virtual',
-            url: 'pizarraVirtual.html',
-            emoji: '🖥️'
+            emoji: '🖥️',
+            toolId: 'pizarraVirtual'
         },
         {
             nombre: 'Biblioteca Babilonia',
-            url: 'bibliotecaBabilonia.html',
-            emoji: '🏛️'
+            emoji: '🏛️',
+            toolId: 'bibliotecaBabilonia'
         },
         {
             nombre: 'Internet Red Local',
-            url: 'internetRedLocal.html',
-            emoji: '🌐'
+            emoji: '🌐',
+            toolId: 'internetRedLocal'
         },
         {
             nombre: 'Escáner de Tareas',
-            url: 'escanerTareas.html',
-            emoji: '🖨️'
+            emoji: '🖨️',
+            toolId: 'escanerTareas'
         }
     ];
 
-    // Generar herramientas
+    // 6. Generar herramientas en el grid
     const toolsContainer = document.getElementById('tools-container');
     herramientas.forEach(tool => {
         const toolCard = document.createElement('div');
         toolCard.className = 'tool-card';
+        toolCard.dataset.tool = tool.toolId;
         toolCard.innerHTML = `
             <span class="tool-emoji">${tool.emoji}</span>
             <p>${tool.nombre}</p>
         `;
         toolsContainer.appendChild(toolCard);
-
-        toolCard.addEventListener('click', () => {
-            if (tool.url) {
-                window.location.href = tool.url;
-            }
-        });
     });
 
-    // Botón premium
+    // 7. Configuración del Generador de Plan de Clase
+    const planClasePopup = document.getElementById('planClasePopup');
+    const closePlanClase = document.getElementById('closePlanClase');
+    const planClaseForm = document.getElementById('planClaseForm');
+    const resultadoPlan = document.getElementById('resultadoPlan');
+    const exportPdfBtn = document.getElementById('exportPdfBtn');
+
+    // Abrir popup al hacer clic en la herramienta
+    document.addEventListener('click', (e) => {
+        const toolCard = e.target.closest('[data-tool="generadorPlanClase"]');
+        if (toolCard) {
+            planClasePopup.classList.remove('hidden');
+        }
+    });
+
+    // Cerrar popup
+    closePlanClase.addEventListener('click', () => {
+        planClasePopup.classList.add('hidden');
+    });
+
+    // Generar plan de clase
+    planClaseForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        if (userData.membership !== 'premium') {
+            alert('Necesitas una suscripción Premium para usar esta herramienta');
+            return;
+        }
+
+        const nivel = document.getElementById('nivel').value;
+        const materia = document.getElementById('materia').value;
+        const tema = document.getElementById('tema').value;
+        const duracion = document.getElementById('duracion').value;
+        const objetivos = document.getElementById('objetivos').value;
+
+        resultadoPlan.textContent = "Generando plan de clase...";
+        exportPdfBtn.disabled = true;
+
+        try {
+            const prompt = `Genera un plan de clase para:
+- Nivel: ${nivel}
+- Materia: ${materia}
+- Tema: ${tema}
+- Duración: ${duracion} minutos
+- Objetivos: ${objetivos}
+
+Estructura requerida:
+1. Título (máx. 8 palabras)
+2. Objetivos de aprendizaje (3-5 puntos)
+3. Desarrollo de la clase (inicio, desarrollo, cierre)
+4. Evaluación (2-3 métodos)
+5. Recursos necesarios
+
+Formato: texto plano, sin introducciones. Máximo 250 palabras.`;
+
+            const response = await fetch('/api/ia/generatePlan', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                },
+                body: JSON.stringify({
+                    prompt: prompt,
+                    max_tokens: 600,
+                    temperature: 0.7
+                })
+            });
+
+            if (!response.ok) throw new Error('Error en la API');
+
+            const data = await response.json();
+            resultadoPlan.textContent = data.response || data.choices?.[0]?.text;
+            exportPdfBtn.disabled = false;
+
+        } catch (error) {
+            console.error('Error:', error);
+            resultadoPlan.textContent = `Error: ${error.message}`;
+            exportPdfBtn.disabled = true;
+        }
+    });
+
+    // Exportar a PDF
+    exportPdfBtn.addEventListener('click', () => {
+        if (!resultadoPlan.innerText.trim() || resultadoPlan.innerText.includes("Generando") || 
+            resultadoPlan.innerText.includes("Error")) {
+            alert('Genera primero un plan de clase válido');
+            return;
+        }
+
+        const materia = document.getElementById('materia').value;
+        const tema = document.getElementById('tema').value;
+
+        const opt = {
+            margin: 0.5,
+            filename: `Plan_Clase_${materia}_${tema.substring(0, 15)}.pdf`,
+            image: { type: 'jpeg', quality: 0.95 },
+            html2canvas: { scale: 2 },
+            jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }
+        };
+
+        const content = `
+        <div style="font-family: Arial, sans-serif; padding:20px; max-width:600px; margin:0 auto;">
+            <h2 style="color:#1e293b; text-align:center; border-bottom:2px solid #3b82f6; padding-bottom:10px;">
+                Plan de Clase - ${materia}
+            </h2>
+            <div style="margin-top:20px;">
+                <p><strong>Tema:</strong> ${tema}</p>
+                <p><strong>Duración:</strong> ${document.getElementById('duracion').value} minutos</p>
+            </div>
+            <div style="background:#f8fafc; padding:15px; border-radius:8px; margin-top:15px; border-left:4px solid #3b82f6;">
+                <pre style="white-space:pre-wrap; font-family:inherit; line-height:1.5; color:#334155;">
+${resultadoPlan.innerText}
+                </pre>
+            </div>
+            <div style="text-align:right; margin-top:20px; font-size:0.8em; color:#64748b;">
+                Generado con DidAppTic - ${new Date().toLocaleDateString()}
+            </div>
+        </div>`;
+
+        html2pdf().set(opt).from(content).save();
+    });
+
+    // 8. Sistema de membresía premium
     const btnPremium = document.querySelector('.btn-premium');
-    const popup = document.getElementById('premiumPopup');
-    const closePopup = document.querySelector('.close-popup');
+    const premiumPopup = document.getElementById('premiumPopup');
+    const closePremiumPopup = document.querySelector('.close-popup');
     const statusMessage = document.getElementById('premiumStatusMessage');
 
-    if (btnPremium) {
-        btnPremium.addEventListener('click', () => {
-            if (userData.membership !== 'premium') {
-                popup.classList.remove('hidden');
-            } else {
-                statusMessage.textContent = "✅ ¡Ya eres usuario Premium!";
-                statusMessage.classList.remove('hidden', 'error');
-                statusMessage.classList.add('success');
-                setTimeout(() => statusMessage.classList.add('hidden'), 3000);
-            }
-        });
-    }
+    btnPremium.addEventListener('click', () => {
+        if (userData.membership !== 'premium') {
+            premiumPopup.classList.remove('hidden');
+        } else {
+            statusMessage.textContent = "✅ ¡Ya eres usuario Premium!";
+            statusMessage.classList.remove('hidden', 'error');
+            statusMessage.classList.add('success');
+            setTimeout(() => statusMessage.classList.add('hidden'), 3000);
+        }
+    });
 
-    if (closePopup) {
-        closePopup.addEventListener('click', () => {
-            popup.classList.add('hidden');
-        });
-    }
+    closePremiumPopup.addEventListener('click', () => {
+        premiumPopup.classList.add('hidden');
+    });
 
-    // Verificar estado premium periódicamente
+    // 9. Verificación periódica de estado premium
     async function checkPremiumStatus() {
         try {
             const res = await fetch('/api/users/check-premium', {
@@ -179,8 +290,14 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // Solo verificar si no es premium
     if (userData.membership !== 'premium') {
         setInterval(checkPremiumStatus, 10000);
     }
+
+    // 10. Cerrar sesión
+    document.getElementById('logoutBtn').addEventListener('click', () => {
+        localStorage.removeItem('token');
+        localStorage.removeItem('userData');
+        window.location.href = 'login.html';
+    });
 });

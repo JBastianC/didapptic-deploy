@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LibretaEscolar - Editor interactivo</title>
+    <!-- Add to head -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/@svgdotjs/svg.js@3.0/dist/svg.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/4.2.12/marked.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jsplumb/2.15.6/js/jsplumb.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/styles/atom-one-dark.min.css">
+    <link href="https://cdn.jsdelivr.net/npm/@svgdotjs/svg.js@3.0/dist/svg.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="plano-viewer.css">
+</head>
+<body>
+    <div class="app-container">
+        <div class="toolbar">
+            <button id="newNoteBtn" class="main-button">
+                <i class="fas fa-plus"></i> Nueva Nota
+            </button>
+            <div class="tool-dropdown">
+                <button class="editor-button dropdown-toggle">
+                    <i class="fas fa-pen"></i> Modo
+                    <i class="fas fa-caret-down"></i>
+                </button>
+                <div class="dropdown-menu">
+                    <button id="richTextMode" class="dropdown-item active">
+                        <i class="fas fa-font"></i> Texto Enriquecido
+                    </button>
+                    <button id="markdownMode" class="dropdown-item">
+                        <i class="fab fa-markdown"></i> Markdown
+                    </button>
+                </div>
+            </div>
+            <div class="status-indicator">
+                <span id="saveStatus" class="saved">Guardado</span>
+            </div>
+        </div>
+
+        <div class="editor-container">
+            <div class="sidebar">
+                <div class="notes-tabs">
+                    <div class="note-tab active" data-note-id="note-1">
+                        <span class="tab-title">Nota 1</span>
+                        <button class="tab-close"><i class="fas fa-times"></i></button>
+                    </div>
+                    <div class="note-tab" data-note-id="note-2">
+                        <span class="tab-title">Nota 2</span>
+                        <button class="tab-close"><i class="fas fa-times"></i></button>
+                    </div>
+                    <div class="note-tab" data-note-id="note-3">
+                        <span class="tab-title">Nota 3</span>
+                        <button class="tab-close"><i class="fas fa-times"></i></button>
+                    </div>
+                </div>
+                <div class="line-container">
+                    <div class="line"></div>
+                    <div class="line"></div>
+                    <div class="line"></div>
+                    <div class="line"></div>
+                    <div class="line"></div>
+                    <div class="line"></div>
+                    <div class="line"></div>
+                    <div class="line"></div>
+                    <div class="line"></div>
+                    <div class="line"></div>
+                    <div class="line"></div>
+                    <div class="line"></div>
+                    <div class="line"></div>
+                    <div class="line"></div>
+                    <div class="line"></div>
+                </div>
+            </div>
+            
+            <div class="editor-area">
+                <div class="editor-toolbar">
+                    <button id="undoBtn" class="editor-button">
+                        <i class="fas fa-undo"></i> Deshacer
+                    </button>
+                    <button id="redoBtn" class="editor-button">
+                        <i class="fas fa-redo"></i> Rehacer
+                    </button>
+                    <div class="editor-toolbar-divider"></div>
+                    <button id="headingBtn" class="editor-button dropdown-toggle">
+                        <i class="fas fa-heading"></i>
+                        <i class="fas fa-caret-down"></i>
+                    </button>
+                    <div class="dropdown-menu heading-menu">
+                        <button data-command="formatBlock" data-value="h1" class="dropdown-item">H1</button>
+                        <button data-command="formatBlock" data-value="h2" class="dropdown-item">H2</button>
+                        <button data-command="formatBlock" data-value="h3" class="dropdown-item">H3</button>
+                        <button data-command="formatBlock" data-value="p" class="dropdown-item">Párrafo</button>
+                    </div>
+                </div>
+                
+                <div id="editor" class="content" contenteditable="true">
+                    <h1>Sin Título</h1>
+                    <p></p>
+                </div>
+                
+                <div id="markdownEditor" class="content markdown-editor" style="display: none;">
+                    <textarea id="markdownText" placeholder="Escribe tu texto en Markdown aquí..."></textarea>
+                    <div id="markdownPreview" class="markdown-preview"></div>
+                </div>
+                
+                <div class="bottom-tools">
+                    <div class="tool-buttons">
+                        <button id="imageBtn" class="tool-button" data-tool="image" title="Insertar imagen">
+                            <i class="fas fa-image"></i>
+                        </button>
+                        <button id="mindmapBtn" class="tool-button" data-tool="mindmap" title="Mapa mental">
+                            <i class="fas fa-project-diagram"></i>
+                        </button>
+                        <button id="infographicBtn" class="tool-button" data-tool="infographic" title="Infografía">
+                            <i class="fas fa-chart-pie"></i>
+                        </button>
+                        <button id="codeBlockBtn" class="tool-button" data-tool="code" title="Bloque de código">
+                            <i class="fas fa-code"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Menú flotante para formato de texto -->
+    <div id="textFormatMenu" class="floating-menu format-menu">
+        <div class="format-group">
+            <button data-command="bold" class="format-button" title="Negrita">
+                <i class="fas fa-bold"></i>
+            </button>
+            <button data-command="italic" class="format-button" title="Itálica">
+                <i class="fas fa-italic"></i>
+            </button>
+            <button data-command="underline" class="format-button" title="Subrayado">
+                <i class="fas fa-underline"></i>
+            </button>
+            <button data-command="strikeThrough" class="format-button" title="Tachado">
+                <i class="fas fa-strikethrough"></i>
+            </button>
+        </div>
+        <div class="format-divider"></div>
+        <div class="format-group">
+            <button data-command="justifyLeft" class="format-button" title="Alinear izquierda">
+                <i class="fas fa-align-left"></i>
+            </button>
+            <button data-command="justifyCenter" class="format-button" title="Centrar">
+                <i class="fas fa-align-center"></i>
+            </button>
+            <button data-command="justifyRight" class="format-button" title="Alinear derecha">
+                <i class="fas fa-align-right"></i>
+            </button>
+            <button data-command="justifyFull" class="format-button" title="Justificar">
+                <i class="fas fa-align-justify"></i>
+            </button>
+        </div>
+        <div class="format-divider"></div>
+        <div class="format-group">
+            <button data-command="fontSize" data-value="3" class="format-button" title="Tamaño normal">
+                <span class="format-icon-md">A</span>
+            </button>
+            <button data-command="fontSize" data-value="5" class="format-button" title="Tamaño grande">
+                <span class="format-icon-lg">A</span>
+            </button>
+            <div class="color-picker">
+                <button data-command="foreColor" class="format-button color-btn" title="Color de texto">
+                    <i class="fas fa-palette"></i>
+                </button>
+                <input type="color" class="color-input" id="textColorPicker">
+            </div>
+        </div>
+    </div>
+    
+    <!-- Diálogo para cargar imágenes -->
+    <div id="imageDialog" class="dialog">
+        <div class="dialog-content">
+            <h3>Insertar imagen</h3>
+            <div class="dialog-form">
+                <label for="imageUrl">URL de la imagen:</label>
+                <input type="text" id="imageUrl" placeholder="https://ejemplo.com/imagen.jpg">
+                <div class="dialog-buttons">
+                    <button id="cancelImageBtn" class="dialog-button cancel">Cancelar</button>
+                    <button id="insertImageBtn" class="dialog-button primary">Insertar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Diálogo para mapa mental mejorado -->
+    <div id="mindmapDialog" class="dialog">
+        <div class="dialog-content mindmap-dialog">
+            <div class="dialog-header">
+                <h3>Editor de Mapa Mental</h3>
+                <button id="closeMindmapBtn" class="close-dialog-btn"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="mindmap-toolbar">
+                <div class="toolbar-group">
+                    <button id="addCentralNodeBtn" class="mindmap-toolbar-btn" title="Nodo central">
+                        <i class="fas fa-bullseye"></i>
+                    </button>
+                    <button id="addNodeBtn" class="mindmap-toolbar-btn" title="Añadir nodo">
+                        <i class="fas fa-plus-circle"></i>
+                    </button>
+                    <button id="deleteElementBtn" class="mindmap-toolbar-btn" title="Eliminar elemento">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+                <div class="toolbar-divider"></div>
+                <div class="toolbar-group">
+                    <button id="addConnectionBtn" class="mindmap-toolbar-btn" title="Añadir conexión">
+                        <i class="fas fa-project-diagram"></i>
+                    </button>
+                    <button id="connectionStyleBtn" class="mindmap-toolbar-btn dropdown-toggle" title="Estilo de conexión">
+                        <i class="fas fa-bezier-curve"></i>
+                        <i class="fas fa-caret-down"></i>
+                    </button>
+                    <div class="dropdown-menu connection-style-menu">
+                        <button data-style="straight" class="dropdown-item">Recta</button>
+                        <button data-style="curved" class="dropdown-item">Curva</button>
+                        <button data-style="orthogonal" class="dropdown-item">Ortogonal</button>
+                    </div>
+                </div>
+                <div class="toolbar-divider"></div>
+                <div class="toolbar-group">
+                    <button id="nodeStyleBtn" class="mindmap-toolbar-btn dropdown-toggle" title="Estilo de nodo">
+                        <i class="fas fa-palette"></i>
+                        <i class="fas fa-caret-down"></i>
+                    </button>
+                    <div class="dropdown-menu node-style-menu">
+                        <div class="color-options">
+                            <label>Color de fondo:</label>
+                            <input type="color" id="nodeBgColor" value="#ffffff">
+                            <label>Color de borde:</label>
+                            <input type="color" id="nodeBorderColor" value="#cccccc">
+                            <label>Color de texto:</label>
+                            <input type="color" id="nodeTextColor" value="#000000">
+                        </div>
+                        <div class="shape-options">
+                            <label>Forma:</label>
+                            <div class="shape-buttons">
+                                <button data-shape="rectangle" class="shape-btn"><i class="fas fa-square"></i></button>
+                                <button data-shape="rounded" class="shape-btn"><i class="fas fa-square"></i></button>
+                                <button data-shape="ellipse" class="shape-btn"><i class="fas fa-circle"></i></button>
+                                <button data-shape="diamond" class="shape-btn"><i class="fas fa-diamond"></i></button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="toolbar-divider"></div>
+                <div class="toolbar-group">
+                    <button id="addIconBtn" class="mindmap-toolbar-btn dropdown-toggle" title="Añadir icono">
+                        <i class="fas fa-icons"></i>
+                        <i class="fas fa-caret-down"></i>
+                    </button>
+                    <div class="dropdown-menu icon-menu">
+                        <div class="icon-grid">
+                            <button class="icon-btn"><i class="fas fa-lightbulb"></i></button>
+                            <button class="icon-btn"><i class="fas fa-brain"></i></button>
+                            <button class="icon-btn"><i class="fas fa-book"></i></button>
+                            <button class="icon-btn"><i class="fas fa-graduation-cap"></i></button>
+                            <button class="icon-btn"><i class="fas fa-chart-line"></i></button>
+                            <button class="icon-btn"><i class="fas fa-globe"></i></button>
+                            <button class="icon-btn"><i class="fas fa-cog"></i></button>
+                            <button class="icon-btn"><i class="fas fa-star"></i></button>
+                            <button class="icon-btn"><i class="fas fa-heart"></i></button>
+                            <button class="icon-btn"><i class="fas fa-flag"></i></button>
+                            <button class="icon-btn"><i class="fas fa-check"></i></button>
+                            <button class="icon-btn"><i class="fas fa-times"></i></button>
+                            <button class="icon-btn"><i class="fas fa-exclamation"></i></button>
+                            <button class="icon-btn"><i class="fas fa-question"></i></button>
+                            <button class="icon-btn"><i class="fas fa-clock"></i></button>
+                            <button class="icon-btn"><i class="fas fa-calendar"></i></button>
+                        </div>
+                    </div>
+                </div>
+                <div class="toolbar-divider"></div>
+                <div class="toolbar-group">
+                    <button id="mindmapLayoutBtn" class="mindmap-toolbar-btn dropdown-toggle" title="Diseño del mapa">
+                        <i class="fas fa-sitemap"></i>
+                        <i class="fas fa-caret-down"></i>
+                    </button>
+                    <div class="dropdown-menu layout-menu">
+                        <button data-layout="radial" class="dropdown-item">Radial</button>
+                        <button data-layout="tree-right" class="dropdown-item">Árbol (Derecha)</button>
+                        <button data-layout="tree-left" class="dropdown-item">Árbol (Izquierda)</button>
+                        <button data-layout="organic" class="dropdown-item">Orgánico</button>
+                    </div>
+                </div>
+            </div>
+            <div class="mindmap-canvas-container">
+                <div id="mindmapCanvas" class="mindmap-canvas"></div>
+            </div>
+            <div class="dialog-buttons">
+                <button id="cancelMindmapBtn" class="dialog-button cancel">Cancelar</button>
+                <button id="insertMindmapBtn" class="dialog-button primary">Insertar</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Diálogo para bloque de código -->
+    <div id="codeDialog" class="dialog">
+        <div class="dialog-content">
+            <h3>Insertar bloque de código</h3>
+            <div class="dialog-form">
+                <label for="codeLanguage">Lenguaje:</label>
+                <select id="codeLanguage">
+                    <option value="javascript">JavaScript</option>
+                    <option value="python">Python</option>
+                    <option value="html">HTML</option>
+                    <option value="css">CSS</option>
+                    <option value="java">Java</option>
+                    <option value="csharp">C#</option>
+                    <option value="php">PHP</option>
+                    <option value="ruby">Ruby</option>
+                    <option value="plaintext">Texto plano</option>
+                </select>
+                <label for="codeContent">Código:</label>
+                <textarea id="codeContent" rows="10"></textarea>
+                <div class="dialog-buttons">
+                    <button id="cancelCodeBtn" class="dialog-button cancel">Cancelar</button>
+                    <button id="insertCodeBtn" class="dialog-button primary">Insertar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/highlight.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/4.3.0/marked.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@svgdotjs/svg.js@3.0/dist/svg.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jsplumb/2.15.6/js/jsplumb.min.js"></script>
+    <script src="plano-viewer.js"></script>
+</body>
+</html>

@@ -3,6 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="/fav/favicon.svg" type="image/svg+xml">
+    <link rel="icon" href="/fav/favicon.ico" type="image/x-icon">
+    <link rel="icon" href="/fav/favicon-1.png" type="image/png">
     <title>Plano de la Realidad</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="styles2.css">
@@ -199,9 +202,29 @@
                     </div>
 
                     <form id="topic-form">
+                        <!-- Cambiar el input de topic-name por un select -->
                         <div class="form-group">
                             <label for="topic-name">Nombre del Tema</label>
-                            <input type="text" id="topic-name" placeholder="Nombre del tema" required>
+                            <select id="topic-name" required>
+                                <option value="">Selecciona un tema</option>
+                                <option value="escasez_agua">Escasez de agua</option>
+                                <option value="contaminacion_aire">Contaminación del aire</option>
+                                <option value="basura_residuos">Manejo de basura y residuos</option>
+                                <option value="seguridad_alimentaria">Seguridad alimentaria</option>
+                                <option value="energia_renovable">Autosuficiencia energética</option>
+                                <option value="movilidad_transporte">Movilidad y transporte</option>
+                                <option value="violencia_comunitaria">Violencia comunitaria</option>
+                                <option value="salud_mental">Salud mental</option>
+                                <option value="educacion_calidad">Educación de calidad</option>
+                                <option value="empleo_jovenes">Empleo juvenil</option>
+                                <option value="espacios_publicos">Espacios públicos deteriorados</option>
+                                <option value="contaminacion_visual">Contaminación visual</option>
+                                <option value="conservacion_areas_verdes">Conservación de áreas verdes</option>
+                                <option value="consumo_responsable">Consumo responsable</option>
+                                <option value="tecnologia_comunidad">Brecha tecnológica</option>
+                                <option value="otros">Otro (especificar)</option>
+                            </select>
+                            <input type="text" id="other-topic" class="hidden" placeholder="Especifica otro tema">
                         </div>
 
                         <div class="form-group">

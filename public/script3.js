@@ -6,6 +6,22 @@ document.addEventListener('DOMContentLoaded', async function() {
     F5: ["Lenguajes", "Saberes y pensamiento", "Ética, Naturaleza", "De lo humano"]
   };
 
+  // Opciones para Eje Articulador
+  const ejeOptions = [
+    "Inclusión", 
+    "Pensamiento crítico", 
+    "Interculturalidad crítica", 
+    "Igualdad de género", 
+    "Vida saludable", 
+    "Apropiación de las culturas a través de la lectura y la escritura", 
+    "Artes y experiencias estéticas"
+  ];
+
+  // Opciones para Nivel de Logro
+  const nivelOptions = [
+    "", "", "", "", "", "Visualizar"
+  ].filter(opt => opt !== ""); // Eliminar opciones vacías
+
   // Función para sanitizar nombres de archivo
   function sanitizeFilename(name) {
     return name
@@ -13,6 +29,64 @@ document.addEventListener('DOMContentLoaded', async function() {
       .replace(/\s+/g, '_')
       .normalize("NFD").replace(/[\u0300-\u036f]/g, "");
   }
+
+  // Agregar al inicio del script3.js
+  function setupPdaSelectionHandlers() {
+    const pdasList = document.getElementById('pdasList');
+    const selectedPdasList = document.getElementById('selectedPdasList');
+    
+    // Manejar selección de PDAs
+    pdasList.addEventListener('change', function(e) {
+        if (e.target.type === 'checkbox') {
+            const pdaText = e.target.nextElementSibling.textContent;
+            const pdaId = e.target.id;
+            
+            if (e.target.checked) {
+                // Crear elemento para lista de seleccionados
+                const selectedItem = document.createElement('div');
+                selectedItem.className = 'pda-item';
+                selectedItem.dataset.pdaId = pdaId;
+                selectedItem.textContent = pdaText;
+                
+                // Botón para eliminar
+                const deleteBtn = document.createElement('button');
+                deleteBtn.innerHTML = '❌';
+                deleteBtn.className = 'delete-pda-btn';
+                deleteBtn.onclick = function() {
+                    selectedItem.remove();
+                    document.getElementById(pdaId).checked = false;
+                };
+                
+                selectedItem.appendChild(deleteBtn);
+                selectedPdasList.appendChild(selectedItem);
+            } else {
+                // Eliminar de la lista de seleccionados
+                const itemToRemove = selectedPdasList.querySelector(`[data-pda-id="${pdaId}"]`);
+                if (itemToRemove) itemToRemove.remove();
+            }
+        }
+    });
+    
+    // Botón para limpiar todos
+    const clearAllBtn = document.createElement('button');
+    clearAllBtn.textContent = 'Limpiar todos';
+    clearAllBtn.className = 'btn-cancel';
+    clearAllBtn.style.margin = '10px 0';
+    clearAllBtn.onclick = function() {
+        selectedPdasList.innerHTML = '';
+        pdasList.querySelectorAll('input[type="checkbox"]').forEach(cb => {
+            cb.checked = false;
+        });
+    };
+    
+    selectedPdasList.parentNode.appendChild(clearAllBtn);
+}
+
+  // Llamar esta función al final del DOMContentLoaded
+  document.addEventListener('DOMContentLoaded', async function() {
+      // ... código existente ...
+      setupPdaSelectionHandlers();
+  });
 
   // Función para cargar contenidos
   async function loadContenidos(fase, campo) {
@@ -59,144 +133,313 @@ document.addEventListener('DOMContentLoaded', async function() {
     }
   }
 
-  // Función para cargar PDAs basados en contenido seleccionado
-  async function loadPdasForContenido(contenido) {
-    try {
-      const fase = document.getElementById('fase-pda').value;
-      const campo = document.getElementById('campo-pda').value;
-      
-      if (!fase || !campo) return null;
-      
-      const contenidosData = await loadContenidos(fase, campo);
-      if (!contenidosData || !contenidosData[contenido]) return null;
-      
-      const pdasList = document.getElementById('pdasList');
-      pdasList.innerHTML = '';
-      
-      // Agrupar PDAs por grado
-      const gradosPdas = {};
-      Object.entries(contenidosData[contenido]).forEach(([grado, pdas]) => {
-        gradosPdas[grado] = pdas;
-      });
-      
-      // Ordenar grados alfabéticamente
-      const sortedGrados = Object.keys(gradosPdas).sort();
-      
-      sortedGrados.forEach(grado => {
-        const gradoHeader = document.createElement('h4');
-        gradoHeader.textContent = grado;
-        pdasList.appendChild(gradoHeader);
-        
-        gradosPdas[grado].forEach((pda, index) => {
-          const pdaItem = document.createElement('div');
-          pdaItem.className = 'pda-item';
-          
-          const checkbox = document.createElement('input');
-          checkbox.type = 'checkbox';
-          checkbox.id = `pda-${grado}-${index}`;
-          checkbox.value = `${grado}: ${pda}`;
-          
-          const label = document.createElement('label');
-          label.htmlFor = checkbox.id;
-          label.textContent = pda;
-          
-          pdaItem.appendChild(checkbox);
-          pdaItem.appendChild(label);
-          pdasList.appendChild(pdaItem);
-        });
-      });
-      
-      return true;
-    } catch (err) {
-      console.error('Error al cargar PDAs:', err);
-      return null;
-    }
-  }
-
-  // Función para manejar la selección de contenidos
-  function setupContenidosCheckboxes() {
-    const contenidosList = document.getElementById('contenidosList');
-    contenidosList.addEventListener('change', async function(e) {
-      if (e.target.type === 'checkbox') {
-        const contenido = e.target.value;
-        const isChecked = e.target.checked;
-        
-        // Desmarcar otros contenidos (selección única)
-        if (isChecked) {
-          document.querySelectorAll('#contenidosList input[type="checkbox"]').forEach(cb => {
-            if (cb !== e.target) cb.checked = false;
-          });
-          
-          // Cargar PDAs para este contenido
-          await loadPdasForContenido(contenido);
-        } else {
-          document.getElementById('pdasList').innerHTML = '';
-        }
-      }
-    });
-  }
-
-  // Función para manejar la selección de PDAs
-  function setupPdasCheckboxes() {
-    const pdasList = document.getElementById('pdasList');
-    pdasList.addEventListener('change', function(e) {
-      if (e.target.type === 'checkbox') {
-        const selectedPdasList = document.getElementById('selectedPdasList');
-        
-        if (e.target.checked) {
-          // Agregar a la lista de seleccionados
-          const selectedItem = document.createElement('div');
-          selectedItem.className = 'pda-item';
-          selectedItem.textContent = e.target.value;
-          selectedPdasList.appendChild(selectedItem);
-        } else {
-          // Remover de la lista de seleccionados
-          const items = selectedPdasList.querySelectorAll('.pda-item');
-          items.forEach(item => {
-            if (item.textContent === e.target.value) {
-              item.remove();
-            }
-          });
-        }
-      }
-    });
-  }
-
-  // [Modificada] Función para abrir el selector de contenidos/PDA
+  // Función para abrir el selector de contenidos/PDA
   function openContenidosSelector(rowId, button) {
     currentPdaButton = button;
     currentPdaRowId = rowId;
-    document.getElementById('pda-selector-overlay').classList.add('active');
+    const popup = document.getElementById('pda-selector-overlay');
+    popup.classList.add('active');
     
-    // Resetear el selector
+    // Resetear las listas
     document.getElementById('contenidosList').innerHTML = '';
     document.getElementById('pdasList').innerHTML = '';
     document.getElementById('selectedPdasList').innerHTML = '';
     
-    // Obtener referencias a los selects del renglón principal
-    const rowFaseSelect = document.querySelector(`tr[data-row-id="${rowId}"] select:nth-of-type(1)`);
-    const rowCampoSelect = document.querySelector(`tr[data-row-id="${rowId}"] select:nth-of-type(2)`);
+    // Eliminar cualquier selector de campos formativo previo
+    const existingCampoSelector = document.querySelector('.campo-selector-container');
+    if (existingCampoSelector) {
+        existingCampoSelector.remove();
+    }
     
-    // Obtener referencias a los selects del selector de PDA
-    const selectorFaseSelect = document.getElementById('fase-pda');
-    const selectorCampoSelect = document.getElementById('campo-pda');
-    
-    // Sincronizar valores iniciales
-    if (rowFaseSelect && rowCampoSelect) {
-        selectorFaseSelect.value = rowFaseSelect.value;
+    // Cargar datos del renglón principal
+    const rowData = rowsState[rowId];
+    if (rowData && rowData.fase) {
+        // Crear selector de campos formativos para el popup
+        createCampoSelector(rowData);
         
-        // Forzar actualización de campos disponibles
-        if (selectorFaseSelect.value) {
-            const event = new Event('change');
-            selectorFaseSelect.dispatchEvent(event);
-            
-            // Esperar un breve momento para que se actualicen las opciones
-            setTimeout(() => {
-                selectorCampoSelect.value = rowCampoSelect.value;
-            }, 50);
+        // Cargar selecciones guardadas si existen
+        if (rowData.campos && rowData.campos.length > 0) {
+            loadSavedSelections(rowData);
         }
     }
+}
+
+function loadSavedSelections(rowData) {
+    // 1. Marcar los campos formativos guardados
+    const camposCheckboxes = document.querySelectorAll('#popupCamposList input[type="checkbox"]');
+    camposCheckboxes.forEach(checkbox => {
+        if (rowData.campos.includes(checkbox.value)) {
+            checkbox.checked = true;
+        }
+    });
+
+    // 2. Cargar contenidos y marcar los seleccionados
+    if (rowData.contenidos && rowData.contenidos.length > 0) {
+        // Esperar a que se carguen los contenidos
+        setTimeout(async () => {
+            const contenidosCheckboxes = document.querySelectorAll('#contenidosList input[type="checkbox"]');
+            
+            contenidosCheckboxes.forEach(checkbox => {
+                const [campo, contenido] = checkbox.value.split('|');
+                if (rowData.contenidos.includes(contenido)) {
+                    checkbox.checked = true;
+                    // Cargar los PDAs para este contenido
+                    loadPdasForContenido(contenido, campo, rowData.pda);
+                }
+            });
+        }, 100);
+    }
+}
+
+// Modificar loadPdasForContenido para aceptar PDAs pre-seleccionados
+async function loadPdasForContenido(contenido, campo, preselectedPdas = []) {
+    const fase = document.querySelector(`tr[data-row-id="${currentPdaRowId}"] .field-group:nth-child(2) select`).value;
+    const faseSimple = fase.replace('Fase ', 'F');
+    const pdasList = document.getElementById('pdasList');
+    
+    try {
+        const contenidosData = await loadContenidos(faseSimple, campo);
+        if (!contenidosData || !contenidosData[contenido]) return;
+        
+        // Agregar título del contenido
+        const contenidoHeader = document.createElement('h4');
+        contenidoHeader.textContent = `${campo} > ${contenido}`;
+        contenidoHeader.style.color = '#64748b';
+        contenidoHeader.dataset.contenidoId = `${campo}-${contenido}`;
+        pdasList.appendChild(contenidoHeader);
+        
+        // Agregar PDAs por grado
+        const gradosPdas = contenidosData[contenido];
+        const sortedGrados = Object.keys(gradosPdas).sort();
+        
+        sortedGrados.forEach(grado => {
+            gradosPdas[grado].forEach((pda, index) => {
+                const pdaItem = document.createElement('div');
+                pdaItem.className = 'pda-item';
+                pdaItem.dataset.contenidoId = `${campo}-${contenido}`;
+                
+                const checkbox = document.createElement('input');
+                checkbox.type = 'checkbox';
+                checkbox.id = `pda-${sanitizeFilename(campo)}-${sanitizeFilename(contenido)}-${grado}-${index}`;
+                checkbox.value = `${grado}: ${pda}`;
+                
+                // Marcar como seleccionado si está en los PDAs guardados
+                if (preselectedPdas && preselectedPdas.includes(`${grado}: ${pda}`)) {
+                    checkbox.checked = true;
+                    updateSelectedPdas(checkbox);
+                }
+                
+                checkbox.addEventListener('change', function() {
+                    updateSelectedPdas(this);
+                });
+                
+                const label = document.createElement('label');
+                label.htmlFor = checkbox.id;
+                label.textContent = pda;
+                
+                pdaItem.appendChild(checkbox);
+                pdaItem.appendChild(label);
+                pdasList.appendChild(pdaItem);
+            });
+        });
+    } catch (error) {
+        console.error(`Error cargando PDAs para ${contenido}:`, error);
+    }
+}
+
+// Modificar los event listeners para resetear PDAs cuando cambian los campos o contenidos
+function createCampoSelector(rowData) {
+    const camposContainer = document.createElement('div');
+    camposContainer.className = 'campo-selector-container';
+    camposContainer.innerHTML = `
+        <h3>Campos Formativos</h3>
+        <div class="campos-list" id="popupCamposList"></div>
+    `;
+    
+    document.getElementById('contenidosContainer').prepend(camposContainer);
+    
+    const camposList = document.getElementById('popupCamposList');
+    const availableCampos = ["Lenguajes", "Saberes y pensamiento", "Ética, Naturaleza", "De lo humano"];
+    
+    availableCampos.forEach(campo => {
+        const campoItem = document.createElement('div');
+        campoItem.className = 'campo-item';
+        
+        const checkbox = document.createElement('input');
+        checkbox.type = 'checkbox';
+        checkbox.id = `campo-${sanitizeFilename(campo)}`;
+        checkbox.value = campo;
+        checkbox.checked = rowData.campos && rowData.campos.includes(campo);
+        
+        checkbox.addEventListener('change', async () => {
+            // Resetear PDAs seleccionados cuando cambian los campos
+            document.getElementById('selectedPdasList').innerHTML = '';
+            await updateContenidosList(rowData.fase);
+        });
+        
+        const label = document.createElement('label');
+        label.htmlFor = checkbox.id;
+        label.textContent = campo;
+        
+        campoItem.appendChild(checkbox);
+        campoItem.appendChild(label);
+        camposList.appendChild(campoItem);
+    });
+    
+    // Cargar contenidos iniciales
+    updateContenidosList(rowData.fase);
+}
+
+// Modificar la función que maneja los cambios en contenidos
+async function updateContenidosList(fase) {
+    const faseSimple = fase.replace('Fase ', 'F');
+    const contenidosList = document.getElementById('contenidosList');
+    contenidosList.innerHTML = '';
+    
+    const selectedCampos = Array.from(
+        document.querySelectorAll('#popupCamposList input[type="checkbox"]:checked')
+    ).map(cb => cb.value);
+    
+    for (const campo of selectedCampos) {
+        try {
+            const contenidosData = await loadContenidos(faseSimple, campo);
+            if (!contenidosData) continue;
+            
+            // Agregar título del campo formativo
+            const campoHeader = document.createElement('h4');
+            campoHeader.textContent = campo;
+            campoHeader.style.color = '#eb4625';
+            campoHeader.style.marginTop = '10px';
+            contenidosList.appendChild(campoHeader);
+            
+            // Agregar contenidos
+            Object.keys(contenidosData).forEach(contenido => {
+                const contenidoItem = document.createElement('div');
+                contenidoItem.className = 'contenido-item';
+                
+                const checkbox = document.createElement('input');
+                checkbox.type = 'checkbox';
+                checkbox.id = `cont-${sanitizeFilename(campo)}-${sanitizeFilename(contenido)}`;
+                checkbox.value = `${campo}|${contenido}`;
+                
+                checkbox.addEventListener('change', async () => {
+                    if (checkbox.checked) {
+                        // Resetear PDAs seleccionados cuando se cambian contenidos
+                        document.getElementById('selectedPdasList').innerHTML = '';
+                        await loadPdasForContenido(contenido, campo);
+                    } else {
+                        removePdasForContenido(contenido, campo);
+                    }
+                });
+                
+                const label = document.createElement('label');
+                label.htmlFor = checkbox.id;
+                label.textContent = contenido;
+                
+                contenidoItem.appendChild(checkbox);
+                contenidoItem.appendChild(label);
+                contenidosList.appendChild(contenidoItem);
+            });
+        } catch (error) {
+            console.error(`Error cargando contenidos para ${campo}:`, error);
+        }
+    }
+}
+
+async function loadPdasForContenido(contenido, campo) {
+  const fase = document.querySelector(`tr[data-row-id="${currentPdaRowId}"] .field-group:nth-child(2) select`).value;
+  const faseSimple = fase.replace('Fase ', 'F');
+  const pdasList = document.getElementById('pdasList');
+  
+  try {
+      const contenidosData = await loadContenidos(faseSimple, campo);
+      if (!contenidosData || !contenidosData[contenido]) return;
+      
+      // Agregar título del contenido
+      const contenidoHeader = document.createElement('h4');
+      contenidoHeader.textContent = `${campo} > ${contenido}`;
+      contenidoHeader.style.color = '#64748b';
+      contenidoHeader.dataset.contenidoId = `${campo}-${contenido}`;
+      pdasList.appendChild(contenidoHeader);
+      
+      // Agregar PDAs por grado
+      const gradosPdas = contenidosData[contenido];
+      const sortedGrados = Object.keys(gradosPdas).sort();
+      
+      sortedGrados.forEach(grado => {
+          gradosPdas[grado].forEach((pda, index) => {
+              const pdaItem = document.createElement('div');
+              pdaItem.className = 'pda-item';
+              pdaItem.dataset.contenidoId = `${campo}-${contenido}`;
+              
+              const checkbox = document.createElement('input');
+              checkbox.type = 'checkbox';
+              checkbox.id = `pda-${sanitizeFilename(campo)}-${sanitizeFilename(contenido)}-${grado}-${index}`;
+              checkbox.value = `${grado}: ${pda}`;
+              
+              checkbox.addEventListener('change', function() {
+                  updateSelectedPdas(this);
+              });
+              
+              const label = document.createElement('label');
+              label.htmlFor = checkbox.id;
+              label.textContent = pda;
+              
+              pdaItem.appendChild(checkbox);
+              pdaItem.appendChild(label);
+              pdasList.appendChild(pdaItem);
+          });
+      });
+  } catch (error) {
+      console.error(`Error cargando PDAs para ${contenido}:`, error);
   }
+}
+
+function removePdasForContenido(contenido, campo) {
+  const pdasList = document.getElementById('pdasList');
+  const contenidoId = `${campo}-${contenido}`;
+  
+  // Eliminar header y PDAs del contenido
+  const elementsToRemove = pdasList.querySelectorAll(`[data-contenido-id="${contenidoId}"]`);
+  elementsToRemove.forEach(el => el.remove());
+  
+  // Eliminar PDAs seleccionados de este contenido
+  const selectedPdasList = document.getElementById('selectedPdasList');
+  const selectedToRemove = selectedPdasList.querySelectorAll(`[data-contenido-id="${contenidoId}"]`);
+  selectedToRemove.forEach(el => el.remove());
+}
+
+function updateSelectedPdas(checkbox) {
+  const selectedPdasList = document.getElementById('selectedPdasList');
+  const pdaItem = checkbox.closest('.pda-item');
+  const contenidoId = pdaItem.dataset.contenidoId;
+  const pdaText = pdaItem.querySelector('label').textContent;
+  
+  if (checkbox.checked) {
+      const selectedItem = document.createElement('div');
+      selectedItem.className = 'pda-item';
+      selectedItem.textContent = pdaText;
+      selectedItem.dataset.contenidoId = contenidoId;
+      
+      const deleteBtn = document.createElement('button');
+      deleteBtn.innerHTML = '❌';
+      deleteBtn.className = 'delete-pda-btn';
+      deleteBtn.onclick = function() {
+          selectedItem.remove();
+          checkbox.checked = false;
+      };
+      
+      selectedItem.appendChild(deleteBtn);
+      selectedPdasList.appendChild(selectedItem);
+  } else {
+      const items = selectedPdasList.querySelectorAll('.pda-item');
+      items.forEach(item => {
+          if (item.textContent.replace('❌', '').trim() === pdaText) {
+              item.remove();
+          }
+      });
+  }
+}
 
   // Verificar autenticación y cargar datos del usuario
   const userData = JSON.parse(localStorage.getItem('userData'));
@@ -205,13 +448,13 @@ document.addEventListener('DOMContentLoaded', async function() {
     return;
   }
 
-  // Mostrar información del usuario
+  // Mostrar información del usuario en la barra superior
   document.getElementById('userEmail').textContent = userData.email;
   const membershipBadge = document.getElementById('userMembership');
   membershipBadge.textContent = userData.membership === 'premium' ? 'Premium' : 'Básico';
   membershipBadge.classList.add(userData.membership === 'premium' ? 'premium' : 'basic');
 
-  // Configurar el botón premium
+  // Configurar el botón premium y mensaje de estado
   const btnPremium = document.querySelector('.btn-premium');
   const premiumStatusContainer = document.createElement('div');
   premiumStatusContainer.className = 'premium-status-container';
@@ -225,6 +468,7 @@ document.addEventListener('DOMContentLoaded', async function() {
     document.body.insertBefore(premiumStatusContainer, document.body.firstChild);
   }
 
+  // Botón premium
   const popup = document.getElementById('premiumPopup');
   const closePopup = document.querySelector('.close-popup');
   const statusMessage = document.getElementById('premiumStatusMessage');
@@ -261,6 +505,7 @@ document.addEventListener('DOMContentLoaded', async function() {
       }
   ];
   
+  // Solo agregar herramientas de IA si es premium
   if (isPremium) {
       menuItems.push({
           icon: '<path d="M13 10V3L4 14h7v7l9-11h-7z"/>',
@@ -345,7 +590,7 @@ document.addEventListener('DOMContentLoaded', async function() {
     }
   }
 
-  // Cargar problemas desde el Plano de la Realidad
+  // Cargar problemas desde el Plano de la Realidad (backend)
   async function loadProblemsFromReality() {
     try {
       const res = await fetch('/api/plans', {
@@ -375,6 +620,8 @@ document.addEventListener('DOMContentLoaded', async function() {
   let problemsFromSituation = await loadProblemsFromReality();
   let rowsState = {};
   let rowCounter = 0;
+
+  // Variables para el selector de PDA
   let currentPdaButton = null;
   let currentPdaRowId = null;
 
@@ -472,218 +719,47 @@ document.addEventListener('DOMContentLoaded', async function() {
     });
   }
 
-  // Configurar eventos para el selector de contenidos/PDA
-  setupContenidosCheckboxes();
-  setupPdasCheckboxes();
-
-  // [Modificado] Selector de PDA - Evento cambio de fase
-  document.getElementById('fase-pda').addEventListener('change', async function() {
-    const fase = this.value;
-    const campoSelect = document.getElementById('campo-pda');
-    
-    campoSelect.innerHTML = '<option value="">--Selecciona Campo--</option>';
-    if (fase && campoOptions[fase]) {
-        campoSelect.disabled = false;
-        campoOptions[fase].forEach(campo => {
-            const opt = document.createElement('option');
-            opt.value = campo;
-            opt.textContent = campo;
-            campoSelect.appendChild(opt);
-        });
-    } else {
-        campoSelect.disabled = true;
-    }
-    
-    // Actualizar el valor en el renglón principal si hay uno seleccionado
-    if (currentPdaRowId) {
-        const rowFaseSelect = document.querySelector(`tr[data-row-id="${currentPdaRowId}"] select:nth-of-type(1)`);
-        if (rowFaseSelect) {
-            rowFaseSelect.value = fase;
-            
-            // Actualizar el estado
-            if (rowsState[currentPdaRowId]) {
-                rowsState[currentPdaRowId].fase = fase;
-                // Limpiar el campo si no es compatible con la nueva fase
-                rowsState[currentPdaRowId].campos = '';
-                
-                // Actualizar el select de campos en el renglón principal
-                const rowCampoSelect = document.querySelector(`tr[data-row-id="${currentPdaRowId}"] select:nth-of-type(2)`);
-                if (rowCampoSelect) {
-                    rowCampoSelect.innerHTML = '<option value="">--Selecciona Campo--</option>';
-                    if (fase && campoOptions[fase]) {
-                        campoOptions[fase].forEach(campo => {
-                            const opt = document.createElement('option');
-                            opt.value = campo;
-                            opt.textContent = campo;
-                            rowCampoSelect.appendChild(opt);
-                        });
-                    }
-                    rowCampoSelect.value = '';
-                }
-            }
-            
-            // Forzar actualización de la interfaz
-            const rowElement = document.querySelector(`tr[data-row-id="${currentPdaRowId}"]`);
-            if (rowElement && typeof rowElement.checkCompletion === 'function') {
-                rowElement.checkCompletion();
-            }
-        }
-    }
-    
-    // Limpiar contenidos y PDAs cuando cambia la fase
-    document.getElementById('contenidosList').innerHTML = '';
-    document.getElementById('pdasList').innerHTML = '';
-    document.getElementById('selectedPdasList').innerHTML = '';
-  });
-
-  // [Modificado] Selector de PDA - Evento cambio de campo
-  document.getElementById('campo-pda').addEventListener('change', async function() {
-    const fase = document.getElementById('fase-pda').value;
-    const campo = this.value;
-    
-    // Actualizar el valor en el renglón principal si hay uno seleccionado
-    if (currentPdaRowId) {
-        const rowCampoSelect = document.querySelector(`tr[data-row-id="${currentPdaRowId}"] select:nth-of-type(2)`);
-        if (rowCampoSelect) {
-            rowCampoSelect.value = campo;
-            if (rowsState[currentPdaRowId]) {
-                rowsState[currentPdaRowId].campos = campo;
-                
-                // Forzar actualización de la interfaz
-                const rowElement = document.querySelector(`tr[data-row-id="${currentPdaRowId}"]`);
-                if (rowElement && typeof rowElement.checkCompletion === 'function') {
-                    rowElement.checkCompletion();
-                }
-            }
-        }
-    }
-    
-    if (!fase || !campo) return;
-
-    const contenidosData = await loadContenidos(fase, campo);
-    const contenidosList = document.getElementById('contenidosList');
-    contenidosList.innerHTML = '';
-
-    if (contenidosData) {
-        Object.keys(contenidosData).forEach(contenido => {
-            const div = document.createElement('div');
-            div.className = 'contenido-item';
-
-            const checkbox = document.createElement('input');
-            checkbox.type = 'checkbox';
-            checkbox.id = `cont-select-${sanitizeFilename(contenido)}`;
-            checkbox.value = contenido;
-
-            const label = document.createElement('label');
-            label.htmlFor = checkbox.id;
-            label.textContent = contenido;
-
-            div.appendChild(checkbox);
-            div.appendChild(label);
-            contenidosList.appendChild(div);
-        });
-    }
-    
-    // Limpiar PDAs cuando cambia el campo
-    document.getElementById('pdasList').innerHTML = '';
-    document.getElementById('selectedPdasList').innerHTML = '';
-  });
-
-  // [Modificado] Evento change para el select de Fase en el renglón principal
-  document.addEventListener('change', function(e) {
-    if (e.target && e.target.matches('tr.primary-row select:nth-of-type(1)')) {
-        const rowId = e.target.closest('tr').getAttribute('data-row-id');
-        const fase = e.target.value;
-        
-        // Actualizar el estado
-        if (rowsState[rowId]) {
-            rowsState[rowId].fase = fase;
-            rowsState[rowId].campos = ''; // Resetear campo al cambiar fase
-            
-            // Actualizar el select de campos en el mismo renglón
-            const campoSelect = e.target.closest('tr').querySelector('select:nth-of-type(2)');
-            if (campoSelect) {
-                campoSelect.innerHTML = '<option value="">--Selecciona Campo--</option>';
-                if (fase && campoOptions[fase]) {
-                    campoOptions[fase].forEach(campo => {
-                        const opt = document.createElement('option');
-                        opt.value = campo;
-                        opt.textContent = campo;
-                        campoSelect.appendChild(opt);
-                    });
-                }
-                campoSelect.value = '';
-            }
-            
-            // Forzar actualización de la interfaz
-            const rowElement = document.querySelector(`tr[data-row-id="${rowId}"]`);
-            if (rowElement && typeof rowElement.checkCompletion === 'function') {
-                rowElement.checkCompletion();
-            }
-        }
-    }
-  });
-
-  // [Modificado] Evento change para el select de Campos en el renglón principal
-  document.addEventListener('change', function(e) {
-    if (e.target && e.target.matches('tr.primary-row select:nth-of-type(2)')) {
-        const rowId = e.target.closest('tr').getAttribute('data-row-id');
-        const campo = e.target.value;
-        
-        // Actualizar el estado
-        if (rowsState[rowId]) {
-            rowsState[rowId].campos = campo;
-            
-            // Forzar actualización de la interfaz
-            const rowElement = document.querySelector(`tr[data-row-id="${rowId}"]`);
-            if (rowElement && typeof rowElement.checkCompletion === 'function') {
-                rowElement.checkCompletion();
-            }
-        }
-    }
-  });
-
   // Selector de PDA - Botón guardar
   document.getElementById('pda-selector-save').addEventListener('click', async function() {
-    const selectedContenido = document.querySelector('#contenidosList input[type="checkbox"]:checked');
-    const selectedPdas = Array.from(document.querySelectorAll('#selectedPdasList .pda-item')).map(item => item.textContent);
-    
-    if (currentPdaButton && selectedContenido && selectedPdas.length > 0) {
-      // Actualizar botón de contenidos
-      const contenidosBtn = document.querySelector(`tr[data-row-id="${currentPdaRowId}"] .field-group:nth-child(4) button`);
-      if (contenidosBtn) {
-        contenidosBtn.textContent = selectedContenido.value;
-        if (rowsState[currentPdaRowId]) {
-          rowsState[currentPdaRowId].contenidos = selectedContenido.value;
-        }
-      }
-      
-      // Actualizar botón de PDA
-      const pdaBtn = document.querySelector(`tr[data-row-id="${currentPdaRowId}"] .field-group:nth-child(5) button`);
-      if (pdaBtn) {
-        pdaBtn.textContent = selectedPdas.join(', ');
-        if (rowsState[currentPdaRowId]) {
-          rowsState[currentPdaRowId].pda = selectedPdas.join(', ');
-        }
-      }
-      
-      // Guardar los cambios
-      if (rowsState[currentPdaRowId]) {
+    try {
+        if (!currentPdaRowId) return;
+        
+        // Obtener campos seleccionados
+        const selectedCampos = Array.from(
+            document.querySelectorAll('#popupCamposList input[type="checkbox"]:checked')
+        ).map(cb => cb.value);
+        
+        // Obtener contenidos seleccionados
+        const selectedContenidos = Array.from(
+            document.querySelectorAll('#contenidosList input[type="checkbox"]:checked')
+        ).map(cb => cb.value.split('|')[1]);
+        
+        // Obtener PDAs seleccionados
+        const selectedPdas = Array.from(
+            document.querySelectorAll('#selectedPdasList .pda-item')
+        ).map(item => item.textContent.replace('❌', '').trim());
+        
+        // Actualizar estado
+        rowsState[currentPdaRowId].campos = selectedCampos;
+        rowsState[currentPdaRowId].contenidos = selectedContenidos;
+        rowsState[currentPdaRowId].pda = selectedPdas;
+        
+        // Actualizar UI
+        safeUpdateRowUI(currentPdaRowId);
+        
+        // Guardar cambios
         const saveResult = await saveContextData(rowsState[currentPdaRowId]);
         if (!saveResult.success) {
-          console.error('Error al guardar cambios:', saveResult.message);
+            console.error('Error al guardar cambios:', saveResult.message);
+            alert('Error al guardar los cambios');
         }
-      }
-      
-      // Actualizar estado de completitud
-      const rowElement = document.querySelector(`tr[data-row-id="${currentPdaRowId}"]`);
-      if (rowElement && typeof rowElement.checkCompletion === 'function') {
-        rowElement.checkCompletion();
-      }
+        
+        document.getElementById('pda-selector-overlay').classList.remove('active');
+    } catch (error) {
+        console.error('Error al guardar selecciones:', error);
+        alert('Ocurrió un error al guardar las selecciones');
     }
-    
-    document.getElementById('pda-selector-overlay').classList.remove('active');
-  });
+});
 
   // Selector de PDA - Botón cancelar
   document.getElementById('pda-selector-cancel').addEventListener('click', function() {
@@ -808,18 +884,27 @@ document.addEventListener('DOMContentLoaded', async function() {
     return group;
   }
 
-  function populateSelect(selectElement, optionsArray) {
+  function populateSelect(selectElement, optionsArray, includeDefault = true) {
     if (!selectElement) return;
     selectElement.innerHTML = "";
+    
+    if (includeDefault) {
+        const defaultOption = document.createElement('option');
+        defaultOption.value = "";
+        defaultOption.textContent = "Seleccione...";
+        selectElement.appendChild(defaultOption);
+    }
+    
     optionsArray.forEach(function(opt) {
-      const option = document.createElement('option');
-      option.value = opt;
-      option.textContent = opt === "" ? "Seleccione..." : opt;
-      selectElement.appendChild(option);
+        if (opt === "") return; // Skip empty options if we already added default
+        const option = document.createElement('option');
+        option.value = opt;
+        option.textContent = opt;
+        selectElement.appendChild(option);
     });
   }
 
-  // Función para añadir filas primarias
+  // Reemplazar la función addPrimaryRow con esta versión modificada
   async function addPrimaryRow(data = null) {
     let rowId;
     if (data === null) {
@@ -829,13 +914,10 @@ document.addEventListener('DOMContentLoaded', async function() {
         rowId: rowId, 
         problemas: "", 
         fase: "", 
-        campos: "", 
+        campos: [], 
         contenidos: "", 
         pda: "", 
-        eje: "", 
-        nivel: "", 
-        objeto: "", 
-        evidencia: "" 
+        eje: ""
       };
       rowsState[rowId] = data;
       const saveResult = await saveContextData(data);
@@ -852,12 +934,16 @@ document.addEventListener('DOMContentLoaded', async function() {
     tr.setAttribute('data-row-id', rowId);
     const td = document.createElement('td');
 
-    // Header
+    // Header con botón de generación
     const headerDiv = document.createElement('div');
     headerDiv.classList.add('primary-row-header');
     headerDiv.style.display = "flex";
     headerDiv.style.alignItems = "center";
     headerDiv.style.justifyContent = "space-between";
+
+    const leftHeader = document.createElement('div');
+    leftHeader.style.display = "flex";
+    leftHeader.style.alignItems = "center";
 
     const toggleIcon = document.createElement('span');
     toggleIcon.classList.add('toggle-icon');
@@ -867,6 +953,14 @@ document.addEventListener('DOMContentLoaded', async function() {
     const labelSpan = document.createElement('span');
     labelSpan.classList.add('row-label');
     labelSpan.textContent = data.problemas || "Seleccionar información";
+
+    const generateBtn = document.createElement('button');
+    generateBtn.classList.add('generate-location-btn');
+    generateBtn.innerHTML = '♻️ Generar Ubicación';
+    generateBtn.addEventListener('click', async function(e) {
+      e.stopPropagation();
+      await generateLocation(rowId);
+    });
 
     const deleteBtn = document.createElement('button');
     deleteBtn.classList.add('delete-btn');
@@ -895,9 +989,17 @@ document.addEventListener('DOMContentLoaded', async function() {
       }
     });
 
-    headerDiv.appendChild(toggleIcon);
-    headerDiv.appendChild(labelSpan);
-    headerDiv.appendChild(deleteBtn);
+    leftHeader.appendChild(toggleIcon);
+    leftHeader.appendChild(labelSpan);
+    headerDiv.appendChild(leftHeader);
+    
+    const rightHeader = document.createElement('div');
+    rightHeader.style.display = "flex";
+    rightHeader.style.alignItems = "center";
+    rightHeader.style.gap = "0.5rem";
+    rightHeader.appendChild(generateBtn);
+    rightHeader.appendChild(deleteBtn);
+    headerDiv.appendChild(rightHeader);
 
     // Collapsible content
     const collapsibleDiv = document.createElement('div');
@@ -905,12 +1007,9 @@ document.addEventListener('DOMContentLoaded', async function() {
 
     const fieldsGrid = document.createElement('div');
     fieldsGrid.classList.add('fields-grid');
-    fieldsGrid.style.display = "grid";
-    fieldsGrid.style.gridTemplateColumns = "repeat(3, 1fr)";
-    fieldsGrid.style.gap = "0.5rem";
 
     // Declare controls
-    let problemasSelect, faseSelect, camposSelect, contenidosBtn, pdaBtn, ejeSelect, nivelSelect, objetoBtn, evidenciaBtn;
+    let problemasSelect, faseSelect, camposSelect, contenidosBtn, pdaBtn, ejeSelect;
 
     // Field 1: Problemas
     const col1 = createFieldGroup("Problemas Redactados", "select");
@@ -944,14 +1043,29 @@ document.addEventListener('DOMContentLoaded', async function() {
       });
     }
 
-    // Field 3: Campos Formativos
+    // Field 3: Campos Formativos (ahora múltiple)
     const col3 = createFieldGroup("Campos Formativos", "select");
     camposSelect = col3.querySelector('select');
+    camposSelect.multiple = true;
+    camposSelect.size = 3;
+    
+    // Agregar contenedor para el hint de selección múltiple
+    const camposContainer = document.createElement('div');
+    camposContainer.className = 'select-multiple-container';
+    camposContainer.appendChild(camposSelect);
+    col3.appendChild(camposContainer);
+    
     if (camposSelect) {
-      populateSelect(camposSelect, ["", "Lenguajes", "Saberes y Pensamiento Científico", "Ética, Naturaleza y Sociedades", "De lo Humano y lo Comunitario"]);
-      if (data.campos) camposSelect.value = data.campos;
+      populateSelect(camposSelect, ["Lenguajes", "Saberes y pensamiento", "Ética, Naturaleza", "De lo humano"]);
+      if (data.campos && data.campos.length > 0) {
+        Array.from(camposSelect.options).forEach(option => {
+          if (data.campos.includes(option.value)) {
+            option.selected = true;
+          }
+        });
+      }
       camposSelect.addEventListener('change', async function() {
-        rowsState[rowId].campos = camposSelect.value;
+        rowsState[rowId].campos = Array.from(camposSelect.selectedOptions).map(opt => opt.value);
         const saveResult = await saveContextData(rowsState[rowId]);
         if (!saveResult.success) {
           console.error('Error al guardar cambios:', saveResult.message);
@@ -960,7 +1074,7 @@ document.addEventListener('DOMContentLoaded', async function() {
       });
     }
 
-    // Field 4: Contenidos
+    // Field 4: Contenidos (botón que abre el selector)
     const col4 = createFieldGroup("Contenidos", "button");
     contenidosBtn = col4.querySelector('button');
     contenidosBtn.textContent = data.contenidos ? data.contenidos : "Seleccionar Contenidos";
@@ -969,7 +1083,7 @@ document.addEventListener('DOMContentLoaded', async function() {
       openContenidosSelector(rowId, contenidosBtn);
     });
 
-    // Field 5: PDA
+    // Field 5: PDA (muestra los seleccionados)
     const col5 = createFieldGroup("PDA", "button");
     pdaBtn = col5.querySelector('button');
     pdaBtn.textContent = data.pda ? data.pda : "PDAs seleccionados";
@@ -979,7 +1093,7 @@ document.addEventListener('DOMContentLoaded', async function() {
     const col6 = createFieldGroup("Eje Articulador", "select");
     ejeSelect = col6.querySelector('select');
     if (ejeSelect) {
-      populateSelect(ejeSelect, ["", "Eje 1", "Eje 2", "Eje 3", "Eje 4"]);
+      populateSelect(ejeSelect, [""].concat(ejeOptions));
       if (data.eje) ejeSelect.value = data.eje;
       ejeSelect.addEventListener('change', async function() {
         rowsState[rowId].eje = ejeSelect.value;
@@ -991,60 +1105,13 @@ document.addEventListener('DOMContentLoaded', async function() {
       });
     }
 
-    // Field 7: Nivel de Logro
-    const col7 = createFieldGroup("Nivel de Logro", "select");
-    nivelSelect = col7.querySelector('select');
-    if (nivelSelect) {
-      populateSelect(nivelSelect, ["", "Nivel 1", "Nivel 2", "Nivel 3", "Nivel 4"]);
-      if (data.nivel) nivelSelect.value = data.nivel;
-      nivelSelect.addEventListener('change', async function() {
-        rowsState[rowId].nivel = nivelSelect.value;
-        const saveResult = await saveContextData(rowsState[rowId]);
-        if (!saveResult.success) {
-          console.error('Error al guardar cambios:', saveResult.message);
-        }
-        checkCompletion();
-      });
-    }
-
-    // Field 8: Objeto de Enseñanza
-    const col8 = createFieldGroup("Objeto de Enseñanza", "button");
-    objetoBtn = col8.querySelector('button');
-    objetoBtn.textContent = data.objeto ? "Editar (Objeto)" : "Editar Objeto";
-    objetoBtn.addEventListener('click', function(e) {
-      e.stopPropagation();
-      openPopup("objeto", rowId, objetoBtn);
-    });
-
-    // Field 9: Evidencia de Aprendizaje
-    const col9 = createFieldGroup("Evidencia de Aprendizaje", "button");
-    evidenciaBtn = col9.querySelector('button');
-    evidenciaBtn.textContent = data.evidencia ? "Editar (Evidencia)" : "Editar Evidencia";
-    evidenciaBtn.addEventListener('click', function(e) {
-      e.stopPropagation();
-      openPopup("evidencia", rowId, evidenciaBtn);
-    });
-
-    fieldsGrid.append(col1, col2, col3, col4, col5, col6, col7, col8, col9);
+    fieldsGrid.append(col1, col2, col3, col4, col5, col6);
     collapsibleDiv.appendChild(fieldsGrid);
 
     // Toggle collapsible
     headerDiv.addEventListener("click", function() {
       collapsibleDiv.classList.toggle("active");
       toggleIcon.classList.toggle("rotated");
-      if (!collapsibleDiv.classList.contains("active")) {
-        const allSelects = collapsibleDiv.querySelectorAll("select");
-        let anyFilled = false;
-        allSelects.forEach(function(sel) {
-          if (sel.value.trim() !== "") anyFilled = true;
-        });
-        const objetoVal = (rowsState[rowId].objeto || "").trim();
-        const evidenciaVal = (rowsState[rowId].evidencia || "").trim();
-        if (!anyFilled && !objetoVal && !evidenciaVal) {
-          const infoContent = document.getElementById("info-box-content");
-          if (infoContent) infoContent.textContent = "";
-        }
-      }
     });
 
     td.appendChild(headerDiv);
@@ -1054,13 +1121,13 @@ document.addEventListener('DOMContentLoaded', async function() {
 
     function checkCompletion() {
       let complete = true;
-      const selects = [problemasSelect, faseSelect, camposSelect, ejeSelect, nivelSelect];
+      const selects = [problemasSelect, faseSelect, ejeSelect];
       selects.forEach(function(sel) {
         if (!sel || !sel.value) complete = false;
       });
-      if (!rowsState[rowId].contenidos || !rowsState[rowId].pda || !rowsState[rowId].objeto || !rowsState[rowId].evidencia) {
-        complete = false;
-      }
+      if (!rowsState[rowId].campos || rowsState[rowId].campos.length === 0) complete = false;
+      if (!rowsState[rowId].contenidos || !rowsState[rowId].pda) complete = false;
+      
       if (complete) {
         tr.classList.add("complete");
         labelSpan.textContent = problemasSelect ? problemasSelect.value : "Seleccionar información";
@@ -1073,7 +1140,245 @@ document.addEventListener('DOMContentLoaded', async function() {
     checkCompletion();
   }
 
-  // Popup Functions
+  // Nueva función para generar ubicación automática
+  async function generateLocation(rowId) {
+    // Verificar membresía
+    const userData = JSON.parse(localStorage.getItem('userData'));
+    if (userData && userData.membership !== 'premium') {
+        alert('Debes ser Premium para usar esta funcionalidad');
+        return;
+    }
+
+    const rowData = rowsState[rowId];
+    if (!rowData || !rowData.problemas || !rowData.fase) {
+        alert('Por favor selecciona un problema y una fase primero');
+        return;
+    }
+
+    try {
+        const fase = rowData.fase.replace('Fase ', 'F');
+        const problema = rowData.problemas.toLowerCase();
+        const allCampos = ["Lenguajes", "Saberes y pensamiento", "Ética, Naturaleza", "De lo humano"];
+        
+        let matchedResults = [];
+        
+        for (const campo of allCampos) {
+            try {
+                const contenidosData = await loadContenidos(fase, campo);
+                if (!contenidosData) continue;
+                
+                for (const [contenido, gradosPdas] of Object.entries(contenidosData)) {
+                    for (const [grado, pdas] of Object.entries(gradosPdas)) {
+                        pdas.forEach(pda => {
+                            const pdaLower = pda.toLowerCase();
+                            let score = 0;
+                            
+                            // Coincidencia exacta
+                            if (pdaLower.includes(problema)) {
+                                score += 10;
+                            }
+                            
+                            // Coincidencia de palabras clave
+                            problema.split(/\W+/).forEach(word => {
+                                if (word.length > 3 && pdaLower.includes(word)) {
+                                    score += 5;
+                                }
+                            });
+                            
+                            if (score > 0) {
+                                matchedResults.push({
+                                    campo,
+                                    contenido,
+                                    grado,
+                                    pda,
+                                    score
+                                });
+                            }
+                        });
+                    }
+                }
+            } catch (error) {
+                console.error(`Error procesando campo ${campo}:`, error);
+                continue;
+            }
+        }
+        
+        if (matchedResults.length === 0) {
+            alert('No se encontraron PDAs coincidentes. Por favor selecciona manualmente.');
+            return;
+        }
+        
+        // Ordenar por puntaje y seleccionar los mejores
+        matchedResults.sort((a, b) => b.score - a.score);
+        const bestMatches = matchedResults.slice(0, 5);
+        
+        // Preparar datos para actualizar
+        const matchedCampos = [...new Set(bestMatches.map(item => item.campo))];
+        const matchedContenidos = [...new Set(bestMatches.map(item => item.contenido))];
+        const matchedPdas = bestMatches.map(item => `${item.grado}: ${item.pda}`);
+        
+        // Actualizar el estado
+        rowsState[rowId].campos = matchedCampos;
+        rowsState[rowId].contenidos = matchedContenidos;
+        rowsState[rowId].pda = matchedPdas;
+        
+        // Actualizar UI sin errores
+        safeUpdateRowUI(rowId);
+        
+        // Guardar cambios
+        const saveResult = await saveContextData(rowsState[rowId]);
+        if (!saveResult.success) {
+            console.error('Error al guardar cambios:', saveResult.message);
+            throw new Error('Error al guardar');
+        }
+    } catch (error) {
+        console.error('Error en generateLocation:', error);
+        alert('Ocurrió un error al generar la ubicación automática');
+    }
+}
+
+// Función segura para actualizar UI
+function safeUpdateRowUI(rowId) {
+    try {
+        const rowData = rowsState[rowId];
+        if (!rowData) return;
+        
+        const rowElement = document.querySelector(`tr[data-row-id="${rowId}"]`);
+        if (!rowElement) return;
+        
+        // Actualizar campos formativos
+        const camposSelect = rowElement.querySelector('.field-group:nth-child(3) select');
+        if (camposSelect) {
+            Array.from(camposSelect.options).forEach(option => {
+                option.selected = Array.isArray(rowData.campos) 
+                    ? rowData.campos.includes(option.value)
+                    : false;
+            });
+        }
+        
+        // Actualizar contenidos
+        const contenidosBtn = rowElement.querySelector('.field-group:nth-child(4) button');
+        if (contenidosBtn) {
+            contenidosBtn.textContent = Array.isArray(rowData.contenidos)
+                ? `${rowData.contenidos.length} contenidos seleccionados`
+                : '0 contenidos seleccionados';
+        }
+        
+        // Actualizar PDAs
+        const pdaBtn = rowElement.querySelector('.field-group:nth-child(5) button');
+        if (pdaBtn) {
+            pdaBtn.textContent = Array.isArray(rowData.pda)
+                ? `${rowData.pda.length} PDAs seleccionados`
+                : '0 PDAs seleccionados';
+        }
+        
+        // Verificar completitud
+        if (typeof rowElement.checkCompletion === 'function') {
+            rowElement.checkCompletion();
+        }
+    } catch (error) {
+        console.error('Error en safeUpdateRowUI:', error);
+    }
+}
+
+function updateRowUI(rowId) {
+    const rowData = rowsState[rowId];
+    if (!rowData) return;
+    
+    const rowElement = document.querySelector(`tr[data-row-id="${rowId}"]`);
+    if (!rowElement) return;
+    
+    // Actualizar campos formativos
+    const camposSelect = rowElement.querySelector('.field-group:nth-child(3) select');
+    if (camposSelect) {
+        Array.from(camposSelect.options).forEach(option => {
+            option.selected = rowData.campos.includes(option.value);
+        });
+    }
+    
+    // Actualizar contenidos
+    const contenidosBtn = rowElement.querySelector('.field-group:nth-child(4) button');
+    if (contenidosBtn) {
+        contenidosBtn.textContent = Array.isArray(rowData.contenidos) 
+            ? rowData.contenidos.join(', ')
+            : rowData.contenidos;
+    }
+    
+    // Actualizar PDAs
+    const pdaBtn = rowElement.querySelector('.field-group:nth-child(5) button');
+    if (pdaBtn) {
+        pdaBtn.textContent = Array.isArray(rowData.pda) 
+            ? `${rowData.pda.length} PDAs seleccionados`
+            : '0 PDAs seleccionados';
+    }
+    
+    // Verificar completitud
+    if (typeof rowElement.checkCompletion === 'function') {
+        rowElement.checkCompletion();
+    }
+  }
+
+function updateRowUI(rowId, campos, contenidos, pdas) {
+    const rowElement = document.querySelector(`tr[data-row-id="${rowId}"]`);
+    if (!rowElement) return;
+    
+    // Actualizar campos formativos
+    const camposSelect = rowElement.querySelector('.field-group:nth-child(3) select');
+    if (camposSelect) {
+        Array.from(camposSelect.options).forEach(option => {
+            option.selected = campos.includes(option.value);
+        });
+    }
+    
+    // Actualizar contenidos
+    const contenidosBtn = rowElement.querySelector('.field-group:nth-child(4) button');
+    if (contenidosBtn) {
+        contenidosBtn.textContent = `${contenidos.length} contenidos seleccionados`;
+    }
+    
+    // Actualizar PDAs
+    const pdaBtn = rowElement.querySelector('.field-group:nth-child(5) button');
+    if (pdaBtn) {
+        pdaBtn.textContent = `${pdas.length} PDAs seleccionados`;
+    }
+    
+    // Verificar completitud
+    if (typeof rowElement.checkCompletion === 'function') {
+        rowElement.checkCompletion();
+    }
+  }
+
+  function updateRowUI(rowId, campos, contenidos, pdaCount) {
+    const rowElement = document.querySelector(`tr[data-row-id="${rowId}"]`);
+    if (!rowElement) return;
+    
+    // Actualizar campos formativos
+    const camposSelect = rowElement.querySelector('.field-group:nth-child(3) select');
+    if (camposSelect) {
+        Array.from(camposSelect.options).forEach(option => {
+            option.selected = campos.includes(option.value);
+        });
+    }
+    
+    // Actualizar contenidos
+    const contenidosBtn = rowElement.querySelector('.field-group:nth-child(4) button');
+    if (contenidosBtn) {
+        contenidosBtn.textContent = `${contenidos.split(',').length} contenidos seleccionados`;
+    }
+    
+    // Actualizar PDAs
+    const pdaBtn = rowElement.querySelector('.field-group:nth-child(5) button');
+    if (pdaBtn) {
+        pdaBtn.textContent = `${pdaCount} PDAs seleccionados`;
+    }
+    
+    // Verificar completitud
+    if (typeof rowElement.checkCompletion === 'function') {
+        rowElement.checkCompletion();
+    }
+  }
+
+  // Popup Functions (solo para evidencia ahora)
   const popupOverlay = document.getElementById("popup-overlay");
   const popupTitle = document.getElementById("popup-title");
   const popupText = document.getElementById("popup-text");
@@ -1088,7 +1393,7 @@ document.addEventListener('DOMContentLoaded', async function() {
     currentPopupField = field;
     currentRowId = rowId;
     currentButton = button;
-    popupTitle.textContent = field === "objeto" ? "Objeto de Enseñanza" : "Evidencia de Aprendizaje";
+    popupTitle.textContent = "Evidencia de Aprendizaje";
     const storedValue = rowsState[rowId] ? rowsState[rowId][field] : "";
     popupText.value = storedValue || "";
     popupOverlay.classList.add("active");
@@ -1102,8 +1407,8 @@ document.addEventListener('DOMContentLoaded', async function() {
         const saveResult = await saveContextData(rowsState[currentRowId]);
         if (saveResult.success) {
           currentButton.textContent = value.trim() !== ""
-            ? (currentPopupField === "objeto" ? "Editar (Objeto)" : "Editar (Evidencia)")
-            : (currentPopupField === "objeto" ? "Editar Objeto" : "Editar Evidencia");
+            ? "Editar (Evidencia)"
+            : "Editar Evidencia";
           const rowElement = document.querySelector(`tr[data-row-id="${currentRowId}"]`);
           if (rowElement && typeof rowElement.checkCompletion === "function") {
             rowElement.checkCompletion();

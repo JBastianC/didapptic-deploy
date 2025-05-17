@@ -3,6 +3,9 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" href="/fav/favicon.svg" type="image/svg+xml">
+  <link rel="icon" href="/fav/favicon.ico" type="image/x-icon">
+  <link rel="icon" href="/fav/favicon-1.png" type="image/png">
   <title>Plano Didáctico</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <link rel="stylesheet" href="style.css">
@@ -97,19 +100,10 @@
               <button id="saveNodeData">Guardar</button>
 
               <!-- Panel IA dentro del Nodo IA -->
-              <div id="ia-panel" class="hidden">
-                <div id="ia-counter">Solicitudes IA hoy: <span id="iaCount">0</span></div>
-                <div id="ia-status">Estatus: <span id="iaStatus">—</span></div>
-                <progress id="iaProgress" max="4" value="0"></progress>
-                <ul id="ia-steps">
-                  <li>Solicitud enviada</li>
-                  <li>Respuesta recibida</li>
-                  <li>Plan parseado</li>
-                  <li>Finalizado</li>
-                </ul>
-                <button id="sendToIA">Enviar a IA</button>
-                <button id="visualizarPlanPanel">Visualizar Plan</button>
-              </div>
+              <!-- Busca y reemplaza el panel IA con este código simplificado -->
+            <div id="ia-panel">
+              <button id="visualizarPlanPanel">Visualizar Plan</button>
+            </div>
             </div>
           </div>
         </div>
@@ -119,6 +113,12 @@
           <button id="btnMove" class="mode-btn active">🖐 Mover</button>
           <button id="btnConnect" class="mode-btn">✚ Conectar</button>
           <button id="btnDelete" class="mode-btn">🗑 Eliminar</button>
+          <button id="btnLoadProblems" class="mode-btn">📂 Cargar Problemas</button>
+        </div>
+
+        <!-- Agrega este menú desplegable para los problemas -->
+        <div id="problemsDropdown" class="dropdown hidden">
+          <div class="dropdown-content" id="problemsList"></div>
         </div>
       </div>
     </main>

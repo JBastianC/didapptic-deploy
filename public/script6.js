@@ -25,7 +25,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     const fase = document.getElementById('fase');
     const grado = document.getElementById('grado');
     const grupo = document.getElementById('grupo');
-    const imagenColegio = document.getElementById('imagenColegio');
     const previewImage = document.getElementById('previewImage');
     const noImageText = document.getElementById('noImageText');
     const removeImageBtn = document.getElementById('removeImageBtn');
@@ -109,16 +108,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     if (input) input.value = data.config[key];
                 });
 
-                // Manejar imagen
-                if (data.config.imagenColegio) {
-                    currentImage = data.config.imagenColegio;
-                    previewImage.src = `data:image/jpeg;base64,${data.config.imagenColegio}`;
-                    previewImage.style.display = 'block';
-                    noImageText.style.display = 'none';
-                    removeImageBtn.disabled = false;
-                    imagePreview.classList.add('has-image');
-                }
-
+             
                 // Actualizar opciones
                 updateOptions();
                 if (data.config.fase) fase.value = data.config.fase;
@@ -166,33 +156,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     }
 
-    // Manejar selección de imagen
-    imagenColegio.addEventListener('change', function(e) {
-        const file = e.target.files[0];
-        if (file) {
-            const reader = new FileReader();
-            reader.onload = function(event) {
-                previewImage.src = event.target.result;
-                previewImage.style.display = 'block';
-                noImageText.style.display = 'none';
-                removeImageBtn.disabled = false;
-                imagePreview.classList.add('has-image');
-                currentImage = event.target.result.split(',')[1]; // Guardar solo base64
-            };
-            reader.readAsDataURL(file);
-        }
-    });
 
-    // Eliminar imagen
-    removeImageBtn.addEventListener('click', function() {
-        previewImage.src = '';
-        previewImage.style.display = 'none';
-        noImageText.style.display = 'block';
-        removeImageBtn.disabled = true;
-        imagePreview.classList.remove('has-image');
-        currentImage = null;
-        imagenColegio.value = '';
-    });
+
 
     // Guardar configuración
     form.addEventListener('submit', async (e) => {
@@ -210,7 +175,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             nombreDirector: document.getElementById('nombreDirector').value,
             inicioPeriodo: document.getElementById('inicioPeriodo').value,
             finPeriodo: document.getElementById('finPeriodo').value,
-            imagenColegio: currentImage
         };
 
         try {

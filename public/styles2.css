@@ -342,7 +342,7 @@
 .problems-list li {
     display: flex;
     justify-content: space-between;
-    align-items: center;
+    align-items: justify;
     padding: 0.5rem;
     border-bottom: 1px solid #e2e8f0;
 }
@@ -397,7 +397,6 @@
     border: none;
     border-radius: 6px;
     cursor: pointer;
-    margin-top: 0.5rem;
     transition: background 0.3s;
 }
 
@@ -517,7 +516,7 @@
     padding: 2rem;
     border-radius: 12px;
     text-align: center;
-    max-width: 400px;
+    max-width: 800px;
     position: relative;
     box-shadow: 0 4px 12px rgba(0,0,0,0.2);
   }
@@ -912,4 +911,49 @@
   width: 100%;
   height: 600px;
   border: none;
+}
+
+/* Estilos para el select y campo "otros" */
+.form-group select {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  font-size: 1rem;
+  margin-bottom: 0.5rem;
+}
+
+#other-topic {
+  margin-top: 0.5rem;
+}
+
+.hidden {
+  display: none;
+}
+
+/* Estilos para los botones de problemas */
+.problem-buttons {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  margin: 1rem 0;
+}
+
+.btn-generate-problems {
+  background: #0077B6;
+  color: white;
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.3s;
+}
+
+.btn-generate-problems:hover {
+  background: #005b8c;
+}
+
+.btn-generate-problems:disabled {
+  background: #cccccc;
+  cursor: not-allowed;
 }

@@ -1,4 +1,4 @@
-document.addEventListener('DOMContentLoaded', async function () {
+document.addEventListener('DOMContentLoaded', async function() {
   // Verificar autenticación y cargar datos del usuario
   const userData = JSON.parse(localStorage.getItem('userData'));
   if (!userData) {
@@ -6,7 +6,7 @@ document.addEventListener('DOMContentLoaded', async function () {
     return;
   }
 
-  // Mostrar información del usuario en la barra superior
+  // Mostrar información del usuario
   document.getElementById('userEmail').textContent = userData.email;
   const membershipBadge = document.getElementById('userMembership');
   membershipBadge.textContent = userData.membership === 'premium' ? 'Premium' : 'Básico';
@@ -27,24 +27,18 @@ document.addEventListener('DOMContentLoaded', async function () {
   const btnMove = document.getElementById('btnMove');
   const btnConn = document.getElementById('btnConnect');
   const btnDel = document.getElementById('btnDelete');
+  const btnLoadProblems = document.getElementById('btnLoadProblems');
   const saveBtn = document.getElementById('saveNodeData');
   const canvasTitle = document.getElementById('canvasTitle');
   const uploadPlan = document.getElementById('uploadPlan');
-
-  // IA panel elements
-  const iaPanel = document.getElementById('ia-panel');
-  const iaCounterEl = document.getElementById('iaCount');
-  const iaStatusEl = document.getElementById('iaStatus');
-  const iaProgress = document.getElementById('iaProgress');
-  const iaSteps = Array.from(document.querySelectorAll('#ia-steps li'));
-  const sendToIA = document.getElementById('sendToIA');
   const vizPlanBtn = document.getElementById('visualizarPlanPanel');
+  const problemsDropdown = document.getElementById('problemsDropdown');
+  const problemsList = document.getElementById('problemsList');
 
   let meta = { fases: [], campos: [] };
   let mode = 'move';
   let idCnt = 0;
   let currentNode = null;
-  let latestIAPlan = '';
   const globalVars = {
     proyecto: '',
     metodologia: '',
@@ -55,78 +49,12 @@ document.addEventListener('DOMContentLoaded', async function () {
     fases: []
   };
 
-  // Cargar problemas desde el Plano de la Realidad
-  let problemsFromSituation = [];
-  async function loadProblemsFromReality() {
-    try {
-      const res = await fetch('/api/plans', {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        }
-      });
-      const data = await res.json();
-      
-      if (data.success) {
-        const problems = [];
-        data.plans.forEach(plan => {
-          plan.situations?.forEach(situation => {
-            problems.push(...(situation.problems || []));
-          });
-        });
-        return problems.length > 0 ? problems : ["No hay problemas registrados"];
-      }
-      return ["No hay problemas registrados"];
-    } catch (error) {
-      console.error("Error al cargar problemas:", error);
-      return ["Error al cargar problemas"];
-    }
-  }
-
-  // IA request counter reset logic - ahora basado en cuenta de usuario
-  const today = new Date().toISOString().slice(0,10);
-  const userRequestKey = `iaRequestCount_${userData.email}`;
-  const userRequestDateKey = `iaRequestDate_${userData.email}`;
-  
-  if (localStorage.getItem(userRequestDateKey) !== today) {
-    localStorage.setItem(userRequestDateKey, today);
-    localStorage.setItem(userRequestKey, '0');
-  }
-  
-  function updateCounterUI() {
-    const maxRequests = userData.membership === 'premium' ? 10 : 4;
-    const count = parseInt(localStorage.getItem(userRequestKey) || '0',10);
-    iaCounterEl.textContent = `${count}/${maxRequests}`;
-    sendToIA.disabled = count >= maxRequests;
-  }
-  updateCounterUI();
-
-  // Tooltip element
-  const tooltip = document.createElement('div');
-  tooltip.id = 'tooltip';
-  Object.assign(tooltip.style, {
-    position: 'absolute', background: 'rgba(0,0,0,0.75)',
-    color: '#fff', padding: '4px 8px', borderRadius: '4px',
-    fontSize: '12px', pointerEvents: 'none',
-    display: 'none', zIndex: '3000'
-  });
-  document.body.appendChild(tooltip);
-
-  const typeEmojis = {
-    'Entrada': '📝','Campos Formativos': '🎓','Fase': '🔄',
-    'Contenido': '📚','PDA': '✔️','Metodología': '🛠️',
-    'Nodo IA': '🤖','Nota': '💡'
-  };
-  const campoColors = {
-    'Lenguajes': 'orange','De lo humano': 'red',
-    'Etica Naturaleza': 'green','Saberes y Pensamiento Científico': 'blue'
-  };
-
-  // 1) Load metadata
+  // Cargar metadata
   fetch('/api/meta')
     .then(r => r.json())
     .then(j => meta = j);
 
-  // 2) Initialize jsPlumb
+  // Inicializar jsPlumb
   const instance = jsPlumb.getInstance({
     Connector: ["Bezier", { curviness: 50 }],
     Anchors: ["AutoDefault"],
@@ -135,42 +63,30 @@ document.addEventListener('DOMContentLoaded', async function () {
     ConnectionOverlays: [["Arrow", { width: 10, length: 10, location: 1 }]]
   });
 
-  // 3) Allowed connections
-  const allowedConnections = {
-    'Entrada': ['Nodo IA'],
-    'Fase': ['Campos Formativos', 'PDA'],
-    'Campos Formativos': ['Contenido'],
-    'Contenido': ['Fase'],
-    'PDA': ['Nodo IA'],
-    'Metodología': ['Nodo IA'],
-    'Nodo IA': []
-  };
-
-  // 4) Change mode
+  // Cambiar modo
   function setMode(m) {
     mode = m;
     document.body.className = `mode-${m}`;
     [btnMove, btnConn, btnDel].forEach(b =>
-      b.classList.toggle('active',
-        b.id === 'btn' + m.charAt(0).toUpperCase() + m.slice(1)
-      )
+      b.classList.toggle('active', b.id === 'btn' + m.charAt(0).toUpperCase() + m.slice(1))
     );
     canvasTitle.contentEditable = m === 'move';
-    canvasTitle.style.cursor    = m === 'move' ? 'text' : 'default';
+    canvasTitle.style.cursor = m === 'move' ? 'text' : 'default';
   }
   btnMove.onclick = () => setMode('move');
   btnConn.onclick = () => setMode('connect');
-  btnDel.onclick  = () => setMode('delete');
+  btnDel.onclick = () => setMode('delete');
   setMode('move');
 
-  // 5) Connection control
+  // Control de conexiones
   instance.bind('beforeStartConnect', info => {
     if (mode !== 'connect') return false;
     const cnt = instance.getConnections({ source: info.source }).length;
-    const h   = info.source.querySelector('.conn-handle');
+    const h = info.source.querySelector('.conn-handle');
     if (h) h.style.top = 50 + cnt * 15 + '%';
     return true;
   });
+
   instance.bind('beforeDrop', info => {
     const src = info.source.dataset.type;
     const tgt = info.target.dataset.type;
@@ -183,6 +99,7 @@ document.addEventListener('DOMContentLoaded', async function () {
     }
     return true;
   });
+
   instance.bind('connection', info => {
     info.connection.getConnector().canvas.classList.add('transfer');
     ['fase','campo','contenido','pdas','value','text','campoFile'].forEach(k => {
@@ -191,20 +108,24 @@ document.addEventListener('DOMContentLoaded', async function () {
       }
     });
     updateNodeIAStatus();
+    saveCanvasState();
   });
+
   instance.bind('connectionDetached', info => {
     const tgtEl = info.connection.target;
     tgtEl.classList.remove('completed');
     delete tgtEl.dataset.color;
     updateNodeIAStatus();
+    saveCanvasState();
   });
 
-  // 7) Drag & drop from palette
+  // Drag & drop desde la paleta
   palette.querySelectorAll('.palette-item').forEach(it => {
     it.addEventListener('dragstart', e =>
       e.dataTransfer.setData('type', it.dataset.type)
     );
   });
+
   container.addEventListener('dragover', e => e.preventDefault());
   container.addEventListener('drop', e => {
     e.preventDefault();
@@ -213,22 +134,23 @@ document.addEventListener('DOMContentLoaded', async function () {
       alert('Solo puede existir un Nodo IA');
       return;
     }
-    const r    = canvas.getBoundingClientRect();
+    const r = canvas.getBoundingClientRect();
     const grid = 20;
-    const x    = Math.round((e.clientX - r.left) / grid) * grid;
-    const y    = Math.round((e.clientY - r.top)  / grid) * grid;
+    const x = Math.round((e.clientX - r.left) / grid) * grid;
+    const y = Math.round((e.clientY - r.top) / grid) * grid;
     createNode(type, x, y);
+    saveCanvasState();
   });
 
-  // 8) Create node
+  // Crear nodo
   function createNode(type, x, y) {
     const el = document.createElement('div');
-    el.className    = 'node';
-    el.id           = `n${idCnt++}`;
+    el.className = 'node';
+    el.id = `n${idCnt++}`;
     el.dataset.type = type;
-    el.style.left   = x + 'px';
-    el.style.top    = y + 'px';
-    el.innerHTML    =
+    el.style.left = x + 'px';
+    el.style.top = y + 'px';
+    el.innerHTML =
       `<span class="handle">☰</span>` +
       (type !== 'Nota' ? `<span class="conn-handle"></span>` : '') +
       `<span class="emoji" style="left:20px;">${typeEmojis[type]||''}</span>` +
@@ -243,9 +165,11 @@ document.addEventListener('DOMContentLoaded', async function () {
         const L = Math.round(parseInt(el.style.left)/20)*20;
         const T = Math.round(parseInt(el.style.top)/20)*20;
         el.style.left = L+'px';
-        el.style.top  = T+'px';
+        el.style.top = T+'px';
+        saveCanvasState();
       }
     });
+
     if (type !== 'Nota') {
       instance.makeSource(el, {
         filter: '.conn-handle',
@@ -258,10 +182,12 @@ document.addEventListener('DOMContentLoaded', async function () {
     el.addEventListener('dblclick', e => {
       if (mode !== 'delete') { e.stopPropagation(); openProperties(el); }
     });
+
     el.addEventListener('contextmenu', e => {
       e.preventDefault();
       if (mode !== 'delete') openProperties(el);
     });
+
     el.addEventListener('click', e => {
       if (mode === 'delete') {
         instance.getConnections({ source: el })
@@ -269,6 +195,7 @@ document.addEventListener('DOMContentLoaded', async function () {
           .forEach(c => instance.deleteConnection(c));
         el.remove();
         updateNodeIAStatus();
+        saveCanvasState();
       }
     });
 
@@ -277,26 +204,29 @@ document.addEventListener('DOMContentLoaded', async function () {
       if (!el.dataset.color) return;
       hoverTimer = setTimeout(() => {
         const info = [];
-        if (el.dataset.text)      info.push(`${el.dataset.type}: ${el.dataset.text}`);
-        if (el.dataset.fase)      info.push(`Fase: ${el.dataset.fase}`);
-        if (el.dataset.campo)     info.push(`Campo: ${el.dataset.campo}`);
+        if (el.dataset.text) info.push(`${el.dataset.type}: ${el.dataset.text}`);
+        if (el.dataset.fase) info.push(`Fase: ${el.dataset.fase}`);
+        if (el.dataset.campo) info.push(`Campo: ${el.dataset.campo}`);
         if (el.dataset.contenido) info.push(`Contenido: ${el.dataset.contenido}`);
-        if (el.dataset.pdas)      info.push(`PDA: ${el.dataset.pdas}`);
-        if (el.dataset.value)     info.push(`Metodología: ${el.dataset.value}`);
+        if (el.dataset.pdas) info.push(`PDA: ${el.dataset.pdas}`);
+        if (el.dataset.value) info.push(`Metodología: ${el.dataset.value}`);
         tooltip.innerHTML = info.join('<br>');
         const rect = el.getBoundingClientRect();
-        tooltip.style.top     = (rect.bottom + window.scrollY + 5) + 'px';
-        tooltip.style.left    = (rect.left   + window.scrollX)     + 'px';
+        tooltip.style.top = (rect.bottom + window.scrollY + 5) + 'px';
+        tooltip.style.left = (rect.left + window.scrollX) + 'px';
         tooltip.style.display = 'block';
       }, 1000);
     });
+
     el.addEventListener('mouseleave', () => {
       clearTimeout(hoverTimer);
       tooltip.style.display = 'none';
     });
+
+    return el;
   }
 
-  // 9) Properties panel
+  // Panel de propiedades
   async function openProperties(node) {
     currentNode = node;
     const type = node.dataset.type;
@@ -311,9 +241,10 @@ document.addEventListener('DOMContentLoaded', async function () {
       'Contenido': 'Selecciona un contenido.',
       'PDA': 'Escoge un único PDA; para más, crea otro nodo PDA.',
       'Metodología': 'Selecciona la metodología.',
-      'Nodo IA': 'Aquí puedes enviar los datos a la IA.',
+      'Nodo IA': 'Aquí puedes visualizar el plan generado.',
       'Nota': 'Redacta aquí tu nota o explicación libre.'
     };
+    
     const pInfo = document.createElement('p');
     pInfo.className = 'info';
     pInfo.textContent = hints[type] || '';
@@ -326,12 +257,10 @@ document.addEventListener('DOMContentLoaded', async function () {
       div.appendChild(ta);
     }
     if (type==='Entrada') {
-      // Cargar problemas desde el Plano de la Realidad
-      problemsFromSituation = await loadProblemsFromReality();
-      
+      const problems = await loadProblemsFromReality();
       sel1 = document.createElement('select');
       sel1.append(new Option('Selecciona un problema', ''));
-      problemsFromSituation.forEach(problem => {
+      problems.forEach(problem => {
         sel1.append(new Option(problem, problem));
       });
       sel1.value = node.dataset.text || '';
@@ -417,30 +346,24 @@ document.addEventListener('DOMContentLoaded', async function () {
       div.appendChild(sel1);
     }
 
-    // Nodo IA: setup panel
+    // Panel IA simplificado
     if (type==='Nodo IA') {
-      iaPanel.classList.remove('hidden');
-      iaStatusEl.textContent = '—';
-      iaProgress.value = 0;
-      iaSteps.forEach(li => li.classList.remove('completed'));
-      updateCounterUI();
-    } else {
-      iaPanel.classList.add('hidden');
+      vizPlanBtn.disabled = false;
     }
 
     saveBtn.onclick = () => {
-      if (ta)                     node.dataset.text   = ta.value;
-      if (sel1 && type==='Entrada') node.dataset.text   = sel1.value;
-      if (sel1 && type==='Fase')  node.dataset.fase   = sel1.value;
+      if (ta) node.dataset.text = ta.value;
+      if (sel1 && type==='Entrada') node.dataset.text = sel1.value;
+      if (sel1 && type==='Fase') node.dataset.fase = sel1.value;
       if (sel1 && sel2 && type==='Campos Formativos') {
-        node.dataset.fase      = sel1.value;
+        node.dataset.fase = sel1.value;
         const opt = sel2.selectedOptions[0];
-        node.dataset.campo     = opt.value;
+        node.dataset.campo = opt.value;
         node.dataset.campoFile = opt.dataset.file;
       }
       if (sel3 && type==='Contenido') node.dataset.contenido = sel3.value;
-      if (sel3 && type==='PDA')       node.dataset.pdas      = sel3.value;
-      if (sel1 && type==='Metodología') node.dataset.value    = sel1.value;
+      if (sel3 && type==='PDA') node.dataset.pdas = sel3.value;
+      if (sel1 && type==='Metodología') node.dataset.value = sel1.value;
       if (type==='Nota') node.querySelector('.label').innerText = ta.value;
 
       let color;
@@ -461,22 +384,257 @@ document.addEventListener('DOMContentLoaded', async function () {
       }
       propsPan.classList.add('hidden');
       updateNodeIAStatus();
+      saveCanvasState();
     };
 
     propsPan.classList.remove('hidden');
   }
 
-  document.addEventListener('click', e => {
-    if (!propsPan.contains(e.target) && !currentNode?.contains(e.target)) {
-      propsPan.classList.add('hidden');
+  // Cargar problemas desde el Plano de la Realidad
+  async function loadProblemsFromReality() {
+    try {
+      const res = await fetch('/api/plans', {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      });
+      const data = await res.json();
+      
+      if (data.success) {
+        const problems = [];
+        data.plans.forEach(plan => {
+          plan.situations?.forEach(situation => {
+            problems.push(...(situation.problems || []));
+          });
+        });
+        return problems.length > 0 ? problems : ["No hay problemas registrados"];
+      }
+      return ["No hay problemas registrados"];
+    } catch (error) {
+      console.error("Error al cargar problemas:", error);
+      return ["Error al cargar problemas"];
     }
+  }
+
+  // Cargar problemas completados
+  async function loadCompletedProblems() {
+    try {
+      const res = await fetch('/api/context', {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      });
+      
+      const data = await res.json();
+      if (data.success && data.contextData) {
+        return data.contextData.filter(row => 
+          row.problemas && row.fase && row.campos && row.campos.length > 0 && 
+          row.contenidos && row.pda && row.eje
+        );
+      }
+      return [];
+    } catch (error) {
+      console.error('Error al cargar problemas completados:', error);
+      return [];
+    }
+  }
+
+  // Botón Cargar Problemas
+  btnLoadProblems.addEventListener('click', async function() {
+    const completedProblems = await loadCompletedProblems();
+    
+    if (completedProblems.length === 0) {
+      alert('No hay problemas completados disponibles');
+      return;
+    }
+    
+    problemsList.innerHTML = '';
+    completedProblems.forEach(problem => {
+      const item = document.createElement('div');
+      item.className = 'dropdown-item';
+      item.textContent = problem.problemas;
+      item.addEventListener('click', () => loadProblemToCanvas(problem));
+      problemsList.appendChild(item);
+    });
+    
+    problemsDropdown.classList.toggle('hidden');
   });
 
+  // Cargar problema al canvas
+  // Modifica la función loadProblemToCanvas para usar las conexiones específicas
+  function loadProblemToCanvas(problemData) {
+      problemsDropdown.classList.add('hidden');
+      
+      if (confirm('¿Deseas limpiar el canvas actual antes de cargar este problema?')) {
+          instance.deleteEveryConnection();
+          document.querySelectorAll('#canvas .node').forEach(node => node.remove());
+          idCnt = 0;
+      }
+      
+      // Posiciones de los nodos
+      const nodePositions = {
+          'Entrada': { x: 100, y: 100 },
+          'Metodología': { x: 100, y: 250 },
+          'Fase': { x: 300, y: 100 },
+          'Campos Formativos': { x: 300, y: 250 },
+          'Contenido': { x: 500, y: 250 },
+          'PDA': { x: 700, y: 250 },
+          'Nodo IA': { x: 700, y: 100 }
+      };
+      
+      // Crear nodos
+      const entradaNode = createNode('Entrada', nodePositions['Entrada'].x, nodePositions['Entrada'].y);
+      entradaNode.dataset.text = problemData.problemas;
+      
+      const metodologiaNode = createNode('Metodología', nodePositions['Metodología'].x, nodePositions['Metodología'].y);
+      metodologiaNode.dataset.value = problemData.eje;
+      
+      const faseNode = createNode('Fase', nodePositions['Fase'].x, nodePositions['Fase'].y);
+      faseNode.dataset.fase = problemData.fase;
+      
+      const camposNode = createNode('Campos Formativos', nodePositions['Campos Formativos'].x, nodePositions['Campos Formativos'].y);
+      camposNode.dataset.fase = problemData.fase;
+      camposNode.dataset.campo = problemData.campos.join(', ');
+      
+      const contenidoNode = createNode('Contenido', nodePositions['Contenido'].x, nodePositions['Contenido'].y);
+      contenidoNode.dataset.contenido = Array.isArray(problemData.contenidos) 
+          ? problemData.contenidos.join(', ') 
+          : problemData.contenidos;
+      
+      const pdaNode = createNode('PDA', nodePositions['PDA'].x, nodePositions['PDA'].y);
+      pdaNode.dataset.pdas = Array.isArray(problemData.pda) 
+          ? problemData.pda.join(', ') 
+          : problemData.pda;
+      
+      const iaNode = createNode('Nodo IA', nodePositions['Nodo IA'].x, nodePositions['Nodo IA'].y);
+      
+      // Conectar nodos según el flujo especificado
+      setTimeout(() => {
+          // 1. Entrada → Nodo IA
+          instance.connect({ source: entradaNode, target: iaNode });
+          
+          // 2. Metodología → Nodo IA
+          instance.connect({ source: metodologiaNode, target: iaNode });
+          
+          // 3. Fase → Campos Formativos
+          instance.connect({ source: faseNode, target: camposNode });
+          
+          // 4. Campos Formativos → Contenido
+          instance.connect({ source: camposNode, target: contenidoNode });
+          
+          // 5. Contenido → PDA
+          instance.connect({ source: contenidoNode, target: pdaNode });
+          
+          // 6. PDA → Nodo IA
+          instance.connect({ source: pdaNode, target: iaNode });
+          
+          // Actualizar estado y guardar
+          updateNodeIAStatus();
+          saveCanvasState();
+      }, 200);
+  }
+
+  // Actualiza las conexiones permitidas para reflejar el nuevo flujo
+  const allowedConnections = {
+      'Entrada': ['Nodo IA'],
+      'Metodología': ['Nodo IA'],
+      'Fase': ['Campos Formativos'],
+      'Campos Formativos': ['Contenido'],
+      'Contenido': ['PDA'],
+      'PDA': ['Nodo IA'],
+      'Nodo IA': [] // No permite conexiones salientes
+  };
+
+  // Persistencia del canvas
+  function saveCanvasState() {
+    const nodes = [];
+    const connections = [];
+    
+    document.querySelectorAll('#canvas .node').forEach(node => {
+      nodes.push({
+        id: node.id,
+        type: node.dataset.type,
+        x: parseInt(node.style.left),
+        y: parseInt(node.style.top),
+        data: {...node.dataset}
+      });
+    });
+    
+    instance.getConnections().forEach(conn => {
+      connections.push({
+        sourceId: conn.sourceId,
+        targetId: conn.targetId
+      });
+    });
+    
+    const state = {
+      nodes,
+      connections,
+      title: document.getElementById('canvasTitle').textContent
+    };
+    
+    localStorage.setItem('canvasState', JSON.stringify(state));
+  }
+
+  function loadCanvasState() {
+    const savedState = localStorage.getItem('canvasState');
+    if (!savedState) return;
+    
+    try {
+      const state = JSON.parse(savedState);
+      document.getElementById('canvasTitle').textContent = state.title || 'Plan Didáctico';
+      
+      // Limpiar canvas
+      instance.deleteEveryConnection();
+      document.querySelectorAll('#canvas .node').forEach(node => node.remove());
+      
+      // Restaurar nodos
+      state.nodes.forEach(nodeData => {
+        createNode(nodeData.type, nodeData.x, nodeData.y);
+        const node = document.getElementById(nodeData.id);
+        if (node) {
+          Object.keys(nodeData.data).forEach(key => {
+            node.dataset[key] = nodeData.data[key];
+          });
+          
+          if (nodeData.type === 'Nota' && nodeData.data.text) {
+            node.querySelector('.label').textContent = nodeData.data.text;
+          }
+        }
+      });
+      
+      // Restaurar conexiones
+      setTimeout(() => {
+        state.connections.forEach(conn => {
+          const source = document.getElementById(conn.sourceId);
+          const target = document.getElementById(conn.targetId);
+          if (source && target) {
+            instance.connect({ source, target });
+          }
+        });
+        updateNodeIAStatus();
+      }, 300);
+    } catch (error) {
+      console.error('Error al cargar estado del canvas:', error);
+    }
+  }
+
   // Helpers
+  const typeEmojis = {
+    'Entrada': '📝','Campos Formativos': '🎓','Fase': '🔄',
+    'Contenido': '📚','PDA': '✔️','Metodología': '🛠️',
+    'Nodo IA': '🤖','Nota': '💡'
+  };
+
+  const campoColors = {
+    'Lenguajes': 'orange','De lo humano': 'red',
+    'Etica Naturaleza': 'green','Saberes y Pensamiento Científico': 'blue'
+  };
+
   function parseTxt(text) {
     const lines = text.trim().split('\n').filter(l=>l.trim());
-    const hdr   = lines[0].split('|').map(h=>h.trim()).slice(1);
-    const out   = {}, rows = lines.slice(1);
+    const hdr = lines[0].split('|').map(h=>h.trim()).slice(1);
+    const out = {}, rows = lines.slice(1);
     let key;
     rows.forEach(r=>{
       const p = r.split('|').map(x=>x.trim());
@@ -519,467 +677,106 @@ document.addEventListener('DOMContentLoaded', async function () {
 
   function updateNodeIAStatus() {
     const nodeIA = document.querySelector('.node[data-type="Nodo IA"]');
-    if (!nodeIA) return;
+    if (!nodeIA) {
+        if (vizPlanBtn) vizPlanBtn.disabled = true;
+        return;
+    }
+    
     const conns = instance.getConnections({ target: nodeIA });
     const types = new Set(conns.map(c => c.source.dataset.type));
-    const ready = ['Entrada','PDA','Metodología'].every(r => types.has(r));
-    if (ready) {
-      markNetwork(nodeIA,
-        getComputedStyle(document.documentElement).getPropertyValue('--success').trim()
-      );
-    } else {
-      nodeIA.classList.remove('completed');
-      nodeIA.style.setProperty('--aura-color',
-        getComputedStyle(document.documentElement).getPropertyValue('--purple').trim()
-      );
-    }
-  }
-
-  // 10) Deletion gesture
-  let deleting = false, startX, startY, deleteCanvas, dcCtx;
-  container.addEventListener('mousedown', e => {
-    if (mode==='delete') {
-      deleting = true;
-      startX = e.clientX; startY = e.clientY;
-      deleteCanvas = document.createElement('canvas');
-      deleteCanvas.width  = container.scrollWidth;
-      deleteCanvas.height = container.scrollHeight;
-      Object.assign(deleteCanvas.style, {
-        position: 'absolute', top: '0', left: '0',
-        width: container.scrollWidth + 'px',
-        height: container.scrollHeight + 'px',
-        pointerEvents: 'none', zIndex: '5000'
-      });
-      container.appendChild(deleteCanvas);
-      dcCtx = deleteCanvas.getContext('2d');
-      dcCtx.strokeStyle = 'red'; dcCtx.lineWidth = 2;
-    }
-  });
-  container.addEventListener('mousemove', e => {
-    if (!deleting) return;
-    dcCtx.clearRect(0, 0, deleteCanvas.width, deleteCanvas.height);
-    dcCtx.beginPath();
-    const r = container.getBoundingClientRect();
-    const x1 = startX - r.left + container.scrollLeft;
-    const y1 = startY - r.top + container.scrollTop;
-    const x2 = e.clientX - r.left + container.scrollLeft;
-    const y2 = e.clientY - r.top + container.scrollTop;
-    dcCtx.moveTo(x1, y1); dcCtx.lineTo(x2, y2); dcCtx.stroke();
-    const steps = 20;
-    for (let i = 0; i <= steps; i++) {
-      const sx = startX + (e.clientX - startX) * (i/steps);
-      const sy = startY + (e.clientY - startY) * (i/steps);
-      const el = document.elementFromPoint(sx, sy);
-      if (el && el.tagName==='path' && el.closest('.jtk-connector')) {
-        instance.getAllConnections().forEach(conn => {
-          if (conn.getConnector().canvas.contains(el)) {
-            instance.deleteConnection(conn);
-            updateNodeIAStatus();
-          }
-        });
-      }
-    }
-  });
-  document.addEventListener('mouseup', () => {
-    if (deleting) {
-      deleting = false;
-      deleteCanvas.remove();
-    }
-  });
-
-  // 11) Generate regular plan (sin IA)
-  document.getElementById('generarPlan').onclick = async () => {
-    const nodes = [...canvas.querySelectorAll('.node')].map(el => ({
-      id: el.id,
-      type: el.dataset.type,
-      data: el.dataset.text || el.dataset.value || el.dataset.pdas || ''
-    }));
-    const resp = await fetch('/api/generatePlan', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(nodes)
-    }).then(r => r.json());
-    window.open(`/api/downloadPlan?id=${resp.id}`, '_blank');
-  };
-
-  // 12) Edit canvas title
-  canvasTitle.addEventListener('dblclick', () => {
-    if (mode==='move') {
-      canvasTitle.contentEditable = true;
-      canvasTitle.focus();
-    }
-  });
-  canvasTitle.addEventListener('blur', () => {
-    canvasTitle.contentEditable = false;
-  });
-  canvasTitle.addEventListener('keydown', e => {
-    if (e.key==='Enter') {
-      e.preventDefault();
-      canvasTitle.blur();
-    }
-  });
-
-  // 13) Send to IA (con colección de todos los PDAs, entradas, metodologías…)
-  // === HISTORIAL DE CONVERSACIÓN PARA CONTEXTO ACUMULATIVO ===
-  let conversationHistory = [];
-
-  sendToIA.onclick = async () => {
-  // Fetch user config for Datos Generales fields BEFORE try block, so it's always defined
-  let userConfig = {};
-  try {
-    const res = await fetch('/api/config', {
-      headers: {
-        'Authorization': `Bearer ${localStorage.getItem('token')}`
-      }
-    });
-    const data = await res.json();
-    if (data.success && data.config) {
-      userConfig = {
-        nivelEducativo: data.config.nivelEducativo || '',
-        centroTrabajo: data.config.centroTrabajo || '',
-        sectorEducativo: data.config.sectorEducativo || '',
-        zonaEscolar: data.config.zonaEscolar || '',
-        fase: data.config.fase || '',
-        grado: data.config.grado || '',
-        grupo: data.config.grupo || '',
-        docente: data.config.nombreDocente || '',
-        director: data.config.nombreDirector || '',
-        inicioPeriodo: data.config.inicioPeriodo || '',
-        finPeriodo: data.config.finPeriodo || ''
-      };
-    }
-  } catch (e) {
-    userConfig = {};
-  }
-    const maxRequests = userData.membership === 'premium' ? 10 : 4;
-    const currentCount = parseInt(localStorage.getItem(userRequestKey) || '0', 10);
     
-    if (currentCount >= maxRequests) {
-      alert(`Has alcanzado el límite de ${maxRequests} solicitudes diarias. ${userData.membership === 'basic' ? 'Actualiza a Premium para aumentar el límite.' : ''}`);
-      return;
-    }
-
-    iaStatusEl.textContent = 'Enviando…';
-    if (iaSteps && iaSteps[0]) iaSteps[0].classList.add('completed');
-    iaProgress.value = 1;
-
-    // Recolectar datos globales (recorriendo TODOS los nodos del canvas, no solo conexiones)
-    const nodeList = canvas.querySelectorAll('.node');
-    globalVars.entrada = Array.from(nodeList)
-      .filter(n => n.dataset.type === 'Entrada' && n.dataset.text)
-      .map(n => n.dataset.text).join('; ');
-    globalVars.pdas = Array.from(nodeList)
-      .filter(n => n.dataset.type === 'PDA' && n.dataset.pdas)
-      .map(n => n.dataset.pdas);
-    globalVars.campos = Array.from(nodeList)
-      .filter(n => n.dataset.type === 'Campos Formativos' && n.dataset.campo)
-      .map(n => n.dataset.campo);
-    globalVars.contenidos = Array.from(nodeList)
-      .filter(n => n.dataset.type === 'Contenido' && n.dataset.contenido)
-      .map(n => n.dataset.contenido);
-    globalVars.metodologia = Array.from(nodeList)
-      .filter(n => n.dataset.type === 'Metodología' && n.dataset.value)
-      .map(n => n.dataset.value).join('; ');
-    globalVars.proyecto = canvasTitle.textContent;
-    globalVars.fases = Array.from(nodeList)
-      .filter(n => n.dataset.type === 'Fase' && n.dataset.fase)
-      .map(n => n.dataset.fase);
-
-    // Inicializar almacenamiento de resultados IA
-    window.iaResults = {
-      evaluacion: null,
-      secuencia: null,
-      organizacion: null,
-      actividades: null,
-      reflexiones: null
-    };
-
-    let todoOk = true;
-
-    try {
-      // 1. Construir historial acumulativo y contexto reforzado
-      const contexto = `Proyecto: ${globalVars.proyecto}\nMetodología: ${globalVars.metodologia}\nFases: ${globalVars.fases.join(', ')}\nPDAs: ${globalVars.pdas.join(', ')}\nCampos Formativos: ${globalVars.campos.join(', ')}\nContenidos: ${globalVars.contenidos.join(', ')}\nEntrada (problema): ${globalVars.entrada}`;
-      // Contexto enriquecido para la IA
-      const contextoResumen = `ERES UNA PLATAFORMA EXPERTA EN SOLUCIONES PEDAGÓGICAS Y DIDÁCTICAS.\nDebes analizar, proponer y reflexionar como un especialista en educación y didáctica.\nTienes la tarea de crear un plan didáctico completo, coherente y personalizado, usando TODA la siguiente información y contexto:\n${contexto}\n\nREQUISITOS: \n- Usa todos los datos proporcionados para generar soluciones didácticas precisas.\n- Todas las tablas, actividades y reflexiones deben estar alineadas con el contexto y problemática.\n- No generes respuestas genéricas.\n- Las reflexiones deben ser profundas, personalizadas y basadas en el plan generado.\n- Mantén la coherencia y continuidad temática en cada paso.\n- Actúa como una plataforma que ayuda a docentes a planear, analizar y mejorar su práctica.\n`;
-      // Primer mensaje del historial: contexto + solicitud de primera tabla
-      if (conversationHistory.length === 0) {
-        conversationHistory.push({ role: "user", content: `${contextoResumen}\n\nPRIMERA TAREA: Genera la tabla EVALUACIÓN en JSON con la estructura [{\"Problema\":\"[entrada]\",\"Proceso de pensamiento\":\"\",\"Evidencia de aprendizaje\":\"\",\"Nivel de logro\":\"\"}], máximo 5 filas. SOLO JSON, sin texto extra.` });
-      }
-      const totalSteps = 5;
-      let currentStep = 1;
-      iaProgress.value = Math.round((currentStep/totalSteps)*100);
-      iaStatusEl.textContent = 'Generando tabla Evaluación...';
-      // Enviar historial truncado (máximo 13000 tokens aprox)
-      function estimateTokens(str) { return Math.ceil(str.length / 3.5); }
-      function truncateHistory(history, maxTokens) {
-        let total = 0;
-        const out = [];
-        for (let i = history.length - 1; i >= 0; i--) {
-          total += estimateTokens(history[i].content);
-          if (total > maxTokens) break;
-          out.unshift(history[i]);
-        }
-        return out;
-      }
-      let truncatedHistory = truncateHistory(conversationHistory, 13000);
-      // Construcción de historial para aprovechar 'Step Back' (contexto ampliado)
-      // Refuerza el contexto general al inicio, pero cada solicitud es autocontenida y específica
-      function buildPromptForStep(stepInstruction) {
-        return (
-          contextoResumen +
-          '\n\nINSTRUCCIÓN ESPECÍFICA PARA ESTA TABLA:\n' +
-          stepInstruction +
-          '\n\nCONVERSACIÓN RELEVANTE PREVIA:\n' +
-          truncatedHistory.map(m => (m.role === 'user' ? 'Usuario: ' : 'Asistente: ') + m.content).join('\n')
+    // Requerimos Entrada, Metodología y PDA conectados
+    const requiredTypes = ['Entrada', 'Metodología', 'PDA'];
+    const missingTypes = requiredTypes.filter(r => !types.has(r));
+    
+    if (missingTypes.length === 0) {
+        markNetwork(nodeIA,
+            getComputedStyle(document.documentElement).getPropertyValue('--success').trim()
         );
-      }
-      // Solicitud de tabla Evaluación
-      const evalPrompt = buildPromptForStep(
-        'Genera la tabla EVALUACIÓN en JSON con la estructura [{"Problema":"[entrada]","Proceso de pensamiento":"","Evidencia de aprendizaje":"","Nivel de logro":""}], máximo 5 filas. El campo "Nivel de logro" debe permanecer vacío en todas las filas. SOLO JSON, sin texto extra.'
-      );
-      let resp = await fetch('/api/ia/generatePlan', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ prompt: evalPrompt, max_tokens: 4000 })
-      });
-      let txt = await resp.text();
-      // Guardar respuesta en historial
-      conversationHistory.push({ role: "assistant", content: txt });
-      // Parsear tabla evaluación
-      window.iaResults.evaluacion = JSON.parse(txt.replace(/```json|```/g, '').trim());
-      // Forzar campo 'Nivel de logro' vacío en todas las filas
-      if (Array.isArray(window.iaResults.evaluacion)) {
-        window.iaResults.evaluacion.forEach(row => {
-          if ('Nivel de logro' in row) row['Nivel de logro'] = '';
-        });
-      }
-      iaProgress.value = 35;
-
-      // 3. SECUENCIA DIDÁCTICA
-      currentStep++;
-      iaProgress.value = Math.round((currentStep/totalSteps)*100);
-      iaStatusEl.textContent = 'Generando tabla Secuencia Didáctica...';
-      const secuenciaPrompt = buildPromptForStep(
-        'Genera la tabla SECUENCIA DIDÁCTICA en JSON. Estructura: [{"Fase":"","Etapa":"","Actividades":"","Evaluación formativa":""}]. Máximo 5 filas. SOLO JSON, sin texto extra.'
-      );
-      resp = await fetch('/api/ia/generatePlan', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ prompt: secuenciaPrompt, max_tokens: 4000 })
-      });
-      txt = await resp.text();
-      window.iaResults.secuencia = JSON.parse(txt.replace(/```json|```/g, '').trim());
-
-      // 4. ORGANIZACIÓN
-      currentStep++;
-      iaProgress.value = Math.round((currentStep/totalSteps)*100);
-      iaStatusEl.textContent = 'Generando tabla Organización...';
-      const organizacionPrompt = buildPromptForStep(
-        'Genera la tabla ORGANIZACIÓN en JSON. Estructura: [{"Fase":"","Tiempo":"","Espacio":"","Recursos/Materiales":""}]. Máximo 5 filas. SOLO JSON, sin texto extra.'
-      );
-      resp = await fetch('/api/ia/generatePlan', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ prompt: organizacionPrompt, max_tokens: 4000 })
-      });
-      txt = await resp.text();
-      window.iaResults.organizacion = JSON.parse(txt.replace(/```json|```/g, '').trim());
-
-      // 5. REGISTRO DE ACTIVIDADES
-      currentStep++;
-      iaProgress.value = Math.round((currentStep/totalSteps)*100);
-      iaStatusEl.textContent = 'Generando lista de Actividades...';
-      const actividadesPrompt = buildPromptForStep(
-        'Genera una lista JSON de ACTIVIDADES didácticas relevantes, concretas y alineadas al plan. SOLO completa el campo "Actividad" (no llenes "Fecha" ni "Observaciones"). Estructura: [{"Actividad": ""}]. Máximo 5 actividades. SOLO JSON, sin texto extra ni explicación.'
-      );
-      resp = await fetch('/api/ia/generatePlan', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ prompt: actividadesPrompt, max_tokens: 4000 })
-      });
-      txt = await resp.text();
-      window.iaResults.actividades = JSON.parse(txt.replace(/```json|```/g, '').trim());
-
-      // 6. REFLEXIONES
-      currentStep++;
-      iaProgress.value = Math.round((currentStep/totalSteps)*100);
-      iaStatusEl.textContent = 'Generando reflexiones...';
-      window.iaResults.reflexiones = 'Agregar Reflexiones';
-      iaProgress.value = Math.round((currentStep/totalSteps)*100);
-
-      // Si llegamos aquí, todo fue exitoso: marcar los pasos de la UI
-      if (iaSteps && iaSteps.length) {
-        for (let i = 0; i < iaSteps.length; i++) {
-          if (iaSteps[i]) iaSteps[i].classList.add('completed');
-        }
-      }
-      // Habilitar botón Visualizar Plan SOLO al finalizar
-      if (vizPlanBtn) vizPlanBtn.disabled = false;
-
-      // Guardar datos para Visualizar Plan
-      // Merge userConfig fields into globalVars for viewer
-      const mergedConfig = { ...userConfig, ...globalVars };
-      window.iaGeneratedData = {
-        config: mergedConfig,
-        tables: {
-          evaluacion: window.iaResults.evaluacion,
-          secuencia: window.iaResults.secuencia,
-          organizacion: window.iaResults.organizacion,
-          actividades: window.iaResults.actividades,
-          reflexiones: window.iaResults.reflexiones
-        },
-        fecha: new Date().toLocaleDateString('es-MX', { 
-          weekday: 'long', 
-          year: 'numeric', 
-          month: 'long', 
-          day: 'numeric' 
-        })
-      };
-      iaStatusEl.textContent = 'Completado';
-
-      // Actualizar contador
-      localStorage.setItem(userRequestKey, (currentCount + 1).toString());
-      updateCounterUI();
-    } catch (e) {
-      todoOk = false;
-      console.error('Error en el proceso IA:', e);
-      iaStatusEl.textContent = 'Error';
-      alert('Error en el proceso IA: ' + e.message);
-    }
-  };
-
-  function parseIAResponse(response) {
-    try {
-      // Eliminar posibles marcadores de código y convertir a JSON
-      const jsonStr = response.replace(/```json|```/g, '').trim();
-      const data = JSON.parse(jsonStr);
-      
-      // Estructura mínima requerida
-      return {
-        evaluacion: data.EVALUACIÓN || [],
-        secuencia: data["SECUENCIA DIDÁCTICA"] || [],
-        organizacion: data.ORGANIZACIÓN || [],
-        actividades: data["REGISTRO DE ACTIVIDADES"] || [],
-        reflexiones: data.REFLEXIONES || "No se generaron reflexiones"
-      };
-    } catch (e) {
-      console.error('Error al parsear respuesta IA:', e);
-      return {
-        evaluacion: [],
-        secuencia: [],
-        organizacion: [],
-        actividades: [],
-        reflexiones: "Error al procesar la respuesta de IA"
-      };
+        if (vizPlanBtn) vizPlanBtn.disabled = false;
+    } else {
+        nodeIA.classList.remove('completed');
+        nodeIA.style.setProperty('--aura-color',
+            getComputedStyle(document.documentElement).getPropertyValue('--purple').trim()
+        );
+        if (vizPlanBtn) vizPlanBtn.disabled = true;
     }
   }
 
-  // 14) Visualizar Plan
+  // Visualizar Plan
   vizPlanBtn.onclick = () => {
-    if (!window.iaGeneratedData) {
-      alert('Primero debes generar un plan con IA');
+    const nodeIA = document.querySelector('.node[data-type="Nodo IA"]');
+    if (!nodeIA) {
+      alert('Debes tener un Nodo IA en el canvas');
       return;
     }
-    
-    const viewerUrl = `plano-viewer-prueba.html?proyecto=${encodeURIComponent(window.iaGeneratedData.config.proyecto)}&metodologia=${encodeURIComponent(window.iaGeneratedData.config.metodologia)}`;
-    const nuevaVentana = window.open(viewerUrl, '_blank');
-    
-    // Usar postMessage solo después de que la ventana esté cargada
-    async function getUserConfig() {
-      try {
-        const res = await fetch('/api/config', {
-          headers: {
-            'Authorization': `Bearer ${localStorage.getItem('token')}`
-          }
-        });
-        const data = await res.json();
-        if (!data.success || !data.config) return {};
-        // Adaptar nombres para el visor
-        return {
-          nivelEducativo: data.config.nivelEducativo || '',
-          centroTrabajo: data.config.centroTrabajo || '',
-          sectorEducativo: data.config.sectorEducativo || '',
-          zonaEscolar: data.config.zonaEscolar || '',
-          fase: data.config.fase || '',
-          grado: data.config.grado || '',
-          grupo: data.config.grupo || '',
-          docente: data.config.nombreDocente || '',
-          director: data.config.nombreDirector || '',
-          inicioPeriodo: data.config.inicioPeriodo || '',
-          finPeriodo: data.config.finPeriodo || ''
-        };
-      } catch (e) {
-        return {};
-      }
+
+    const conns = instance.getConnections({ target: nodeIA });
+    const requiredTypes = ['Entrada', 'PDA', 'Metodología'];
+    const missingTypes = requiredTypes.filter(type => 
+      !conns.some(c => c.source.dataset.type === type)
+    );
+
+    if (missingTypes.length > 0) {
+      alert(`Faltan conexiones requeridas: ${missingTypes.join(', ')}`);
+      return;
     }
 
-    // Reimplementación del setInterval para postMessage con config extendido
-    const checkLoad = setInterval(async () => {
-      if (nuevaVentana.closed) {
-        clearInterval(checkLoad);
-        return;
-      }
-      try {
-        const config = await getUserConfig();
-        // EXTRAER SIEMPRE los valores actuales del canvas para campos, contenidos y fases
-        const nodeList = canvas.querySelectorAll('.node');
-        const camposCanvas = Array.from(nodeList)
-          .filter(n => n.dataset.type === 'Campos Formativos' && n.dataset.campo)
-          .map(n => n.dataset.campo).filter(Boolean);
-        const contenidosCanvas = Array.from(nodeList)
-          .filter(n => n.dataset.type === 'Contenido' && n.dataset.contenido)
-          .map(n => n.dataset.contenido).filter(Boolean);
-        const fasesCanvas = Array.from(nodeList)
-          .filter(n => n.dataset.type === 'Fase' && n.dataset.fase)
-          .map(n => n.dataset.fase).filter(Boolean);
-        const mergedConfig = {
-          ...config,
-          proyecto: globalVars.proyecto || (window.iaGeneratedData?.config?.proyecto ?? ''),
-          metodologia: globalVars.metodologia || (window.iaGeneratedData?.config?.metodologia ?? ''),
-          entrada: globalVars.entrada || (window.iaGeneratedData?.config?.entrada ?? ''),
-          pdas: Array.isArray(globalVars.pdas) ? globalVars.pdas : (window.iaGeneratedData?.config?.pdas ?? []),
-          campos: camposCanvas.length ? camposCanvas : (Array.isArray(globalVars.campos) ? globalVars.campos : (window.iaGeneratedData?.config?.campos ?? [])),
-          contenidos: contenidosCanvas.length ? contenidosCanvas : (Array.isArray(globalVars.contenidos) ? globalVars.contenidos : (window.iaGeneratedData?.config?.contenidos ?? [])),
-          fases: fasesCanvas.length ? fasesCanvas : (Array.isArray(globalVars.fases) ? globalVars.fases : (window.iaGeneratedData?.config?.fases ?? []))
-        };
-        nuevaVentana.postMessage({
-          type: 'loadData',
-          config: mergedConfig,
-          ...window.iaGeneratedData
-        }, '*');
-        clearInterval(checkLoad);
-      } catch (e) {
-        // La ventana aún no está lista
-      }
-    }, 100);
-  };
-  // 15) Carga configuración o plan
-  uploadPlan.addEventListener('change', e => {
-    const file = e.target.files[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = () => {
-      const text = reader.result;
-      if (file.name.endsWith('.json')) {
-        const cfg = JSON.parse(text);
-        instance.deleteEveryConnection();
-        canvas.innerHTML = '<h1 id="canvasTitle" contenteditable="false">Plan Didáctico</h1>';
-        idCnt = 0;
-        cfg.nodes.forEach(n => {
-          createNode(n.type, n.x, n.y);
-          const el = document.getElementById(`n${idCnt-1}`);
-          el.id = n.id;
-          Object.assign(el.dataset, n.data);
-        });
-        setTimeout(() => {
-          cfg.connections.forEach(c => {
-            const s = document.getElementById(c.sourceId);
-            const t = document.getElementById(c.targetId);
-            if (s && t) instance.connect({ source: s, target: t });
-          });
-        }, 50);
-      }
+    // Recolectar datos para el plan
+    const nodeList = canvas.querySelectorAll('.node');
+    const planData = {
+      proyecto: canvasTitle.textContent,
+      entrada: Array.from(nodeList)
+        .filter(n => n.dataset.type === 'Entrada' && n.dataset.text)
+        .map(n => n.dataset.text).join('; '),
+      pdas: Array.from(nodeList)
+        .filter(n => n.dataset.type === 'PDA' && n.dataset.pdas)
+        .map(n => n.dataset.pdas),
+      metodologia: Array.from(nodeList)
+        .filter(n => n.dataset.type === 'Metodología' && n.dataset.value)
+        .map(n => n.dataset.value).join('; '),
+      campos: Array.from(nodeList)
+        .filter(n => n.dataset.type === 'Campos Formativos' && n.dataset.campo)
+        .map(n => n.dataset.campo),
+      contenidos: Array.from(nodeList)
+        .filter(n => n.dataset.type === 'Contenido' && n.dataset.contenido)
+        .map(n => n.dataset.contenido),
+      fases: Array.from(nodeList)
+        .filter(n => n.dataset.type === 'Fase' && n.dataset.fase)
+        .map(n => n.dataset.fase)
     };
-    reader.readAsText(file);
+
+    // Abrir nueva pestaña con los datos
+    const viewerUrl = `plano-viewer.html?data=${encodeURIComponent(JSON.stringify(planData))}`;
+    window.open(viewerUrl, '_blank');
+  };
+
+  // Cargar estado inicial
+  loadCanvasState();
+
+  // Configurar guardado automático
+  setInterval(saveCanvasState, 10000);
+  window.addEventListener('beforeunload', saveCanvasState);
+
+  // Cerrar dropdown al hacer clic fuera
+  document.addEventListener('click', (e) => {
+    if (!e.target.closest('#btnLoadProblems') && !e.target.closest('#problemsDropdown')) {
+      problemsDropdown.classList.add('hidden');
+    }
   });
 
+  // Tooltip
+  const tooltip = document.createElement('div');
+  tooltip.id = 'tooltip';
+  Object.assign(tooltip.style, {
+    position: 'absolute', background: 'rgba(0,0,0,0.75)',
+    color: '#fff', padding: '4px 8px', borderRadius: '4px',
+    fontSize: '12px', pointerEvents: 'none',
+    display: 'none', zIndex: '3000'
+  });
+  document.body.appendChild(tooltip);
+
+  
   // Configurar menú
   const isPremium = userData && userData.membership === 'premium';
   const isAdmin = userData && userData.membership === 'admin';
@@ -1054,4 +851,5 @@ document.addEventListener('DOMContentLoaded', async function () {
       popup.classList.add('hidden');
     });
   }
+
 });

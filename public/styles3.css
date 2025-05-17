@@ -992,3 +992,202 @@
   height: 600px;
   border: none;
 }
+/* Agregar al final de styles3.css */
+.generate-location-btn {
+  background-color: #f0f9ff;
+  border: 1px solid #bae6fd;
+  color: #0369a1;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  transition: all 0.2s;
+}
+
+.generate-location-btn:hover {
+  background-color: #e0f2fe;
+  transform: translateY(-1px);
+}
+
+/* Ajustar el grid de campos */
+.fields-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 0.5rem;
+}
+
+/* Estilos para selects múltiples */
+select[multiple] {
+  height: auto;
+  min-height: 80px;
+}
+
+.select-multiple-container {
+  position: relative;
+}
+
+.select-multiple-container::after {
+  content: "Mantén Ctrl/Cmd para seleccionar múltiples";
+  position: absolute;
+  bottom: -20px;
+  left: 0;
+  font-size: 0.7rem;
+  color: #64748b;
+}
+
+/* Agregar al final del archivo CSS */
+.pda-selector-content {
+  max-width: 1000px;
+  width: 90%;
+}
+
+.selection-panels {
+  grid-template-columns: 1fr 1.5fr 1.5fr;
+}
+
+.items-container {
+  max-height: 60vh;
+  overflow-y: auto;
+}
+
+.contenido-item {
+  padding: 8px;
+  margin: 5px 0;
+  background: white;
+  border: 1px solid #eee;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+}
+
+.pda-item {
+  padding: 8px;
+  margin: 5px 0;
+  background: white;
+  border: 1px solid #eee;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+}
+
+.pda-item label {
+  cursor: pointer;
+  margin-left: 5px;
+}
+
+.pda-count-badge {
+  background-color: #eb4625;
+  color: white;
+  border-radius: 50%;
+  padding: 2px 6px;
+  font-size: 0.8em;
+  margin-left: 5px;
+}
+
+/* Agregar al CSS */
+.delete-pda-btn {
+  background: none;
+  border: none;
+  color: #ef4444;
+  cursor: pointer;
+  margin-left: auto;
+  padding: 0 5px;
+}
+
+.delete-pda-btn:hover {
+  color: #dc2626;
+}
+
+#selectedPdasList .pda-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+/* Agregar al CSS */
+#pdasList {
+  max-height: 60vh;
+  overflow-y: auto;
+  padding: 10px;
+}
+
+#pdasList .pda-item {
+  display: flex;
+  align-items: center;
+  padding: 5px;
+  margin: 3px 0;
+  background: #f8fafc;
+  border-radius: 4px;
+}
+
+#pdasList .pda-item input {
+  margin-right: 8px;
+}
+
+#selectedPdasList {
+  max-height: 60vh;
+  overflow-y: auto;
+  padding: 10px;
+}
+
+#selectedPdasList .pda-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 5px;
+  margin: 3px 0;
+  background: #f0fdf4;
+  border-radius: 4px;
+  border-left: 3px solid #10b981;
+}
+
+.delete-pda-btn {
+  background: none;
+  border: none;
+  color: #ef4444;
+  cursor: pointer;
+  font-size: 14px;
+  padding: 0 5px;
+}
+
+/* Mantenemos solo estos estilos relevantes */
+#contenidosList h4 {
+  margin-top: 15px;
+  padding-bottom: 5px;
+  border-bottom: 1px solid #e2e8f0;
+  color: #eb4625;
+}
+
+#pdasList h4 {
+  margin-top: 15px;
+  padding-bottom: 5px;
+  border-bottom: 1px solid #e2e8f0;
+  color: #64748b;
+}
+
+.contenido-item, .pda-item {
+  display: flex;
+  align-items: center;
+  padding: 8px;
+  margin: 5px 0;
+  background: white;
+  border-radius: 4px;
+  border: 1px solid #eee;
+}
+
+#selectedPdasList .pda-item {
+  background: #f0fdf4;
+  border-left: 3px solid #10b981;
+}
+
+.delete-pda-btn {
+  background: none;
+  border: none;
+  color: #ef4444;
+  cursor: pointer;
+  margin-left: auto;
+  padding: 0 5px;
+}

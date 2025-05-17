@@ -3,6 +3,9 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" href="/fav/favicon.svg" type="image/svg+xml">
+  <link rel="icon" href="/fav/favicon.ico" type="image/x-icon">
+  <link rel="icon" href="/fav/favicon-1.png" type="image/png">
   <title>Plano Contextual</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <link rel="stylesheet" href="styles3.css">
@@ -182,7 +185,7 @@
         <h1>Plano Contextual</h1>
       </div>
 
-      <!-- Sección de Tabla -->
+      <!-- Sección de Tabla (versión simplificada) -->
       <section class="info-table-section">
         <div class="table-header">
           <h2>Tabla de contenidos</h2>
@@ -217,47 +220,48 @@
   <!-- Selector de PDA (nuevo) -->
   <div id="pda-selector-overlay" class="pda-selector-overlay hidden">
     <div class="pda-selector-content">
-      <h2>Seleccionar PDA</h2>
-      <div class="selector-container">
-        <div class="form-group">
-          <label for="fase-pda">Fase:</label>
-          <select id="fase-pda">
-            <option value="">-- Selecciona Fase --</option>
-            <option value="F3">Fase 3 (1° y 2°)</option>
-            <option value="F4">Fase 4 (3° y 4°)</option>
-            <option value="F5">Fase 5 (5° y 6°)</option>
-          </select>
+        <h2>Seleccionar PDA</h2>
+        
+        <div class="selector-container" style="display: none;">
+            <!-- Ocultamos estos selectores ya que no son necesarios -->
+            <div class="form-group">
+                <label for="fase-pda">Fase:</label>
+                <select id="fase-pda">
+                    <option value="">-- Selecciona Fase --</option>
+                    <option value="F3">Fase 3 (1° y 2°)</option>
+                    <option value="F4">Fase 4 (3° y 4°)</option>
+                    <option value="F5">Fase 5 (5° y 6°)</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="campo-pda">Campo Formativo:</label>
+                <select id="campo-pda" disabled>
+                    <option value="">-- Selecciona Campo --</option>
+                </select>
+            </div>
         </div>
 
-        <div class="form-group">
-          <label for="campo-pda">Campo Formativo:</label>
-          <select id="campo-pda" disabled>
-            <option value="">-- Selecciona Campo --</option>
-          </select>
-        </div>
-      </div>
+        <div class="selection-panels">
+            <div id="contenidosContainer" class="selection-panel">
+                <h3>Contenidos</h3>
+                <div class="items-container" id="contenidosList"></div>
+            </div>
 
-      <div class="selection-panels">
-        <div id="contenidoContainer" class="selection-panel">
-          <h3>Contenidos</h3>
-          <div class="items-container" id="contenidosList"></div>
-        </div>
+            <div id="pdaContainer" class="selection-panel">
+                <h3>PDAs Disponibles</h3>
+                <div class="items-container" id="pdasList"></div>
+            </div>
 
-        <div id="pdaContainer" class="selection-panel">
-          <h3>PDAs Disponibles</h3>
-          <div class="items-container" id="pdasList"></div>
+            <div id="selectedPdaContainer" class="selection-panel">
+                <h3>PDAs Seleccionados</h3>
+                <div class="items-container" id="selectedPdasList"></div>
+            </div>
         </div>
 
-        <div id="selectedPdaContainer" class="selection-panel">
-          <h3>PDAs Seleccionados</h3>
-          <div class="items-container" id="selectedPdasList"></div>
+        <div class="pda-selector-actions">
+            <button id="pda-selector-cancel" class="btn-cancel">Cancelar</button>
+            <button id="pda-selector-save" class="btn-save">Guardar</button>
         </div>
-      </div>
-
-      <div class="pda-selector-actions">
-        <button id="pda-selector-cancel" class="btn-cancel">Cancelar</button>
-        <button id="pda-selector-save" class="btn-save">Guardar</button>
-      </div>
     </div>
   </div>
 
