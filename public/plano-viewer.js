@@ -477,8 +477,7 @@ function updateNoteTabs() {
   tabsContainer.innerHTML = '';
   
   Object.values(notes).forEach(note => {
-    const tab = document.createElement('div');
-    tab.className = `note-tab ${note.id === currentNoteId ? 'active' : ''}`;
+    const tab = document.createElement('div');    tab.className = `note-tab ${note.id === currentNoteId ? 'active' : ''}`;
     tab.setAttribute('data-note-id', note.id);
     tab.innerHTML = `
       <span class="tab-title">${note.title}</span>

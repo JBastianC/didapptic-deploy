@@ -711,45 +711,116 @@ document.addEventListener('DOMContentLoaded', async function() {
       return;
     }
 
-    const conns = instance.getConnections({ target: nodeIA });
-    const requiredTypes = ['Entrada', 'PDA', 'Metodología'];
-    const missingTypes = requiredTypes.filter(type => 
-      !conns.some(c => c.source.dataset.type === type)
-    );
+    // === NUEVO: Generar registro jerarquizado para plano-viewer.html ===
+    const nodes = [];
+    const connections = [];
+    document.querySelectorAll('#canvas .node').forEach(node => {
+      nodes.push({
+        id: node.id,
+        type: node.dataset.type,
+        data: {...node.dataset}
+      });
+    });
+    instance.getConnections().forEach(conn => {
+      connections.push({
+        sourceId: conn.sourceId,
+        targetId: conn.targetId
+      });
+    });
+    const nodesById = Object.fromEntries(nodes.map(n => [n.id, n]));
+    // Auxiliar para obtener nodos conectados de un tipo
+    function getConnectedNodes(originId, type) {
+      return connections.filter(c => c.sourceId === originId && nodesById[c.targetId]?.type === type)
+        .map(c => nodesById[c.targetId]);
+    }
+    // Auxiliar para obtener valor preferido
+    function getValue(node, prefer) {
+      if (!node) return '';
+      if (prefer && node.data?.[prefer]) return node.data[prefer];
+      if (node.data?.text) return node.data.text;
+      if (node.data && Object.keys(node.data).length === 1) {
+        return node.data[Object.keys(node.data)[0]];
+      }
+      return '';
+    }
+    // Construir arreglo para tabla Ubicación Curricular
+    const ubicacionRows = [];
+    // Si no hay nodos Entrada, aún así mostrar combinaciones de los otros bloques
+    const entradas = nodes.filter(n => n.type === 'Entrada');
+    const camposFormativos = nodes.filter(n => n.type === 'Campos Formativos');
+    const contenidos = nodes.filter(n => n.type === 'Contenido');
+    const pdas = nodes.filter(n => n.type === 'PDA');
 
-    if (missingTypes.length > 0) {
-      alert(`Faltan conexiones requeridas: ${missingTypes.join(', ')}`);
-      return;
+    // Si hay nodos Entrada, generar combinaciones conectadas
+    if (entradas.length) {
+      entradas.forEach(entrada => {
+        const campos = getConnectedNodes(entrada.id, 'Campos Formativos');
+        if (!campos.length) {
+          ubicacionRows.push({
+            Problema: getValue(entrada, 'text'),
+            'Campo(s) Formativo(s)': camposFormativos.map(c=>getValue(c,'campo')).join('#'),
+            'Contenido(s)': contenidos.map(c=>getValue(c,'contenido')).join('#'),
+            'PDA(s)': pdas.map(p=>getValue(p,'pdas')).join('#')
+          });
+          return;
+        }
+        campos.forEach(campo => {
+          const contenidosCon = getConnectedNodes(campo.id, 'Contenido');
+          if (!contenidosCon.length) {
+            ubicacionRows.push({
+              Problema: getValue(entrada, 'text'),
+              'Campo(s) Formativo(s)': getValue(campo, 'campo'),
+              'Contenido(s)': contenidos.map(c=>getValue(c,'contenido')).join(', '),
+              'PDA(s)': pdas.map(p=>getValue(p,'pdas')).join(', ')
+            });
+            return;
+          }
+          contenidosCon.forEach(contenido => {
+            const pdasCon = getConnectedNodes(contenido.id, 'PDA');
+            if (!pdasCon.length) {
+              ubicacionRows.push({
+                Problema: getValue(entrada, 'text'),
+                'Campo(s) Formativo(s)': getValue(campo, 'campo'),
+                'Contenido(s)': getValue(contenido, 'contenido'),
+                'PDA(s)': pdas.map(p=>getValue(p,'pdas')).join(', ')
+              });
+              return;
+            }
+            pdasCon.forEach(pda => {
+              ubicacionRows.push({
+                Problema: getValue(entrada, 'text'),
+                'Campo(s) Formativo(s)': getValue(campo, 'campo'),
+                'Contenido(s)': getValue(contenido, 'contenido'),
+                'PDA(s)': getValue(pda, 'pdas')
+              });
+            });
+          });
+        });
+      });
+    } else {
+      // Si no hay Entrada, mostrar todas las combinaciones de los otros bloques
+      ubicacionRows.push({
+        Problema: '',
+        'Campo(s) Formativo(s)': camposFormativos.map(c=>getValue(c,'campo')).join('#'),
+        'Contenido(s)': contenidos.map(c=>getValue(c,'contenido')).join(', '),
+        'PDA(s)': pdas.map(p=>getValue(p,'pdas')).join(', ')
+      });
     }
 
-    // Recolectar datos para el plan
-    const nodeList = canvas.querySelectorAll('.node');
-    const planData = {
-      proyecto: canvasTitle.textContent,
-      entrada: Array.from(nodeList)
-        .filter(n => n.dataset.type === 'Entrada' && n.dataset.text)
-        .map(n => n.dataset.text).join('; '),
-      pdas: Array.from(nodeList)
-        .filter(n => n.dataset.type === 'PDA' && n.dataset.pdas)
-        .map(n => n.dataset.pdas),
-      metodologia: Array.from(nodeList)
-        .filter(n => n.dataset.type === 'Metodología' && n.dataset.value)
-        .map(n => n.dataset.value).join('; '),
-      campos: Array.from(nodeList)
-        .filter(n => n.dataset.type === 'Campos Formativos' && n.dataset.campo)
-        .map(n => n.dataset.campo),
-      contenidos: Array.from(nodeList)
-        .filter(n => n.dataset.type === 'Contenido' && n.dataset.contenido)
-        .map(n => n.dataset.contenido),
-      fases: Array.from(nodeList)
-        .filter(n => n.dataset.type === 'Fase' && n.dataset.fase)
-        .map(n => n.dataset.fase)
+    // Estructura para plano-viewer.html
+    const planViewerData = {
+      proyecto: document.getElementById('canvasTitle').textContent || '',
+      metodologia: (Array.from(document.querySelectorAll('.node[data-type="Metodología"]')).map(n => n.dataset.value).join('; ')) || '',
+      ubicacion: ubicacionRows
     };
+    localStorage.setItem('planViewerData', JSON.stringify(planViewerData));
+    // === FIN NUEVO ===
 
     // Abrir nueva pestaña con los datos
-    const viewerUrl = `plano-viewer.html?data=${encodeURIComponent(JSON.stringify(planData))}`;
+    const viewerUrl = `plano-viewer.html`;
     window.open(viewerUrl, '_blank');
   };
+
 
   // Cargar estado inicial
   loadCanvasState();
