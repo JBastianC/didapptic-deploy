@@ -959,6 +959,7 @@ function updateSelectedPdas(checkbox) {
     generateBtn.innerHTML = '♻️ Generar Ubicación';
     generateBtn.addEventListener('click', async function(e) {
       e.stopPropagation();
+      if (typeof descontarCredito === 'function') descontarCredito();
       await generateLocation(rowId);
     });
 
@@ -1031,7 +1032,7 @@ function updateSelectedPdas(checkbox) {
     const col2 = createFieldGroup("Fase", "select");
     faseSelect = col2.querySelector('select');
     if (faseSelect) {
-      populateSelect(faseSelect, ["", "Fase 3", "Fase 4", "Fase 5"]);
+      populateSelect(faseSelect, ["", "Fase 1","Fase 2","Fase 3", "Fase 4", "Fase 5"]);
       if (data.fase) faseSelect.value = data.fase;
       faseSelect.addEventListener('change', async function() {
         rowsState[rowId].fase = faseSelect.value;

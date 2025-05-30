@@ -1,10 +1,24 @@
-// Función global para construir la tabla de secuencia didáctica según la metodología y los datos guardados
+// Función global para construir la tabla de secuencia didáctica
 function construirTablaSecuencia(metodologia) {
+  // Control de visibilidad de columna Estrategia
+  if (typeof window.estrategiaImprimir === 'undefined') {
+    window.estrategiaImprimir = true;
+  }
+
+  // Cargar estado guardado
+  if (!window.secuenciaTableState) {
+    try {
+      window.secuenciaTableState = JSON.parse(localStorage.getItem('secuenciaTableState') || '{}');
+    } catch (e) {
+      window.secuenciaTableState = {};
+    }
+  }
+
   const container = document.getElementById('secuenciaTableContainer');
   let fases = [], etapaPorFase = {}, tieneEtapa = false;
   metodologia = (metodologia||'').trim();
 
-  // 1. Definir estructura según metodología
+  // Definir estructura según metodología
   if (metodologia === 'Aprendizaje servicio') {
     fases = [
       '1. Punto de partida',
@@ -43,7 +57,7 @@ function construirTablaSecuencia(metodologia) {
     tieneEtapa = true;
   }
 
-  // 2. Estandarizar datos guardados (si existen)
+  // Estandarizar datos guardados (si existen)
   let secuenciaGuardada = [];
   try {
     const planViewerData = JSON.parse(localStorage.getItem('planViewerData'));
@@ -65,259 +79,357 @@ function construirTablaSecuencia(metodologia) {
     }
   } catch(e) { secuenciaGuardada = []; }
 
-  // 3. Construir tabla
-  let html = '<table id="secuenciaTable" style="margin-top:0;">';
+  // Construir HTML de la tabla
+  let html = '<table id="secuenciaTable" style="margin-top:0; width:100%; border-collapse:collapse;">';
+  
+  // Encabezados
   html += '<tr>';
-  html += '<th>Fase</th>';
-  if (tieneEtapa) html += '<th>Etapa</th>';
-  html += '<th>Proceso de evaluación</th><th>Estrategia</th><th>Momentos</th>';
+  html += '<th style="border:1px solid #ddd; padding:8px; text-align:left; background-color:#f2f2f2;">Fase</th>';
+  if (tieneEtapa) {
+    html += '<th style="border:1px solid #ddd; padding:8px; text-align:left; background-color:#f2f2f2;">Etapa</th>';
+  }
+  
+  if (window.estrategiaImprimir) {
+    html += `<th style="border:1px solid #ddd; padding:8px; text-align:left; background-color:#f2f2f2;">
+      Estrategia 
+      <button id='toggleEstrategiaBtn' title='Mostrar/Ocultar Estrategia' 
+        style='margin-left:4px; font-size:13px; padding:1px 6px; border-radius:4px; border:1px solid #ccc; background:#fafafa; cursor:pointer;'>
+        ${window.estrategiaImprimir ? '🚫' : '👁️'}
+      </button>
+    </th>`;
+  }
+  
+  html += `<th style="border:1px solid #ddd; padding:8px; text-align:left; background-color:#f2f2f2; ${!window.estrategiaImprimir ? 'width:60%;' : ''}">Actividades</th>`;
   html += '</tr>';
 
-  let leyendaCount = 1;
-  // Descripciones de leyenda para fases (Indagación y Problemas)
+  // Leyendas y descripciones
   const leyendaFaseDescripciones = {
-    // Aprendizaje servicio
-    'Punto de partida': `Iniciar el proyecto a partir del interés de los alumnos o de una necesidad concreta de la comunidad.\nCompartir la propuesta con el grupo escolar e ir involucrando progresivamente a toda la comunidad.\nGenerar motivación mediante actividades de sensibilización e información que permitan la apropiación del proyecto.\nInvolucrar activamente a aliados, colaboradores y actores clave (familia, comunidad escolar) para enriquecer la experiencia y convertir a todos en protagonistas del aprendizaje y servicio.`,
-    'Identificamos necesidades para definir el servicio': `Guiar actividades para explorar la realidad sobre la que se trabajará, recabando información e identificando recursos disponibles.\nEstablecer vínculos con familias e instituciones públicas para obtener apoyo.\nRealizar análisis y debates que permitan un diagnóstico participativo, donde la comunidad escolar pueda expresar sus necesidades.\nAjustar la demanda inicial si es necesario y proponer alternativas de acción.\nFomentar que alumnos, maestros y tutores participen activamente en la definición del proyecto.`,
-    'Organicemos las actividades': `Articular los objetivos pedagógicos con los de servicio, definiendo acciones, recursos y responsables.\nUtilizar herramientas básicas de planificación, respondiendo a preguntas clave: ¿Qué se hará? ¿Por qué? ¿Para qué? ¿A quiénes beneficiará? ¿Cómo? ¿Cuándo? ¿Quiénes participarán? ¿Con qué recursos?\nDescribir claramente las acciones, tiempos, recursos materiales (espacios, textos, etc.) y responsables.\nAsegurar que las actividades estén alineadas con el currículo y favorezcan el logro de aprendizajes.`,
-    'Creatividad en marcha': `Implementar lo planificado, monitoreando actividades, espacios y tiempos.\nDar seguimiento tanto a los contenidos curriculares como al servicio comunitario.\nFomentar la interacción entre alumnos, maestros y familia para formalizar acuerdos y fortalecer vínculos con la comunidad.`,
-    'Valoramos y compartimos nuestros logros': `Evaluar los resultados finales, tanto en lo académico como en el servicio a la comunidad.\nAnalizar el protagonismo de los alumnos y la integración entre aprendizaje y acción.\nIncluir autoevaluaciones y reflexiones grupales sobre los logros alcanzados.\nPlantear la continuidad del proyecto o la posibilidad de iniciar uno nuevo, según su factibilidad.`,
-    'Saberes de nuestra comunidad': `Introducir al tema mediante una aproximación contextualizada.\nRecuperar conocimientos previos sobre el tema para generar disonancia cognitiva a partir de ideas diversas y orientarlas hacia nuevos aprendizajes.\nIdentificar la problemática general de investigación, vinculada a aspectos sociales de la comunidad, y establecer preguntas específicas que guíen la indagación.`,
-    'Indagamos': `Planificar la investigación: definir acciones para cada pregunta específica (¿qué?, ¿quién?, ¿cómo?, ¿cuándo?, ¿dónde?, ¿para qué?, ¿con qué?).\nEjecutar la indagación en el aula: responder a las preguntas específicas mediante recolección de datos, análisis (descripción, comparación, identificación de patrones, cambios, explicaciones, etc.) y generar una explicación inicial.`,
-    'Comprendemos': `Organizar y analizar la información: interpretar datos, sintetizar ideas y clarificar conceptos.\nEstablecer conclusiones vinculadas a la problemática general, integrando los hallazgos de la indagación.`,
-    'Socializamos y aplicamos': `Presentar los resultados de la indagación a la comunidad educativa.\nElaborar propuestas de acción para resolver o mitigar la problemática identificada, en la medida de lo posible.`,
-    'Reflexionamos el camino andado': `Evaluar el proceso: reflexionar sobre los planes de trabajo, actuaciones individuales/grupales, procedimientos, instrumentos, logros, dificultades y fracasos.`,
-    // Aprendizaje basado en problemas
-    'Presentamos': `Observar individual y colectivamente el contenido del diálogo y los ejes articuladores del proyecto.\nIntroducir un escenario que permita reflexionar sobre una problemática, adaptado a la edad de los alumnos.\nUtilizar una imagen o lectura breve acompañada de preguntas detonantes para contextualizar la situación en la vida cotidiana de los estudiantes.`,
-    'Recolectamos': `Recuperar conocimientos sociales y escolares previos sobre la temática detectada.\nAplicar técnicas didácticas para clarificar definiciones, necesidades de aprendizaje y factores relacionados con el problema.`,
-    'Definimos el problema/Formulemos el problema': `Establecer con precisión el problema a trabajar, considerando las inquietudes y curiosidades de los alumnos.`,
-    'Organizamos la experiencia': `Diseñar una ruta de trabajo que incluya: objetivos de aprendizaje, acuerdos, medios (observación, entrevistas, materiales bibliográficos, audiovisuales, etc.), recursos, tiempos y responsables.\nOrientar la solución hacia la construcción de conocimiento para comprender y resignificar la problemática.`,
-    'Vivimos la experiencia': `Guiar a los alumnos en una investigación que les permita comprender el problema y, si es posible, intervenir para transformarlo.\nFomentar la discusión grupal integrando conocimientos relevantes, saberes comunitarios, habilidades y actitudes necesarias.`,
-    'Valoramos la experiencia': `Evaluar avances o resultados finales, retomando: el problema inicial, hallazgos y aprendizajes, proceso de construcción de acuerdos, participación individual y colectiva.\nDefinir medios para divulgar resultados e identificar nuevos problemas si es necesario.`
+    'Punto de partida': 'Iniciar el proyecto a partir del interés de los alumnos o de una necesidad concreta de la comunidad.\nCompartir la propuesta con el grupo escolar e ir involucrando progresivamente a toda la comunidad.\nGenerar motivación mediante actividades de sensibilización e información que permitan la apropiación del proyecto.\nInvolucrar activamente a aliados, colaboradores y actores clave (familia, comunidad escolar) para enriquecer la experiencia y convertir a todos en protagonistas del aprendizaje y servicio.',
+    'Identificamos necesidades para definir el servicio': 'Guiar actividades para explorar la realidad sobre la que se trabajará, recabando información e identificando recursos disponibles.\nEstablecer vínculos con familias e instituciones públicas para obtener apoyo.\nRealizar análisis y debates que permitan un diagnóstico participativo, donde la comunidad escolar pueda expresar sus necesidades.\nAjustar la demanda inicial si es necesario y proponer alternativas de acción.\nFomentar que alumnos, maestros y tutores participen activamente en la definición del proyecto.',
+    'Organicemos las actividades': 'Articular los objetivos pedagógicos con los de servicio, definiendo acciones, recursos y responsables.\nUtilizar herramientas básicas de planificación, respondiendo a preguntas clave: ¿Qué se hará? ¿Por qué? ¿Para qué? ¿A quiénes beneficiará? ¿Cómo? ¿Cuándo? ¿Quiénes participarán? ¿Con qué recursos?\nDescribir claramente las acciones, tiempos, recursos materiales (espacios, textos, etc.) y responsables.\nAsegurar que las actividades estén alineadas con el currículo y favorezcan el logro de aprendizajes.',
+    'Creatividad en marcha': 'Implementar lo planificado, monitoreando actividades, espacios y tiempos.\nDar seguimiento tanto a los contenidos curriculares como al servicio comunitario.\nFomentar la interacción entre alumnos, maestros y familia para formalizar acuerdos y fortalecer vínculos con la comunidad.',
+    'Valoramos y compartimos nuestros logros': 'Evaluar los resultados finales, tanto en lo académico como en el servicio a la comunidad.\nAnalizar el protagonismo de los alumnos y la integración entre aprendizaje y acción.\nIncluir autoevaluaciones y reflexiones grupales sobre los logros alcanzados.\nPlantear la continuidad del proyecto o la posibilidad de iniciar uno nuevo, según su factibilidad.',
+    'Saberes de nuestra comunidad': 'Introducir al tema mediante una aproximación contextualizada.\nRecuperar conocimientos previos sobre el tema para generar disonancia cognitiva a partir de ideas diversas y orientarlas hacia nuevos aprendizajes.\nIdentificar la problemática general de investigación, vinculada a aspectos sociales de la comunidad, y establecer preguntas específicas que guíen la indagación.',
+    'Indagamos': 'Planificar la investigación: definir acciones para cada pregunta específica (¿qué?, ¿quién?, ¿cómo?, ¿cuándo?, ¿dónde?, ¿para qué?, ¿con qué?).\nEjecutar la indagación en el aula: responder a las preguntas específicas mediante recolección de datos, análisis (descripción, comparación, identificación de patrones, cambios, explicaciones, etc.) y generar una explicación inicial.',
+    'Comprendemos': 'Organizar y analizar la información: interpretar datos, sintetizar ideas y clarificar conceptos.\nEstablecer conclusiones vinculadas a la problemática general, integrando los hallazgos de la indagación.',
+    'Socializamos y aplicamos': 'Presentar los resultados de la indagación a la comunidad educativa.\nElaborar propuestas de acción para resolver o mitigar la problemática identificada, en la medida de lo posible.',
+    'Reflexionamos el camino andado': 'Evaluar el proceso: reflexionar sobre los planes de trabajo, actuaciones individuales/grupales, procedimientos, instrumentos, logros, dificultades y fracasos.',
+    'Presentamos': 'Observar individual y colectivamente el contenido del diálogo y los ejes articuladores del proyecto.\nIntroducir un escenario que permita reflexionar sobre una problemática, adaptado a la edad de los alumnos.\nUtilizar una imagen o lectura breve acompañada de preguntas detonantes para contextualizar la situación en la vida cotidiana de los estudiantes.',
+    'Recolectamos': 'Recuperar conocimientos sociales y escolares previos sobre la temática detectada.\nAplicar técnicas didácticas para clarificar definiciones, necesidades de aprendizaje y factores relacionados con el problema.',
+    'Definimos el problema/Formulemos el problema': 'Establecer con precisión el problema a trabajar, considerando las inquietudes y curiosidades de los alumnos.',
+    'Organizamos la experiencia': 'Diseñar una ruta de trabajo que incluya: objetivos de aprendizaje, acuerdos, medios (observación, entrevistas, materiales bibliográficos, audiovisuales, etc.), recursos, tiempos y responsables.\nOrientar la solución hacia la construcción de conocimiento para comprender y resignificar la problemática.',
+    'Vivimos la experiencia': 'Guiar a los alumnos en una investigación que les permita comprender el problema y, si es posible, intervenir para transformarlo.\nFomentar la discusión grupal integrando conocimientos relevantes, saberes comunitarios, habilidades y actitudes necesarias.',
+    'Valoramos la experiencia': 'Evaluar avances o resultados finales, retomando: el problema inicial, hallazgos y aprendizajes, proceso de construcción de acuerdos, participación individual y colectiva.\nDefinir medios para divulgar resultados e identificar nuevos problemas si es necesario.'
   };
 
+  const leyendaEtapaDescripciones = {
+    'Identificación': 'Proponer planteamientos genuinos que refieran a una situación real (no forzada) para introducir el diálogo, considerando escenarios áulicos, escolares y comunitarios.\nPlantear cuestiones que permitan identificar la problemática general y aspectos específicos a investigar en el aula.\nDefinir el insumo inicial: diseñar un planteamiento (producto, material, objeto, texto, etc.) que sirva para que el alumno comprenda el propósito del proyecto.',
+    'Recuperación': 'Vincular conocimientos previos sobre el contenido a desarrollar.\nGenerar discrepancia a partir de diferentes ideas para motivar el aprendizaje continuo.',
+    'Planificación': 'Negociar los pasos a seguir: acciones del proyecto, producciones necesarias, tiempos y tipo de actividades.',
+    'Acercamiento': 'Explorar el problema o situación acordada mediante planteamientos que permitan una primera aproximación (descripción, comparación, identificación de aspectos clave, explicación, etc.).',
+    'Comprensión y producción': 'Analizar aspectos necesarios para elaborar las producciones del proyecto, realizando experimentaciones y revisiones según sea necesario.',
+    'Reconocimiento': 'Identificar avances y dificultades en el proceso, ajustando estrategias para atenderlos.',
+    'Concreción': 'Desarrollar una primera versión del producto planteado en las etapas iniciales.',
+    'Integración': 'Presentar y explicar soluciones o recomendaciones, intercambiando producciones y recibiendo retroalimentación.\nModificar y revisar los planteamientos según los cambios sugeridos.',
+    'Difusión': 'Mostrar el producto final en el aula, explicando cómo se resolvió la problemática del proyecto.',
+    'Consideraciones': 'Recibir opiniones sobre el impacto del producto en los escenarios áulicos, escolares y comunitarios.',
+    'Avances': 'Analizar la retroalimentación recibida y utilizarla para mejorar procesos en futuros proyectos.'
+  };
+
+  // Construir filas
   if (tieneEtapa) {
     fases.forEach(fase => {
       (etapaPorFase[fase]||['']).forEach(etapa => {
-        // Buscar datos guardados para esta fase/etapa
-        let fila = secuenciaGuardada.find(f => (f.fase||'').trim()===fase && (f.etapa||'').trim()===etapa);
-        // Mapeo de descripciones de leyenda por etapa
-        const leyendaDescripciones = {
-          'Identificación': `Proponer planteamientos genuinos que refieran a una situación real (no forzada) para introducir el diálogo, considerando escenarios áulicos, escolares y comunitarios.\nPlantear cuestiones que permitan identificar la problemática general y aspectos específicos a investigar en el aula.\nDefinir el insumo inicial: diseñar un planteamiento (producto, material, objeto, texto, etc.) que sirva para que el alumno comprenda el propósito del proyecto.`,
-          'Recuperación': `Vincular conocimientos previos sobre el contenido a desarrollar.\nGenerar discrepancia a partir de diferentes ideas para motivar el aprendizaje continuo.`,
-          'Planificación': `Negociar los pasos a seguir: acciones del proyecto, producciones necesarias, tiempos y tipo de actividades.`,
-          'Acercamiento': `Explorar el problema o situación acordada mediante planteamientos que permitan una primera aproximación (descripción, comparación, identificación de aspectos clave, explicación, etc.).`,
-          'Comprensión y producción': `Analizar aspectos necesarios para elaborar las producciones del proyecto, realizando experimentaciones y revisiones según sea necesario.`,
-          'Reconocimiento': `Identificar avances y dificultades en el proceso, ajustando estrategias para atenderlos.`,
-          'Concreción': `Desarrollar una primera versión del producto planteado en las etapas iniciales.`,
-          'Integración': `Presentar y explicar soluciones o recomendaciones, intercambiando producciones y recibiendo retroalimentación.\nModificar y revisar los planteamientos según los cambios sugeridos.`,
-          'Difusión': `Mostrar el producto final en el aula, explicando cómo se resolvió la problemática del proyecto.`,
-          'Consideraciones': `Recibir opiniones sobre el impacto del producto en los escenarios áulicos, escolares y comunitarios.`,
-          'Avances': `Analizar la retroalimentación recibida y utilizarla para mejorar procesos en futuros proyectos.`
-        };
-        // Normaliza la etapa para buscar la descripción (quita número, punto y espacios al inicio)
-        let etapaKey = (etapa || '').replace(/^[0-9. ]+/, '').trim();
-        let leyendaDescripcion = leyendaDescripciones[etapaKey] || `Leyenda ${leyendaCount}`;
-        let leyendaIcon = `<span style=\"cursor:pointer;color:#007bff;margin-left:4px;\" title=\"${leyendaDescripcion.replace(/\n/g,'&#10;')}\">&#9432;</span>`;
-        leyendaCount++;
-        const selectId = `estrategia_${leyendaCount}_${Math.random().toString(36).substr(2,5)}`;
-        // Ícono de leyenda para fase (solo si metodología es indagación y tiene descripción)
-        let leyendaFase = '';
-        // Normaliza la fase para buscar la descripción (quita número, punto y espacios al inicio)
-        let faseKey = (fase || '').replace(/^[0-9. ]+/, '').trim();
-        if (leyendaFaseDescripciones[faseKey]) {
-          leyendaFase = `<span style=\"cursor:pointer;color:#007bff;margin-left:4px;\" title=\"${leyendaFaseDescripciones[faseKey].replace(/\n/g,'&#10;')}\">&#9432;</span>`;
+        const fila = secuenciaGuardada.find(f => (f.fase||'').trim()===fase && (f.etapa||'').trim()===etapa);
+        const faseKey = (fase || '').replace(/^[0-9. ]+/, '').trim();
+        const etapaKey = (etapa || '').replace(/^[0-9. ]+/, '').trim();
+        const leyendaFase = leyendaFaseDescripciones[faseKey] || '';
+        const leyendaEtapa = leyendaEtapaDescripciones[etapaKey] || '';
+        const leyendaIconFase = leyendaFase ? `<span style="cursor:pointer;color:#007bff;margin-left:4px;" title="${leyendaFase.replace(/\n/g,'&#10;')}">&#9432;</span>` : '';
+        const leyendaIconEtapa = leyendaEtapa ? `<span style="cursor:pointer;color:#007bff;margin-left:4px;" title="${leyendaEtapa.replace(/\n/g,'&#10;')}">&#9432;</span>` : '';
+        const selectId = `estrategia_${Math.random().toString(36).substr(2,8)}`;
+        
+        html += `<tr>
+          <td style="border:1px solid #ddd; padding:8px;">${fase} ${leyendaIconFase}</td>
+          <td style="border:1px solid #ddd; padding:8px;">${etapa} ${leyendaIconEtapa}</td>`;
+        
+        if (window.estrategiaImprimir) {
+          html += `<td style="border:1px solid #ddd; padding:8px;">
+            <select id="${selectId}" onchange="actualizarMomento(this)" style="width:100%; max-width:100%; padding:4px; border:1px solid #ccc; border-radius:4px;">
+              <option value="" selected>Selecciona una estrategia</option>
+              <optgroup label="Lenguaje y Comunicación">
+                <option>Taller de escritores</option>
+                <option>Lectura</option>
+                <option>Entrevista</option>
+                <option>Diálogo y conversación</option>
+                <option>Exposición de temas</option>
+                <option>Discusión organizativa</option>
+                <option>Diario de grupo y personal</option>
+                <option>Correspondencia escolar</option>
+                <option>Periódico mural</option>
+              </optgroup>
+              <optgroup label="Matemáticas">
+                <option>Planteamiento y resolución de problemas en seriación y algoritmos</option>
+                <option>Planteamiento y resolución de problemas apoyándose del rincón de la tiendita</option>
+                <option>Planteamiento y resolución de problemas utilizando el cálculo mental</option>
+                <option>Planteamiento y resolución de problemas en juegos matemáticos</option>
+              </optgroup>
+              <optgroup label="Ciencias Naturales">
+                <option>Experimentos</option>
+                <option>Consulta en materiales diversos</option>
+                <option>Elaboración de maquetas y álbumes</option>
+                <option>Mapas conceptuales</option>
+                <option>Cápsulas científicas</option>
+                <option>Diccionario científico</option>
+              </optgroup>
+              <optgroup label="Geografía e Historia">
+                <option>Recorridos y visitas</option>
+                <option>Línea del tiempo</option>
+                <option>Cartas a personajes del pasado</option>
+                <option>Noticiero histórico</option>
+                <option>Escenificación y teatro guiñol</option>
+                <option>Historieta</option>
+                <option>Mapas históricos</option>
+                <option>Lectura de mapas</option>
+                <option>Maquetas, dioramas y modelos</option>
+                <option>Registro climático</option>
+                <option>Uso de gráficas</option>
+                <option>Recorrido por la comunidad</option>
+                <option>Uso de la fotografía</option>
+                <option>Uso de mapas y croquis</option>
+              </optgroup>
+              <optgroup label="Formación Cívica y Ética">
+                <option>Juicio crítico a los medios</option>
+                <option>Juego de roles</option>
+                <option>Artículos de opinión</option>
+                <option>Debate</option>
+                <option>Asamblea escolar</option>
+                <option>Dilemas morales</option>
+              </optgroup>
+              <optgroup label="Educación Física">
+                <option>Juego con reglas</option>
+                <option>Juegos modificados</option>
+                <option>Circuitos de acción motriz</option>
+                <option>Actividades alternativas</option>
+                <option>Juegos naturales</option>
+              </optgroup>
+              <optgroup label="Artes">
+                <option>Elaboración de títeres y máscaras</option>
+                <option>Presentación de bailes y danzas</option>
+                <option>Muestras y exposiciones</option>
+                <option>Apreciación y exploración musical</option>
+                <option>Escenificaciones</option>
+                <option>¿Cómo mirar el teatro?</option>
+                <option>Lectura de imagen</option>
+              </optgroup>
+            </select>
+          </td>`;
         }
-        html += `<tr><td>${fase} ${leyendaFase}</td><td>${etapa} ${leyendaIcon}</td>`+
-          `<td class='editable' contenteditable='true' style='border-bottom:1px solid #bbb;'>${fila?.evaluacion||''}</td>`+
-          `<td style='border-bottom:1px solid #bbb;'>
-            <select id='${selectId}' onchange='actualizarMomento(this)' style='max-width:220px; min-width:80px; width:auto; text-overflow:ellipsis; white-space:nowrap; overflow:hidden; display:inline-block; vertical-align:middle;'>
-  <option value="" selected>Selecciona una estrategia</option>
-  <optgroup label="Lenguaje y Comunicación">
-    <option>Taller de escritores</option>
-    <option>Lectura</option>
-    <option>Entrevista</option>
-    <option>Diálogo y conversación</option>
-    <option>Exposición de temas</option>
-    <option>Discusión organizativa</option>
-    <option>Diario de grupo y personal</option>
-    <option>Correspondencia escolar</option>
-    <option>Periódico mural</option>
-  </optgroup>
-  <optgroup label="Matemáticas">
-    <option>Planteamiento y resolución de problemas en seriación y algoritmos</option>
-    <option>Planteamiento y resolución de problemas apoyándose del rincón de la tiendita</option>
-    <option>Planteamiento y resolución de problemas utilizando el cálculo mental</option>
-    <option>Planteamiento y resolución de problemas en juegos matemáticos</option>
-  </optgroup>
-  <optgroup label="Ciencias Naturales">
-    <option>Experimentos</option>
-    <option>Consulta en materiales diversos</option>
-    <option>Elaboración de maquetas y álbumes</option>
-    <option>Mapas conceptuales</option>
-    <option>Cápsulas científicas</option>
-    <option>Diccionario científico</option>
-  </optgroup>
-  <optgroup label="Geografía e Historia">
-    <option>Recorridos y visitas</option>
-    <option>Línea del tiempo</option>
-    <option>Cartas a personajes del pasado</option>
-    <option>Noticiero histórico</option>
-    <option>Escenificación y teatro guiñol</option>
-    <option>Historieta</option>
-    <option>Mapas históricos</option>
-    <option>Lectura de mapas</option>
-    <option>Maquetas, dioramas y modelos</option>
-    <option>Registro climático</option>
-    <option>Uso de gráficas</option>
-    <option>Recorrido por la comunidad</option>
-    <option>Uso de la fotografía</option>
-    <option>Uso de mapas y croquis</option>
-  </optgroup>
-  <optgroup label="Formación Cívica y Ética">
-    <option>Juicio crítico a los medios</option>
-    <option>Juego de roles</option>
-    <option>Artículos de opinión</option>
-    <option>Debate</option>
-    <option>Asamblea escolar</option>
-    <option>Dilemas morales</option>
-  </optgroup>
-  <optgroup label="Educación Física">
-    <option>Juego con reglas</option>
-    <option>Juegos modificados</option>
-    <option>Circuitos de acción motriz</option>
-    <option>Actividades alternativas</option>
-    <option>Juegos naturales</option>
-  </optgroup>
-  <optgroup label="Artes">
-    <option>Elaboración de títeres y máscaras</option>
-    <option>Presentación de bailes y danzas</option>
-    <option>Muestras y exposiciones</option>
-    <option>Apreciación y exploración musical</option>
-    <option>Escenificaciones</option>
-    <option>¿Cómo mirar el teatro?</option>
-    <option>Lectura de imagen</option>
-  </optgroup>
-</select>
-          </td>`+
-          `<td class='momento' style='border-bottom:1px solid #bbb; min-width:110px; max-width:220px; width:220px;'>
-  <div class='momentos-clave' style='font-size:13px; margin-bottom:4px; color:#333; min-height:18px; text-align:left;'></div>
-  <div style='display:flex; align-items:flex-start; gap:4px;'>
-    <textarea disabled class='auto-grow' style='flex:1; resize:none; width:100%; min-height:38px; max-width:100%; overflow-x:hidden; box-sizing:border-box; font-size:14px; line-height:1.2;'></textarea>
-    <button type='button' title='Reemplazar momentos' disabled style='padding:0 6px; font-size:18px; line-height:1; background:none; border:none; cursor:pointer;'>♻️</button>
-  </div>
-</td></tr>`;
+        
+        html += `<td style="border:1px solid #ddd; padding:8px; ${!window.estrategiaImprimir ? 'width:60%;' : ''}">
+          <div class="momentos-clave" style="font-size:13px; margin-bottom:4px; color:#333;"></div>
+          <div style="display:flex; gap:4px;">
+            <textarea disabled class="auto-grow" style="flex:1; width:100%; min-height:60px; padding:6px; border:1px solid #ddd; border-radius:4px; resize:vertical;"></textarea>
+            <button type="button" title="Reemplazar momentos" disabled style="padding:0 8px; font-size:16px; background:none; border:1px solid #ddd; border-radius:4px; cursor:pointer; align-self:flex-start;">♻️</button>
+          </div>
+        </td></tr>`;
       });
     });
   } else if (fases.length) {
     fases.forEach(fase => {
-      // Buscar datos guardados para esta fase
-      let fila = secuenciaGuardada.find(f => (f.fase||'').trim()===fase);
-      // Ícono de leyenda para fase (usa descripción normalizada)
-      let faseKey = (fase || '').replace(/^[0-9. ]+/, '').trim();
-      let leyendaDescripcion = leyendaFaseDescripciones[faseKey] || `Leyenda ${leyendaCount}`;
-      let leyendaIcon = `<span style=\"cursor:pointer;color:#007bff;margin-left:4px;\" title=\"${leyendaDescripcion.replace(/\n/g,'&#10;')}\">&#9432;</span>`;
-      leyendaCount++;
-      const selectId = `estrategia_${leyendaCount}_${Math.random().toString(36).substr(2,5)}`;
-      html += `<tr><td>${fase} ${leyendaIcon}</td>`+
-        `<td class='editable' contenteditable='true' style='border-bottom:1px solid #bbb;'>${fila?.evaluacion||''}</td>`+
-        `<td style='border-bottom:1px solid #bbb;'>
-          <select id='${selectId}' onchange='actualizarMomento(this)' style='max-width:220px; min-width:80px; width:auto; text-overflow:ellipsis; white-space:nowrap; overflow:hidden; display:inline-block; vertical-align:middle;'>
-  <option value="" selected>Selecciona una estrategia</option>
-  <optgroup label="Lenguaje y Comunicación">
-    <option>Taller de escritores</option>
-    <option>Lectura</option>
-    <option>Entrevista</option>
-    <option>Diálogo y conversación</option>
-    <option>Exposición de temas</option>
-    <option>Discusión organizativa</option>
-    <option>Diario de grupo y personal</option>
-    <option>Correspondencia escolar</option>
-    <option>Periódico mural</option>
-  </optgroup>
-  <optgroup label="Matemáticas">
-    <option>Planteamiento y resolución de problemas en seriación y algoritmos</option>
-    <option>Planteamiento y resolución de problemas apoyándose del rincón de la tiendita</option>
-    <option>Planteamiento y resolución de problemas utilizando el cálculo mental</option>
-    <option>Planteamiento y resolución de problemas en juegos matemáticos</option>
-  </optgroup>
-  <optgroup label="Ciencias Naturales">
-    <option>Experimentos</option>
-    <option>Consulta en materiales diversos</option>
-    <option>Elaboración de maquetas y álbumes</option>
-    <option>Mapas conceptuales</option>
-    <option>Cápsulas científicas</option>
-    <option>Diccionario científico</option>
-  </optgroup>
-  <optgroup label="Geografía e Historia">
-    <option>Recorridos y visitas</option>
-    <option>Línea del tiempo</option>
-    <option>Cartas a personajes del pasado</option>
-    <option>Noticiero histórico</option>
-    <option>Escenificación y teatro guiñol</option>
-    <option>Historieta</option>
-    <option>Mapas históricos</option>
-    <option>Lectura de mapas</option>
-    <option>Maquetas, dioramas y modelos</option>
-    <option>Registro climático</option>
-    <option>Uso de gráficas</option>
-    <option>Recorrido por la comunidad</option>
-    <option>Uso de la fotografía</option>
-    <option>Uso de mapas y croquis</option>
-  </optgroup>
-  <optgroup label="Formación Cívica y Ética">
-    <option>Juicio crítico a los medios</option>
-    <option>Juego de roles</option>
-    <option>Artículos de opinión</option>
-    <option>Debate</option>
-    <option>Asamblea escolar</option>
-    <option>Dilemas morales</option>
-  </optgroup>
-  <optgroup label="Educación Física">
-    <option>Juego con reglas</option>
-    <option>Juegos modificados</option>
-    <option>Circuitos de acción motriz</option>
-    <option>Actividades alternativas</option>
-    <option>Juegos naturales</option>
-  </optgroup>
-  <optgroup label="Artes">
-    <option>Elaboración de títeres y máscaras</option>
-    <option>Presentación de bailes y danzas</option>
-    <option>Muestras y exposiciones</option>
-    <option>Apreciación y exploración musical</option>
-    <option>Escenificaciones</option>
-    <option>¿Cómo mirar el teatro?</option>
-    <option>Lectura de imagen</option>
-  </optgroup>
-</select>
-        </td>`+
-        `<td class='momento' style='border-bottom:1px solid #bbb; min-width:110px; max-width:220px; width:220px;'>
-  <div class='momentos-clave' style='font-size:13px; margin-bottom:4px; color:#333; min-height:18px; text-align:left;'></div>
-  <div style='display:flex; align-items:flex-start; gap:4px;'>
-    <textarea disabled class='auto-grow' style='flex:1; resize:none; width:100%; min-height:38px; max-width:100%; overflow-x:hidden; box-sizing:border-box; font-size:14px; line-height:1.2;'></textarea>
-    <button type='button' title='Reemplazar momentos' disabled style='padding:0 6px; font-size:18px; line-height:1; background:none; border:none; cursor:pointer;'>♻️</button>
-  </div>
-</td></tr>`;
+      const fila = secuenciaGuardada.find(f => (f.fase||'').trim()===fase);
+      const faseKey = (fase || '').replace(/^[0-9. ]+/, '').trim();
+      const leyendaDesc = leyendaFaseDescripciones[faseKey] || '';
+      const leyendaIcon = leyendaDesc ? `<span style="cursor:pointer;color:#007bff;margin-left:4px;" title="${leyendaDesc.replace(/\n/g,'&#10;')}">&#9432;</span>` : '';
+      const selectId = `estrategia_${Math.random().toString(36).substr(2,8)}`;
+      
+      html += `<tr><td style="border:1px solid #ddd; padding:8px;">${fase} ${leyendaIcon}</td>`;
+      
+      if (window.estrategiaImprimir) {
+        html += `<td style="border:1px solid #ddd; padding:8px;">
+          <select id="${selectId}" onchange="actualizarMomento(this)" style="width:100%; max-width:100%; padding:4px; border:1px solid #ccc; border-radius:4px;">
+            <option value="" selected>Selecciona una estrategia</option>
+            <optgroup label="Lenguaje y Comunicación">
+              <option>Taller de escritores</option>
+              <option>Lectura</option>
+              <option>Entrevista</option>
+              <option>Diálogo y conversación</option>
+              <option>Exposición de temas</option>
+              <option>Discusión organizativa</option>
+              <option>Diario de grupo y personal</option>
+              <option>Correspondencia escolar</option>
+              <option>Periódico mural</option>
+            </optgroup>
+            <optgroup label="Matemáticas">
+              <option>Planteamiento y resolución de problemas en seriación y algoritmos</option>
+              <option>Planteamiento y resolución de problemas apoyándose del rincón de la tiendita</option>
+              <option>Planteamiento y resolución de problemas utilizando el cálculo mental</option>
+              <option>Planteamiento y resolución de problemas en juegos matemáticos</option>
+            </optgroup>
+            <optgroup label="Ciencias Naturales">
+              <option>Experimentos</option>
+              <option>Consulta en materiales diversos</option>
+              <option>Elaboración de maquetas y álbumes</option>
+              <option>Mapas conceptuales</option>
+              <option>Cápsulas científicas</option>
+              <option>Diccionario científico</option>
+            </optgroup>
+            <optgroup label="Geografía e Historia">
+              <option>Recorridos y visitas</option>
+              <option>Línea del tiempo</option>
+              <option>Cartas a personajes del pasado</option>
+              <option>Noticiero histórico</option>
+              <option>Escenificación y teatro guiñol</option>
+              <option>Historieta</option>
+              <option>Mapas históricos</option>
+              <option>Lectura de mapas</option>
+              <option>Maquetas, dioramas y modelos</option>
+              <option>Registro climático</option>
+              <option>Uso de gráficas</option>
+              <option>Recorrido por la comunidad</option>
+              <option>Uso de la fotografía</option>
+              <option>Uso de mapas y croquis</option>
+            </optgroup>
+            <optgroup label="Formación Cívica y Ética">
+              <option>Juicio crítico a los medios</option>
+              <option>Juego de roles</option>
+              <option>Artículos de opinión</option>
+              <option>Debate</option>
+              <option>Asamblea escolar</option>
+              <option>Dilemas morales</option>
+            </optgroup>
+            <optgroup label="Educación Física">
+              <option>Juego con reglas</option>
+              <option>Juegos modificados</option>
+              <option>Circuitos de acción motriz</option>
+              <option>Actividades alternativas</option>
+              <option>Juegos naturales</option>
+            </optgroup>
+            <optgroup label="Artes">
+              <option>Elaboración de títeres y máscaras</option>
+              <option>Presentación de bailes y danzas</option>
+              <option>Muestras y exposiciones</option>
+              <option>Apreciación y exploración musical</option>
+              <option>Escenificaciones</option>
+              <option>¿Cómo mirar el teatro?</option>
+              <option>Lectura de imagen</option>
+            </optgroup>
+          </select>
+        </td>`;
+      }
+      
+      html += `<td style="border:1px solid #ddd; padding:8px; ${!window.estrategiaImprimir ? 'width:60%;' : ''}">
+        <div class="momentos-clave" style="font-size:13px; margin-bottom:4px; color:#333;"></div>
+        <div style="display:flex; gap:4px;">
+          <textarea disabled class="auto-grow" style="flex:1; width:100%; min-height:60px; padding:6px; border:1px solid #ddd; border-radius:4px; resize:vertical;"></textarea>
+          <button type="button" title="Reemplazar momentos" disabled style="padding:0 8px; font-size:16px; background:none; border:1px solid #ddd; border-radius:4px; cursor:pointer; align-self:flex-start;">♻️</button>
+        </div>
+      </td></tr>`;
     });
   } else {
-    html += '<tr><td colspan="4">Seleccione una metodología para ver la secuencia</td></tr>';
+    const colspan = tieneEtapa ? (window.estrategiaImprimir ? 4 : 3) : (window.estrategiaImprimir ? 3 : 2);
+    html += `<tr><td colspan="${colspan}" style="border:1px solid #ddd; padding:8px; text-align:center;">Seleccione una metodología para ver la secuencia</td></tr>`;
   }
+  
   html += '</table>';
   container.innerHTML = html;
 
-  // Al cargar la tabla, actualiza los momentos clave para selects con valor guardado
-  const selects = container.querySelectorAll('select');
-  selects.forEach(sel => {
-    if (sel.value && sel.value !== '') {
-      actualizarMomento(sel);
-    }
+  // Configurar botón de toggle
+  const toggleBtn = container.querySelector('#toggleEstrategiaBtn');
+  if (toggleBtn) {
+    toggleBtn.addEventListener('click', function(e) {
+      e.preventDefault();
+      window.estrategiaImprimir = !window.estrategiaImprimir;
+      construirTablaSecuencia(metodologia); // Reconstruir tabla completa
+    });
+  }
+
+  // Inicializar textareas con autoajuste
+  container.querySelectorAll('.auto-grow').forEach(textarea => {
+    textarea.style.height = 'auto';
+    textarea.style.height = (textarea.scrollHeight) + 'px';
+    textarea.addEventListener('input', function() {
+      this.style.height = 'auto';
+      this.style.height = (this.scrollHeight) + 'px';
+    });
   });
 
+  // --- SAVE CURRENT STATE before rebuilding table (if table exists) ---
+  const prevTable = container.querySelector('#secuenciaTable');
+  if (prevTable && secuenciaGuardada && secuenciaGuardada.length) {
+    let rowIdx = 0;
+    prevTable.querySelectorAll('tr').forEach((tr, idx) => {
+      if (idx === 0) return; // skip header
+      const row = secuenciaGuardada[rowIdx];
+      const key = getRowKey(row, rowIdx);
+      // Estrategia
+      const select = tr.querySelector('select');
+      if (select) {
+        if (!window.secuenciaTableState[key]) window.secuenciaTableState[key] = {};
+        window.secuenciaTableState[key].estrategia = select.value;
+      }
+      // Actividades
+      const textarea = tr.querySelector('textarea');
+      if (textarea) {
+        if (!window.secuenciaTableState[key]) window.secuenciaTableState[key] = {};
+        window.secuenciaTableState[key].actividades = textarea.value;
+      }
+      rowIdx++;
+    });
+    // --- Persist to localStorage ---
+    try {
+      localStorage.setItem('secuenciaTableState', JSON.stringify(window.secuenciaTableState));
+    } catch (e) {}
+  }
+
+  // Restore Estrategia and Actividades values
+  const table = container.querySelector('#secuenciaTable');
+  if (table && secuenciaGuardada && secuenciaGuardada.length) {
+    let rowIdx = 0;
+    table.querySelectorAll('tr').forEach((tr, idx) => {
+      if (idx === 0) return; // skip header
+      const row = secuenciaGuardada[rowIdx];
+      const key = getRowKey(row, rowIdx);
+      // Estrategia
+      if (!window.estrategiaOculta) {
+        const select = tr.querySelector('select');
+        if (select && window.secuenciaTableState[key] && typeof window.secuenciaTableState[key].estrategia !== 'undefined') {
+          select.value = window.secuenciaTableState[key].estrategia;
+          // Trigger the logic to enable/disable Actividades as if user selected
+          actualizarMomento(select);
+        }
+        // Listen for changes
+        if (select) {
+          select.addEventListener('change', function() {
+            if (!window.secuenciaTableState[key]) window.secuenciaTableState[key] = {};
+            window.secuenciaTableState[key].estrategia = this.value;
+            try { localStorage.setItem('secuenciaTableState', JSON.stringify(window.secuenciaTableState)); } catch (e) {}
+            // Trigger the logic to enable/disable Actividades
+            actualizarMomento(this);
+          });
+        }
+      }
+      // Actividades
+      const textarea = tr.querySelector('textarea');
+      // Always restore from state if present, never overwrite with default
+      if (textarea && window.secuenciaTableState[key] && typeof window.secuenciaTableState[key].actividades !== 'undefined') {
+        textarea.value = window.secuenciaTableState[key].actividades;
+      }
+      // Only update state on user input or ♻️
+      if (textarea) {
+        textarea.addEventListener('input', function() {
+          if (!window.secuenciaTableState[key]) window.secuenciaTableState[key] = {};
+          window.secuenciaTableState[key].actividades = this.value;
+          try { localStorage.setItem('secuenciaTableState', JSON.stringify(window.secuenciaTableState)); } catch (e) {}
+        });
+      }
+      rowIdx++;
+    });
+  }
+
   // --- IA: Integrar botón ♻️ en Momentos ---
-  // Obtener todas las filas de la tabla
-  const secuenciaTable = container.querySelector('#secuenciaTable');
-  if (secuenciaTable) {
-    secuenciaTable.querySelectorAll('tr').forEach(tr => {
+  if (table) {
+    table.querySelectorAll('tr').forEach(tr => {
       const momentoTd = tr.querySelector('td.momento');
       if (momentoTd) {
         const btn = momentoTd.querySelector('button');
@@ -421,6 +533,7 @@ function construirTablaSecuencia(metodologia) {
               });
               if (!res.ok) throw new Error('Error IA: ' + res.statusText);
               const data = await res.json();
+              if (typeof descontarCredito === 'function') descontarCredito();
               let txt = data.response || data.result || data.choices?.[0]?.text || JSON.stringify(data);
               textarea.value = txt.trim();
               textarea.style.height = 'auto';
@@ -435,8 +548,40 @@ function construirTablaSecuencia(metodologia) {
       }
     });
   }
-} // <-- cierre correcto de construirTablaSecuencia
+}
 
+// Helper to get unique key for each row
+function getRowKey(row, idx) {
+  // Use fase + etapa if present, otherwise fallback to idx
+  let key = (row.fase||'') + '|' + (row.etapa||'');
+  if (!row.fase && !row.etapa) key = 'row_' + idx;
+  return key;
+}
+
+// Función para actualizar momentos clave
+function actualizarMomento(selectElem) {
+  const tr = selectElem.closest('tr');
+  const momentoTd = tr.querySelector('td:last-child');
+  
+  if (momentoTd) {
+    const momentosClaveDiv = momentoTd.querySelector('.momentos-clave');
+    const textarea = momentoTd.querySelector('textarea');
+    const btn = momentoTd.querySelector('button');
+    const estrategia = selectElem.value;
+    
+    if (momentosClaveDiv) {
+      momentosClaveDiv.textContent = momentosPorEstrategia[estrategia] || '';
+    }
+    
+    if (textarea && btn) {
+      const habilitar = estrategia && estrategia !== '';
+      textarea.disabled = !habilitar;
+      btn.disabled = !habilitar;
+    }
+  }
+}
+
+// Definición de momentos por estrategia
 const momentosPorEstrategia = {
   'Taller de escritores': 'Planificación → Redacción → Revisión → Publicación.',
   'Lectura': 'Selección del texto → Lectura individual/grupal → Análisis → Reflexión.',
@@ -454,7 +599,6 @@ const momentosPorEstrategia = {
   'Experimentos': 'Hipótesis → Materiales → Ejecución → Conclusiones.',
   'Consulta en materiales diversos': 'Pregunta clave → Búsqueda → Síntesis.',
   'Elaboración de maquetas y álbumes': 'Investigación → Diseño → Construcción → Explicación.',
-  'Maquetas y álbumes': 'Investigación → Diseño → Construcción → Explicación.',
   'Mapas conceptuales': 'Tema central → Relaciones → Diagrama.',
   'Cápsulas científicas': 'Investigación → Resumen → Presentación creativa.',
   'Diccionario científico': 'Selección de términos → Definición → Ejemplos.',
@@ -481,55 +625,13 @@ const momentosPorEstrategia = {
   'Juego con reglas': 'Explicación → Ejecución → Evaluación.',
   'Juegos modificados': 'Adaptación de reglas → Práctica → Reflexión.',
   'Circuitos de acción motriz': 'Estaciones → Rotación → Mejora de habilidades.',
-  'Circuitos motrices': 'Estaciones → Rotación → Mejora de habilidades.',
   'Actividades alternativas': 'Propuestas no tradicionales → Participación.',
   'Juegos naturales': 'Uso de entorno → Creatividad → Cooperación.',
   'Elaboración de títeres y máscaras': 'Diseño → Elaboración → Representación.',
-  'Títeres y máscaras': 'Diseño → Elaboración → Representación.',
   'Presentación de bailes y danzas': 'Selección musical → Coreografía → Presentación.',
-  'Bailes y danzas': 'Selección musical → Coreografía → Presentación.',
   'Muestras y exposiciones': 'Creación → Curaduría → Exhibición.',
   'Apreciación y exploración musical': 'Audición → Análisis → Expresión.',
-  'Apreciación musical': 'Audición → Análisis → Expresión.',
   'Escenificaciones': 'Guión → Ensayo → Puesta en escena.',
   '¿Cómo mirar el teatro?': 'Observación → Elementos técnicos → Crítica.',
   'Lectura de imagen': 'Análisis visual → Contexto → Interpretación.'
 };
-
-// Función global para actualizar la columna Momentos según la selección
-function actualizarMomento(selectElem) {
-  const td = selectElem.parentElement;
-  const momentoTd = td.nextElementSibling;
-  // Buscamos el contenedor de momentos clave dentro de la celda
-  let momentoCell = momentoTd;
-  if (momentoCell && momentoCell.classList.contains('momento')) {
-    const momentosClaveDiv = momentoCell.querySelector('.momentos-clave');
-    const estrategia = selectElem.value;
-    if (momentosClaveDiv) {
-      momentosClaveDiv.textContent = momentosPorEstrategia[estrategia] || '';
-    }
-    // Habilitar/deshabilitar textarea y botón según selección
-    const textarea = momentoCell.querySelector('textarea');
-    const btn = momentoCell.querySelector('button');
-    if (textarea && btn) {
-      if (estrategia && estrategia !== '') {
-        textarea.disabled = false;
-        btn.disabled = false;
-      } else {
-        textarea.disabled = true;
-        btn.disabled = true;
-      }
-      // Autoajustar alto del textarea al contenido
-      textarea.style.height = 'auto';
-      textarea.style.height = (textarea.scrollHeight) + 'px';
-      // Agregar event listener para autoajuste en edición manual
-      if (!textarea._autoGrowListener) {
-        textarea.addEventListener('input', function() {
-          this.style.height = 'auto';
-          this.style.height = (this.scrollHeight) + 'px';
-        });
-        textarea._autoGrowListener = true;
-      }
-    }
-  }
-}

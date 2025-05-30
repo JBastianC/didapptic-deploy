@@ -311,6 +311,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
         
                 const data = await response.json();
+                if (typeof descontarCredito === 'function') descontarCredito();
                 let responseText = data.response || data.result || data.choices?.[0]?.text || JSON.stringify(data);
         
                 // Limpiar y extraer problemas

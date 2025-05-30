@@ -256,6 +256,12 @@ document.addEventListener('DOMContentLoaded', async function() {
       ta.value = node.dataset.text || '';
       div.appendChild(ta);
     }
+    // Mostrar botón Visualizar Plan solo para Nodo IA
+    if (type==='Nodo IA') {
+      document.getElementById('ia-panel').style.display = '';
+    } else {
+      document.getElementById('ia-panel').style.display = 'none';
+    }
     if (type==='Entrada') {
       const problems = await loadProblemsFromReality();
       sel1 = document.createElement('select');

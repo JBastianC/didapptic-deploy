@@ -336,6 +336,44 @@
 .bordered-black {
   border: 2px solid #111 !important;
 }
+  @media print {
+  body.hide-estrategia-print th.estrategia-col,
+  body.hide-estrategia-print td.estrategia-col {
+    display: none !important;
+  }
+  body.hide-estrategia-print th.actividades-col,
+  body.hide-estrategia-print td.actividades-col {
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+
+    /* Hide specific buttons in print mode */
+    .add-alumnos-btn, /* + Añadir Alumnos */
+    .add-row-btn,     /* Añadir Fila */
+    .reciclar-btn,    /* ♻️ button, assuming this class is used */
+    button[data-print-hide], /* fallback for any button marked for print hiding */
+    .toolbar,         /* Toolbar section */
+    .floating-btn {
+      display: none !important;
+    }
+
+    /* Hide Estrategia column ONLY if it has the print-only class */
+    #secuenciaTable th.no-print-estrategia,
+    #secuenciaTable td.no-print-estrategia {
+      display: none !important;
+    }
+    /* Hide select dropdowns and toggle button in Estrategia column in print */
+    #secuenciaTable td.estrategia-col select,
+    #secuenciaTable th.estrategia-col button {
+      display: none !important;
+    }
+    /* Expand Actividades column only if it has the special expanded class */
+    #secuenciaTable th.actividades-expandida,
+    #secuenciaTable td.actividades-expandida {
+      width: 100% !important;
+      max-width: 100% !important;
+    }
+  }
 </style>
 </head>
 <body>
@@ -347,12 +385,25 @@
     <input type="file" id="planFileInput" accept="application/json" style="display:none;" onchange="importPlanJSON(event)">
   </div>
 
-  <div class="logo-container">
-  <label for="logoInput" style="cursor:pointer;display:inline-block;">
-    <img id="customLogo" src="assets/Ddapptic.svg" alt="Logo" class="logo-img">
-  </label>
-  <input type="file" id="logoInput" accept="image/*" style="display:none;">
-  <p id="currentDate" class="editable" contenteditable="true"></p>
+  <div class="logo-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+  <!-- Left Logo Upload -->
+  <div class="logo-container" style="flex: 0 0 auto;">
+    <label for="logoInputLeft" style="cursor:pointer;display:inline-block;">
+      <img id="customLogoLeft" src="assets/Ddapptic.svg" alt="Logo Izquierdo" class="logo-img">
+    </label>
+    <input type="file" id="logoInputLeft" accept="image/*" style="display:none;">
+  </div>
+  <!-- Center Date -->
+  <div style="flex: 1 1 auto; text-align: center;">
+    <p id="currentDate" class="editable" contenteditable="true" style="margin: 0;"></p>
+  </div>
+  <!-- Right Logo Upload -->
+  <div class="logo-container" style="flex: 0 0 auto;">
+    <label for="logoInputRight" style="cursor:pointer;display:inline-block;">
+      <img id="customLogoRight" src="assets/Ddapptic.svg" alt="Logo Derecho" class="logo-img">
+    </label>
+    <input type="file" id="logoInputRight" accept="image/*" style="display:none;">
+  </div>
 </div>
 
   <h1>Datos Generales</h1>
@@ -388,6 +439,7 @@
       <td style="border:1.5px solid #333;"><span id="inicioPeriodo" class="editable" contenteditable="true"></span> al <span id="finPeriodo" class="editable" contenteditable="true"></span></td>
     </tr>
   </table>
+
 
   <div style="display:none">
     <h2>planViewerData (JSON crudo)</h2>
@@ -564,23 +616,42 @@ window.addEventListener('DOMContentLoaded', () => {
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script>
-// Logo personalizado
+// Logo personalizado (izquierdo y derecho)
 window.addEventListener('DOMContentLoaded', function() {
-  const logoInput = document.getElementById('logoInput');
-  const customLogo = document.getElementById('customLogo');
-  if (logoInput && customLogo) {
-    logoInput.addEventListener('change', function(e) {
+  // Left logo
+  const logoInputLeft = document.getElementById('logoInputLeft');
+  const customLogoLeft = document.getElementById('customLogoLeft');
+  if (logoInputLeft && customLogoLeft) {
+    logoInputLeft.addEventListener('change', function(e) {
       const file = e.target.files[0];
       if (file) {
         const reader = new FileReader();
         reader.onload = function(evt) {
-          customLogo.src = evt.target.result;
+          customLogoLeft.src = evt.target.result;
         };
         reader.readAsDataURL(file);
       }
     });
-    customLogo.onclick = function() {
-      logoInput.click();
+    customLogoLeft.onclick = function() {
+      logoInputLeft.click();
+    };
+  }
+  // Right logo
+  const logoInputRight = document.getElementById('logoInputRight');
+  const customLogoRight = document.getElementById('customLogoRight');
+  if (logoInputRight && customLogoRight) {
+    logoInputRight.addEventListener('change', function(e) {
+      const file = e.target.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = function(evt) {
+          customLogoRight.src = evt.target.result;
+        };
+        reader.readAsDataURL(file);
+      }
+    });
+    customLogoRight.onclick = function() {
+      logoInputRight.click();
     };
   }
 });
@@ -1289,138 +1360,95 @@ function buildUbicacionTableFromCanvas() {
   try { planViewerData = JSON.parse(planViewerData); } catch (e) { return; }
   const ubicacion = planViewerData.ubicacion || [];
 
-  // Agrupar datos por Campo Formativo -> Contenido -> PDAs
-  // Suponemos que solo hay un Problema en la tabla (por requerimiento)
-  if (!ubicacion.length) return;
-
-  const problema = ubicacion[0]['Problema'] || '';
-
-  // Construir estructura jerárquica: campo -> contenido -> [pdas]
-  const camposMap = {};
+  // Construir agrupación: Problema > Campo > Contenido > [PDAs...]
+  const problemasMap = {};
   ubicacion.forEach(row => {
-    const campos = (row['Campo(s) Formativo(s)'] || '').split('#');
-    const contenidos = (row['Contenido(s)'] || '').split('#');
-    const pdas = (row['PDA(s)'] || '').split('#');
-    campos.forEach((campo, i) => {
-      if (!camposMap[campo]) camposMap[campo] = {};
-      contenidos.forEach((contenido, j) => {
-        if (!camposMap[campo][contenido]) camposMap[campo][contenido] = [];
-        pdas.forEach((pda, k) => {
-          if (pda && !camposMap[campo][contenido].includes(pda)) {
-            camposMap[campo][contenido].push(pda);
+    const problema = (row['Problema'] || '').trim();
+    const campos = (row['Campo(s) Formativo(s)'] || '').split('#').map(s => s.trim()).filter(Boolean);
+    const contenidos = (row['Contenido(s)'] || '').split('#').map(s => s.trim()).filter(Boolean);
+    const pdas = (row['PDA(s)'] || '').split('#').map(s => s.trim()).filter(Boolean);
+    if (!problemasMap[problema]) problemasMap[problema] = {};
+    campos.forEach(campo => {
+      if (!problemasMap[problema][campo]) problemasMap[problema][campo] = {};
+      contenidos.forEach(contenido => {
+        if (!problemasMap[problema][campo][contenido]) problemasMap[problema][campo][contenido] = [];
+        // Asociar todos los PDAs de este contenido (sin repetir)
+        pdas.forEach(pda => {
+          if (pda && !problemasMap[problema][campo][contenido].includes(pda)) {
+            problemasMap[problema][campo][contenido].push(pda);
           }
         });
-        // Si no hay PDAs, igual agregamos una fila vacía para ese contenido
-        if (pdas.length === 0 || (pdas.length === 1 && pdas[0] === '')) {
-          if (!camposMap[campo][contenido].includes('')) {
-            camposMap[campo][contenido].push('');
+        // Si no hay PDAs, poner una celda vacía para ese contenido
+        if (pdas.length === 0 && !problemasMap[problema][campo][contenido].includes('')) {
+          problemasMap[problema][campo][contenido].push('');
+        }
+      });
+    });
+  });
+
+  // Renderizar la tabla con rowspan correcto
+  Object.entries(problemasMap).forEach(([problema, camposMap]) => {
+    // Calcular total de filas para el rowspan de Problema
+    let totalRowsProblema = 0;
+    Object.values(camposMap).forEach(contenidosMap => {
+      Object.values(contenidosMap).forEach(pdasArr => {
+        totalRowsProblema += pdasArr.length || 1;
+      });
+    });
+    let problemaPrinted = false;
+    Object.entries(camposMap).forEach(([campo, contenidosMap]) => {
+      // Calcular rowspan para este campo
+      let campoRowspan = 0;
+      Object.values(contenidosMap).forEach(pdasArr => {
+        campoRowspan += pdasArr.length || 1;
+      });
+      let campoPrinted = false;
+      Object.entries(contenidosMap).forEach(([contenido, pdasArr]) => {
+        let contenidoRowspan = pdasArr.length || 1;
+        let contenidoPrinted = false;
+        pdasArr.forEach((pda, idx) => {
+          const tr = document.createElement('tr');
+          // Problema
+          if (!problemaPrinted) {
+            const tdProblema = document.createElement('td');
+            tdProblema.textContent = problema;
+            tdProblema.rowSpan = totalRowsProblema;
+            tdProblema.style.verticalAlign = 'middle';
+            tdProblema.style.borderRight = '2px solid #ccc';
+            tr.appendChild(tdProblema);
+            problemaPrinted = true;
           }
-        }
+          // Campo Formativo
+          if (!campoPrinted) {
+            const tdCampo = document.createElement('td');
+            tdCampo.textContent = campo;
+            tdCampo.rowSpan = campoRowspan;
+            tdCampo.style.verticalAlign = 'middle';
+            tdCampo.style.borderRight = '2px solid #ccc';
+            tr.appendChild(tdCampo);
+            campoPrinted = true;
+          }
+          // Contenido
+          if (!contenidoPrinted) {
+            const tdContenido = document.createElement('td');
+            tdContenido.textContent = contenido;
+            tdContenido.rowSpan = contenidoRowspan;
+            tdContenido.style.verticalAlign = 'middle';
+            tdContenido.style.borderRight = '2px solid #ccc';
+            tr.appendChild(tdContenido);
+            contenidoPrinted = true;
+          }
+          // PDA (si hay varios, una fila por cada uno)
+          const tdPDA = document.createElement('td');
+          tdPDA.textContent = pda;
+          tdPDA.style.verticalAlign = 'middle';
+          tr.appendChild(tdPDA);
+          tableBody.appendChild(tr);
+        });
       });
-    });
-  });
-
-  // Calcular el total de filas necesarias para el rowspan de Problema
-  let totalRows = 0;
-  Object.values(camposMap).forEach(contenidosMap => {
-    Object.values(contenidosMap).forEach(pdasArr => {
-      totalRows += Math.max(pdasArr.length, 1);
-    });
-  });
-
-  let problemaPrinted = false;
-  Object.entries(camposMap).forEach(([campo, contenidosMap]) => {
-    // Calcular rowspan para este campo
-    let campoRowspan = 0;
-    Object.values(contenidosMap).forEach(pdasArr => {
-      campoRowspan += Math.max(pdasArr.length, 1);
-    });
-    let campoPrinted = false;
-    Object.entries(contenidosMap).forEach(([contenido, pdasArr]) => {
-      // Rowspan para este contenido
-      let contenidoRowspan = Math.max(pdasArr.length, 1);
-      let contenidoPrinted = false;
-      pdasArr.forEach((pda, idx) => {
-        const tr = document.createElement('tr');
-        // Problema
-        if (!problemaPrinted) {
-          const tdProblema = document.createElement('td');
-          tdProblema.textContent = problema;
-          tdProblema.rowSpan = totalRows;
-          tdProblema.style.verticalAlign = 'middle';
-          tdProblema.style.borderRight = '2px solid #ccc';
-          tr.appendChild(tdProblema);
-          problemaPrinted = true;
-        }
-        // Campo Formativo
-        if (!campoPrinted) {
-          const tdCampo = document.createElement('td');
-          tdCampo.textContent = campo;
-          tdCampo.rowSpan = campoRowspan;
-          tdCampo.style.verticalAlign = 'middle';
-          tdCampo.style.borderRight = '2px solid #ccc';
-          tr.appendChild(tdCampo);
-          campoPrinted = true;
-        }
-        // Contenido
-        if (!contenidoPrinted) {
-          const tdContenido = document.createElement('td');
-          tdContenido.textContent = contenido;
-          tdContenido.rowSpan = contenidoRowspan;
-          tdContenido.style.verticalAlign = 'middle';
-          tdContenido.style.borderRight = '2px solid #ccc';
-          tr.appendChild(tdContenido);
-          contenidoPrinted = true;
-        }
-        // PDA
-        const tdPDA = document.createElement('td');
-        tdPDA.textContent = pda;
-        tdPDA.style.verticalAlign = 'middle';
-        tr.appendChild(tdPDA);
-        tableBody.appendChild(tr);
-      });
-      // Si no hay PDAs, igual poner una fila vacía
-      if (pdasArr.length === 0) {
-        const tr = document.createElement('tr');
-        if (!problemaPrinted) {
-          const tdProblema = document.createElement('td');
-          tdProblema.textContent = problema;
-          tdProblema.rowSpan = totalRows;
-          tdProblema.style.verticalAlign = 'middle';
-          tdProblema.style.borderRight = '2px solid #ccc';
-          tr.appendChild(tdProblema);
-          problemaPrinted = true;
-        }
-        if (!campoPrinted) {
-          const tdCampo = document.createElement('td');
-          tdCampo.textContent = campo;
-          tdCampo.rowSpan = campoRowspan;
-          tdCampo.style.verticalAlign = 'middle';
-          tdCampo.style.borderRight = '2px solid #ccc';
-          tr.appendChild(tdCampo);
-          campoPrinted = true;
-        }
-        if (!contenidoPrinted) {
-          const tdContenido = document.createElement('td');
-          tdContenido.textContent = contenido;
-          tdContenido.rowSpan = contenidoRowspan;
-          tdContenido.style.verticalAlign = 'middle';
-          tdContenido.style.borderRight = '2px solid #ccc';
-          tr.appendChild(tdContenido);
-          contenidoPrinted = true;
-        }
-        const tdPDA = document.createElement('td');
-        tdPDA.textContent = '';
-        tdPDA.style.verticalAlign = 'middle';
-        tr.appendChild(tdPDA);
-        tableBody.appendChild(tr);
-      }
     });
   });
 }
-
-
-
 
 
 </script>
