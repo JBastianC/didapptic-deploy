@@ -80,16 +80,6 @@ document.addEventListener('DOMContentLoaded', () => {
             
             row.innerHTML = `
                 <td>${user.id}</td>
-                <td>${user.name} ${user.lastname}</td>
-                <td>${user.email}</td>
-                <td><span class="membership-badge ${user.membership}">${user.membership}</span></td>
-                <td>${new Date(user.createdAt).toLocaleDateString()}</td>
-                <td>
-                  ${user.membership === 'premium' ? `
-                    <input type="number" min="0" class="creditos-input" value="${typeof user.creditos === 'number' ? user.creditos : 100}" data-id="${user.id}" style="width:60px;">
-                    <button class="guardar-creditos-btn" data-id="${user.id}">Guardar</button>
-                  ` : '-'}
-                </td>
                 <td>
                     <button class="action-btn btn-view" data-id="${user.id}">Ver</button>
                     <button class="action-btn btn-delete" data-id="${user.id}">Eliminar</button>
@@ -98,6 +88,18 @@ document.addEventListener('DOMContentLoaded', () => {
                         <option value="basic" ${user.membership === 'basic' ? 'selected' : ''}>Básico</option>
                         <option value="premium" ${user.membership === 'premium' ? 'selected' : ''}>Premium</option>
                     </select>
+                </td>
+                <td>
+                    <button class="action-btn btn-email" data-email="${user.email}" data-name="${user.name} ${user.lastname}">Notificar</button>
+                </td>
+                <td>${user.email}</td>
+                <td><span class="membership-badge ${user.membership}">${user.membership}</span></td>
+                <td>${new Date(user.createdAt).toLocaleDateString()}</td>
+                <td>
+                  ${user.membership === 'premium' ? `
+                    <input type="number" min="0" class="creditos-input" value="${typeof user.creditos === 'number' ? user.creditos : 100}" data-id="${user.id}" style="width:60px;">
+                    <button class="guardar-creditos-btn" data-id="${user.id}">Guardar</button>
+                  ` : '-'}
                 </td>
             `;
             
@@ -161,7 +163,56 @@ document.addEventListener('DOMContentLoaded', () => {
         document.querySelectorAll('.membership-select').forEach(select => {
             select.addEventListener('change', (e) => updateMembership(e.target.dataset.id, e.target.value));
         });
+
+        // Botón para abrir el modal de enviar correo
+        document.querySelectorAll('.btn-email').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const email = btn.getAttribute('data-email');
+                const name = btn.getAttribute('data-name');
+                document.getElementById('email-to').value = email;
+                document.getElementById('email-subject').value = '';
+                document.getElementById('email-message').value = '';
+                document.getElementById('send-email-modal').style.display = 'flex';
+            });
+        });
     };
+
+    // Cerrar modal de correo
+    document.querySelector('.close-email-modal').addEventListener('click', () => {
+        document.getElementById('send-email-modal').style.display = 'none';
+    });
+    window.addEventListener('click', (e) => {
+        if (e.target === document.getElementById('send-email-modal')) {
+            document.getElementById('send-email-modal').style.display = 'none';
+        }
+    });
+
+    // Enviar correo
+    document.getElementById('send-email-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const to = document.getElementById('email-to').value;
+        const subject = document.getElementById('email-subject').value;
+        const message = document.getElementById('email-message').value;
+        try {
+            const res = await fetch('/api/admin/send-email', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                },
+                body: JSON.stringify({ to, subject, message })
+            });
+            const data = await res.json();
+            if (data.success) {
+                alert('Correo enviado correctamente');
+                document.getElementById('send-email-modal').style.display = 'none';
+            } else {
+                alert('Error al enviar correo: ' + data.message);
+            }
+        } catch (error) {
+            alert('Error al enviar correo');
+        }
+    });
 
     // Actualizar membresía de usuario
     const updateMembership = async (userId, membership) => {

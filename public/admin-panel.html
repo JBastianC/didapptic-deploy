@@ -72,12 +72,13 @@
                     <thead>
                         <tr>
                             <th>ID</th>
-                            <th>Nombre</th>
+                            <th>Acciones</th>
+                            <th>Notificar</th>
                             <th>Email</th>
                             <th>Membresía</th>
                             <th>Registro</th>
                             <th>Créditos</th>
-<th>Acciones</th>
+                            <th>Acciones</th>
                         </tr>
                     </thead>
                     <tbody id="users-table-body">
@@ -92,6 +93,28 @@
                     <span class="close-modal">&times;</span>
                     <h2>Detalles del Usuario</h2>
                     <div id="user-details-content"></div>
+                </div>
+            </div>
+            <!-- Modal para enviar correo -->
+            <div id="send-email-modal" class="modal">
+                <div class="modal-content">
+                    <span class="close-email-modal">&times;</span>
+                    <h2>Enviar correo a usuario</h2>
+                    <form id="send-email-form">
+                        <div class="form-group">
+                            <label for="email-to">Para:</label>
+                            <input type="email" id="email-to" name="email-to" readonly required>
+                        </div>
+                        <div class="form-group">
+                            <label for="email-subject">Asunto:</label>
+                            <input type="text" id="email-subject" name="email-subject" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="email-message">Mensaje:</label>
+                            <textarea id="email-message" name="email-message" rows="5" required></textarea>
+                        </div>
+                        <button type="submit" class="btn-send-email">Enviar</button>
+                    </form>
                 </div>
             </div>
         </main>
