@@ -1,7 +1,10 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
+  <link rel="icon" type="image/png" href="fav/favicon-2.png">
+
 <meta charset="UTF-8">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Planificación Didáctica</title>
 <style>
@@ -379,6 +382,25 @@
   }
 </style>
 </head>
+  <script src="creditos-api.js"></script>
+
+  <script>
+  document.addEventListener('DOMContentLoaded', async function() {
+    if (typeof getCreditosUsuario === 'function' && typeof isPremiumUser === 'function') {
+      if (isPremiumUser()) {
+        try {
+          const creditos = await getCreditosUsuario();
+          window.actualizarCreditosScore(creditos);
+        } catch(e) {
+          const scoreDiv = document.getElementById('creditos-score');
+          if (scoreDiv) scoreDiv.textContent = 'Créditos: ?';
+        }
+      } else {
+        document.getElementById('creditos-score').style.display = 'none';
+      }
+    }
+  });
+</script>
 <body>
 <div class="container">
   <div class="toolbar">
@@ -386,6 +408,7 @@
     <button onclick="togglePrintMode()">Modo Impresión</button>
     <button onclick="document.getElementById('planFileInput').click()">Cargar Plan</button>
     <input type="file" id="planFileInput" accept="application/json" style="display:none;" onchange="importPlanJSON(event)">
+    <div id="creditos-score" style="display:none; margin-left: 16px; font-weight: bold; color: #3483FA;"></div>
   </div>
 
   <div class="logo-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
@@ -407,6 +430,7 @@
     </label>
     <input type="file" id="logoInputRight" accept="image/*" style="display:none;">
   </div>
+  
 </div>
 
   <h1>Datos Generales</h1>
@@ -755,6 +779,7 @@ window.addEventListener('DOMContentLoaded', () => {
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="creditos-api.js"></script>
 <script>
 // Logo personalizado (izquierdo y derecho)
 window.addEventListener('DOMContentLoaded', function() {
@@ -2243,7 +2268,10 @@ function renderOrganizacionTable(rows) {
         }
         const res = await fetch('/api/ia/generatePlan', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer ' + localStorage.getItem('token')
+          },
           body: JSON.stringify({ prompt: prompt, max_tokens: 120 })
         });
         if (!res.ok) throw new Error('Error IA: ' + res.statusText);

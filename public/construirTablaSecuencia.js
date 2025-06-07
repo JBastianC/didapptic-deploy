@@ -868,9 +868,16 @@ async function reemplazarMomentos(btnElem) {
           return;
         }
       }
+      const token = localStorage.getItem('token');
+      const headers = {
+        'Content-Type': 'application/json'
+      };
+      if (token) {
+        headers['Authorization'] = 'Bearer ' + token;
+      }
       const res = await fetch('/api/ia/generatePlan', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers,
         body: JSON.stringify({ prompt: prompt, max_tokens: 400 })
       });
       if (!res.ok) throw new Error('Error IA: ' + res.statusText);

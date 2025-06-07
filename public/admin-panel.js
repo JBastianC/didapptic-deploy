@@ -85,6 +85,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 <td><span class="membership-badge ${user.membership}">${user.membership}</span></td>
                 <td>${new Date(user.createdAt).toLocaleDateString()}</td>
                 <td>
+                  ${user.membership === 'premium' ? `
+                    <input type="number" min="0" class="creditos-input" value="${typeof user.creditos === 'number' ? user.creditos : 100}" data-id="${user.id}" style="width:60px;">
+                    <button class="guardar-creditos-btn" data-id="${user.id}">Guardar</button>
+                  ` : '-'}
+                </td>
+                <td>
                     <button class="action-btn btn-view" data-id="${user.id}">Ver</button>
                     <button class="action-btn btn-delete" data-id="${user.id}">Eliminar</button>
                     <button class="action-btn btn-reset" data-id="${user.id}">Resetear</button>
@@ -100,7 +106,43 @@ document.addEventListener('DOMContentLoaded', () => {
         
         // Agregar event listeners
         addEventListeners();
+        addCreditSaveListeners();
     };
+
+    // Listeners para guardar créditos
+    const addCreditSaveListeners = () => {
+        document.querySelectorAll('.guardar-creditos-btn').forEach(btn => {
+            btn.addEventListener('click', async () => {
+                const userId = btn.dataset.id;
+                const input = document.querySelector(`.creditos-input[data-id='${userId}']`);
+                const credits = parseInt(input.value, 10);
+                if (isNaN(credits) || credits < 0) {
+                    alert('El valor de créditos debe ser un número no negativo.');
+                    return;
+                }
+                try {
+                    const res = await fetch('/api/admin/update-credits', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${localStorage.getItem('token')}`
+                        },
+                        body: JSON.stringify({ userId, credits })
+                    });
+                    const data = await res.json();
+                    if (data.success) {
+                        alert('Créditos actualizados correctamente');
+                        loadUsers();
+                    } else {
+                        alert('Error al actualizar créditos: ' + data.message);
+                    }
+                } catch (error) {
+                    alert('Error al actualizar créditos');
+                }
+            });
+        });
+    };
+
 
     // Agregar event listeners a los elementos
     const addEventListeners = () => {

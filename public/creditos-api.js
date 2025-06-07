@@ -1,5 +1,45 @@
 // Sistema de Créditos Didapptic (API/server version)
 // Este archivo reemplaza el uso de localStorage por llamadas a server.js
+// SOLO este archivo debe gestionar la lógica de créditos en el frontend.
+
+async function mostrarCreditos() {
+  try {
+    if (typeof isPremiumUser === 'function' && !isPremiumUser()) {
+      document.getElementById('creditos-score').style.display = 'none';
+      return;
+    }
+    const creditos = await getCreditosUsuario();
+    mostrarCreditos(creditos);
+  } catch(e) {
+    const scoreDiv = document.getElementById('creditos-score');
+    if (scoreDiv) scoreDiv.textContent = 'Créditos: ?';
+  }
+}
+
+// Permitir actualización global con animación
+window.actualizarCreditosScore = function(creditos) {
+  const scoreDiv = document.getElementById('creditos-score');
+  if (!scoreDiv) return;
+  if (creditos === undefined || creditos === null || isNaN(creditos)) {
+    scoreDiv.innerHTML = `<i class='fas fa-coins' style='margin-right:4px;color:#FFD700;'></i> <span class='creditos-num'>?</span> Créditos`;
+  } else {
+    scoreDiv.innerHTML = `<i class='fas fa-coins' style='margin-right:4px;color:#FFD700;'></i> <span class='creditos-num'>${creditos}</span> Créditos`;
+  }
+  scoreDiv.title = 'Tus créditos disponibles para IA. Se descuentan 1 por cada uso.';
+  scoreDiv.style.background = 'rgba(255,223,70,0.15)';
+  scoreDiv.style.borderRadius = '16px';
+  scoreDiv.style.padding = '4px 12px';
+  scoreDiv.style.display = '';
+  scoreDiv.style.cursor = 'help';
+  const prev = scoreDiv.querySelector('.creditos-num')?.textContent;
+  if (prev && prev != creditos) {
+    scoreDiv.animate([
+      { background: '#FFF9C4' },
+      { background: '#FFD700' },
+      { background: 'rgba(255,223,70,0.15)' }
+    ], { duration: 700 });
+  }
+}
 
 async function getCreditosUsuario() {
   const res = await fetch('/api/creditos', { headers: authHeader() });
@@ -120,6 +160,7 @@ window.mostrarMensajeCreditoReset = mostrarMensajeCreditoReset;
 window.isPremiumUser = isPremiumUser;
 window.mostrarMensajeSoloPremium = mostrarMensajeSoloPremium;
 window.ocultarSistemaCreditos = ocultarSistemaCreditos;
+window.mostrarCreditos = mostrarCreditos;
 
 // Ocultar créditos en todas las páginas si no es premium
 if (document.readyState === 'loading') {

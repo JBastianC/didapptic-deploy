@@ -295,23 +295,18 @@ document.addEventListener('DOMContentLoaded', () => {
                 // Mostrar UI de carga
                 btn.textContent = 'Generando...';
                 btn.disabled = true;
-        
-                // Enviar solicitud a la IA
-                const response = await fetch('/api/ia/generatePlan', {
+                // Realiza el fetch a la IA con header Authorization
+                const res = await fetch('/api/ia/generatePlan', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ 
-                        prompt: prompt,
-                        max_tokens: 500
-                    })
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer ' + localStorage.getItem('token')
+                    },
+                    body: JSON.stringify({ prompt: prompt, max_tokens: 400 })
                 });
-        
-                if (!response.ok) {
-                    throw new Error(`Error en la API: ${response.statusText}`);
-                }
-        
-                const data = await response.json();
-                if (typeof descontarCredito === 'function') descontarCredito();
+                if (!res.ok) throw new Error('Error IA: ' + res.statusText);
+                const data = await res.json();
+                if (typeof descontarCreditoUsuario === 'function') await descontarCreditoUsuario();
                 let responseText = data.response || data.result || data.choices?.[0]?.text || JSON.stringify(data);
         
                 // Limpiar y extraer problemas

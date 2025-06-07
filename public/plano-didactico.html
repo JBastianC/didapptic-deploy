@@ -63,6 +63,7 @@
         <div class="user-info">
           <span id="userEmail"></span>
           <span id="userMembership" class="membership-badge"></span>
+    <div id="creditos-score" style="display:none; margin-left: 16px; font-weight: bold; color: #3483FA;"></div>
         </div>
         <div class="action-buttons">
           <button class="btn-premium">¡Suscríbete a Premium!</button>
@@ -130,6 +131,28 @@
   <script src="script4.js"></script>
   <script src="sidebar.js"></script>
   <script src="auth.js"></script>
-  <script src="creditos.js"></script>
+  <script src="creditos-api.js"></script>
+  
+  
+  
+  
+  
+  <script>
+  document.addEventListener('DOMContentLoaded', async function() {
+    if (typeof getCreditosUsuario === 'function' && typeof isPremiumUser === 'function') {
+      if (isPremiumUser()) {
+        try {
+          const creditos = await getCreditosUsuario();
+          window.actualizarCreditosScore(creditos);
+        } catch(e) {
+          const scoreDiv = document.getElementById('creditos-score');
+          if (scoreDiv) scoreDiv.textContent = 'Créditos: ?';
+        }
+      } else {
+        document.getElementById('creditos-score').style.display = 'none';
+      }
+    }
+  });
+</script>
 </body>
 </html>

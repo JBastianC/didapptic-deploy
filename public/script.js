@@ -117,10 +117,11 @@ document.addEventListener('DOMContentLoaded', () => {
         toolsContainer.appendChild(toolCard);
 
         toolCard.addEventListener('click', () => {
-            if (tool.url && tool.url !== '#') {
-                window.location.href = tool.url;
-            } else if (tool.url === '#') {
-                document.querySelector('.btn-premium').click();
+            // Si la url NO es herramientasAI.html, redirige a herramientasAI.html
+            if (tool.url !== 'herramientasAI.html') {
+                window.location.href = 'herramientasAI.html';
+            } else {
+                window.location.href = 'herramientasAI.html';
             }
         });
     });
