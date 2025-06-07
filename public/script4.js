@@ -35,6 +35,24 @@ document.addEventListener('DOMContentLoaded', async function() {
   const problemsDropdown = document.getElementById('problemsDropdown');
   const problemsList = document.getElementById('problemsList');
 
+  // --- CORRECCIÓN: guardar texto seleccionado en nodo Entrada ---
+  if (problemsList) {
+    problemsList.addEventListener('click', function(e) {
+      const item = e.target.closest('.problem-item');
+      if (item) {
+        const valorSeleccionado = item.textContent.trim();
+        // Encuentra el nodo Entrada en el canvas
+        const entradaNode = document.querySelector('.node[data-type="Entrada"]');
+        if (entradaNode) {
+          entradaNode.dataset.text = valorSeleccionado;
+          // Actualiza el label visual si existe
+          const label = entradaNode.querySelector('.label');
+          if (label) label.textContent = valorSeleccionado;
+        }
+      }
+    });
+  }
+
   let meta = { fases: [], campos: [] };
   let mode = 'move';
   let idCnt = 0;
@@ -359,7 +377,12 @@ document.addEventListener('DOMContentLoaded', async function() {
 
     saveBtn.onclick = () => {
       if (ta) node.dataset.text = ta.value;
-      if (sel1 && type==='Entrada') node.dataset.text = sel1.value;
+      if (sel1 && type==='Entrada') {
+        node.dataset.text = sel1.value;
+        // Actualiza el label visual si existe
+        const label = node.querySelector('.label');
+        if (label) label.textContent = sel1.value;
+      }
       if (sel1 && type==='Fase') node.dataset.fase = sel1.value;
       if (sel1 && sel2 && type==='Campos Formativos') {
         node.dataset.fase = sel1.value;
@@ -467,7 +490,6 @@ document.addEventListener('DOMContentLoaded', async function() {
   });
 
   // Cargar problema al canvas
-  // Modifica la función loadProblemToCanvas para usar las conexiones específicas
   function loadProblemToCanvas(problemData) {
       problemsDropdown.classList.add('hidden');
       
@@ -717,116 +739,86 @@ document.addEventListener('DOMContentLoaded', async function() {
       return;
     }
 
-    // === NUEVO: Generar registro jerarquizado para plano-viewer.html ===
-    const nodes = [];
-    const connections = [];
-    document.querySelectorAll('#canvas .node').forEach(node => {
-      nodes.push({
-        id: node.id,
-        type: node.dataset.type,
-        data: {...node.dataset}
-      });
-    });
-    instance.getConnections().forEach(conn => {
-      connections.push({
-        sourceId: conn.sourceId,
-        targetId: conn.targetId
-      });
-    });
-    const nodesById = Object.fromEntries(nodes.map(n => [n.id, n]));
-    // Auxiliar para obtener nodos conectados de un tipo
-    function getConnectedNodes(originId, type) {
-      return connections.filter(c => c.sourceId === originId && nodesById[c.targetId]?.type === type)
-        .map(c => nodesById[c.targetId]);
-    }
-    // Auxiliar para obtener valor preferido
-    function getValue(node, prefer) {
-      if (!node) return '';
-      if (prefer && node.data?.[prefer]) return node.data[prefer];
-      if (node.data?.text) return node.data.text;
-      if (node.data && Object.keys(node.data).length === 1) {
-        return node.data[Object.keys(node.data)[0]];
-      }
-      return '';
-    }
-    // Construir arreglo para tabla Ubicación Curricular
-    const ubicacionRows = [];
-    // Si no hay nodos Entrada, aún así mostrar combinaciones de los otros bloques
-    const entradas = nodes.filter(n => n.type === 'Entrada');
-    const camposFormativos = nodes.filter(n => n.type === 'Campos Formativos');
-    const contenidos = nodes.filter(n => n.type === 'Contenido');
-    const pdas = nodes.filter(n => n.type === 'PDA');
+    // Construir estructura jerárquica para tabla Ubicación Curricular
+    const ubicacionHierarchical = [];
+    const connectionsBySource = {};
 
-    // Si hay nodos Entrada, generar combinaciones conectadas
-    if (entradas.length) {
-      entradas.forEach(entrada => {
-        const campos = getConnectedNodes(entrada.id, 'Campos Formativos');
-        if (!campos.length) {
-          ubicacionRows.push({
-            Problema: getValue(entrada, 'text'),
-            'Campo(s) Formativo(s)': camposFormativos.map(c=>getValue(c,'campo')).join('#'),
-            'Contenido(s)': contenidos.map(c=>getValue(c,'contenido')).join('#'),
-            'PDA(s)': pdas.map(p=>getValue(p,'pdas')).join('#')
-          });
-          return;
-        }
-        campos.forEach(campo => {
-          const contenidosCon = getConnectedNodes(campo.id, 'Contenido');
-          if (!contenidosCon.length) {
-            ubicacionRows.push({
-              Problema: getValue(entrada, 'text'),
-              'Campo(s) Formativo(s)': getValue(campo, 'campo'),
-              'Contenido(s)': contenidos.map(c=>getValue(c,'contenido')).join(', '),
-              'PDA(s)': pdas.map(p=>getValue(p,'pdas')).join(', ')
-            });
-            return;
-          }
-          contenidosCon.forEach(contenido => {
-            const pdasCon = getConnectedNodes(contenido.id, 'PDA');
-            if (!pdasCon.length) {
-              ubicacionRows.push({
-                Problema: getValue(entrada, 'text'),
-                'Campo(s) Formativo(s)': getValue(campo, 'campo'),
-                'Contenido(s)': getValue(contenido, 'contenido'),
-                'PDA(s)': pdas.map(p=>getValue(p,'pdas')).join(', ')
-              });
-              return;
+    // Organizar conexiones por nodo fuente
+    instance.getConnections().forEach(conn => {
+      if (!connectionsBySource[conn.sourceId]) {
+        connectionsBySource[conn.sourceId] = [];
+      }
+      connectionsBySource[conn.sourceId].push(conn);
+    });
+
+    // Recorrer todos los campos formativos activos en el canvas
+    const camposFormativos = Array.from(document.querySelectorAll('.node[data-type="Campos Formativos"]'));
+    camposFormativos.forEach((campoNode, idxCampo) => {
+      const campo = campoNode.dataset.campo || '';
+      // Buscar todos los contenidos conectados a este campo
+      const contenidoConnections = (connectionsBySource[campoNode.id] || []).filter(c => 
+        document.getElementById(c.targetId)?.dataset.type === 'Contenido');
+      const contenidosArr = [];
+      contenidoConnections.forEach((contenidoConn, idxCont) => {
+        const contenidoNode = document.getElementById(contenidoConn.targetId);
+        const contenido = contenidoNode.dataset.contenido || '';
+        // Buscar todos los PDAs conectados a este contenido
+        const pdaConnections = (connectionsBySource[contenidoNode.id] || []).filter(c => 
+          document.getElementById(c.targetId)?.dataset.type === 'PDA');
+        const pdasArr = [];
+        pdaConnections.forEach((pdaConn) => {
+          const pdaNode = document.getElementById(pdaConn.targetId);
+          const pda = pdaNode.dataset.pdas || '';
+          pdasArr.push(pda);
+        });
+        contenidosArr.push({ contenido, pdas: pdasArr });
+      });
+      // Buscar TODOS los nodos Entrada conectados a este campo (vía cualquier Nodo IA)
+      let problemasEncontrados = [];
+      const entradaNodes = Array.from(document.querySelectorAll('.node[data-type="Entrada"]'));
+      entradaNodes.forEach(entradaNode => {
+        const entradaId = entradaNode.id;
+        const iaConnections = (connectionsBySource[entradaId] || []).filter(c => document.getElementById(c.targetId)?.dataset.type === 'Nodo IA');
+        iaConnections.forEach(iaConn => {
+          const iaNode = document.getElementById(iaConn.targetId);
+          const campoConnections = (connectionsBySource[iaNode.id] || []).filter(c => document.getElementById(c.targetId)?.id === campoNode.id);
+          if (campoConnections.length > 0) {
+            // Obtener SIEMPRE el valor de dataset.text (como getValue(entrada, 'text'))
+            const texto = entradaNode.dataset.text || '-';
+            if (!problemasEncontrados.includes(texto)) {
+              problemasEncontrados.push(texto);
             }
-            pdasCon.forEach(pda => {
-              ubicacionRows.push({
-                Problema: getValue(entrada, 'text'),
-                'Campo(s) Formativo(s)': getValue(campo, 'campo'),
-                'Contenido(s)': getValue(contenido, 'contenido'),
-                'PDA(s)': getValue(pda, 'pdas')
-              });
-            });
-          });
+          }
         });
       });
-    } else {
-      // Si no hay Entrada, mostrar todas las combinaciones de los otros bloques
-      ubicacionRows.push({
-        Problema: '',
-        'Campo(s) Formativo(s)': camposFormativos.map(c=>getValue(c,'campo')).join('#'),
-        'Contenido(s)': contenidos.map(c=>getValue(c,'contenido')).join(', '),
-        'PDA(s)': pdas.map(p=>getValue(p,'pdas')).join(', ')
-      });
-    }
+      const problema = problemasEncontrados.length > 0 ? problemasEncontrados.join(' / ') : '-';
+      ubicacionHierarchical.push({ problema, campo, contenidos: contenidosArr });
+    });
 
-    // Estructura para plano-viewer.html
+    // Obtener el valor seleccionado de TODOS los nodos Entrada (concatenados si hay varios)
+    let problemasSeleccionados = [];
+    const entradaNodes = Array.from(document.querySelectorAll('.node[data-type="Entrada"]'));
+    entradaNodes.forEach(entradaNode => {
+      const texto = entradaNode.dataset.text || '-';
+      if (!problemasSeleccionados.includes(texto)) {
+        problemasSeleccionados.push(texto);
+      }
+    });
+    let problemaSeleccionado = problemasSeleccionados.length > 0 ? problemasSeleccionados.join(' / ') : '-';
+
+    // Luego en planViewerData:
     const planViewerData = {
       proyecto: document.getElementById('canvasTitle').textContent || '',
-      metodologia: (Array.from(document.querySelectorAll('.node[data-type="Metodología"]')).map(n => n.dataset.value).join('; ')) || '',
-      ubicacion: ubicacionRows
+      metodologia: (Array.from(document.querySelectorAll('.node[data-type="Metodología"]')).map(n => n.dataset.value).join('; ') || ''),
+      ubicacion: ubicacionHierarchical,
+      problemaSeleccionado // <-- Se agrega explícitamente
     };
-    localStorage.setItem('planViewerData', JSON.stringify(planViewerData));
-    // === FIN NUEVO ===
 
+    localStorage.setItem('planViewerData', JSON.stringify(planViewerData));
     // Abrir nueva pestaña con los datos
     const viewerUrl = `plano-viewer.html`;
     window.open(viewerUrl, '_blank');
   };
-
 
   // Cargar estado inicial
   loadCanvasState();

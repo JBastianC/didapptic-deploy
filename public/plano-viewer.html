@@ -213,6 +213,9 @@
   .alumnos-table th {
     background-color: #4CAF50;
     color: white;
+    position: sticky;
+    top: 0;
+    z-index: 1;
   }
   .alumnos-table td {
     vertical-align: middle;
@@ -447,7 +450,12 @@
   </div>
   
   <h1>Ubicación Curricular</h1>
-  <table id="ubicacionTable">
+  <style>
+#ubicacionTable td, #ubicacionTable th {
+  vertical-align: middle !important;
+}
+</style>
+<table id="ubicacionTable">
     <thead>
       <tr>
         <th>Problema</th>
@@ -466,61 +474,56 @@
   <div id="evaluacionTableContainer"></div>
 <script>
 function crearTablaEvaluacionOrdenada() {
-  // 1. Extraer los PDAs directamente de planViewerData.ubicacion
+  // 1. Extraer PDAs desde la estructura jerárquica de planViewerData.ubicacion si existe
+  let pdaSet = new Set();
+  let pdaList = [];
   let planViewerData = null;
   try {
     planViewerData = JSON.parse(localStorage.getItem('planViewerData'));
   } catch (e) { planViewerData = null; }
-  if (!planViewerData || !Array.isArray(planViewerData.ubicacion)) return;
-
-  // Recopilar todos los enunciados PDA únicos del campo 'PDA(s)'
-  let pdaSet = new Set();
-  planViewerData.ubicacion.forEach(row => {
-    if (row['PDA(s)'] && typeof row['PDA(s)'] === 'string') {
-      // Separar por el símbolo # (pda1#pda2)
-      row['PDA(s)'].split('#').forEach(pdaRaw => {
-        const pda = pdaRaw.trim();
-        if (pda) pdaSet.add(pda);
-      });
-    }
-  });
-  let pdaArray = Array.from(pdaSet);
-
-  // Clasificar y ordenar los PDAs según los niveles de Bloom
-  let colGroups = [[],[],[],[],[],[]];
-  let colContentSet = [new Set(), new Set(), new Set(), new Set(), new Set(), new Set()];
-  pdaArray.forEach(pda => {
-    // Buscar todos los verbos taxonómicos presentes en el enunciado
-    let found = false;
-    bloomLevels.forEach((level, idx) => {
-      level.verbs.forEach(verb => {
-        // Buscar el verbo en el enunciado (usando lematización simple)
-        let regex = new RegExp(`\\b${verb}\\b`, 'i');
-        if (regex.test(pda)) {
-          found = true;
-          // Resaltar SOLO este verbo en el enunciado
-          let highlighted = pda.replace(new RegExp(`\\b(${verb})\\b`, 'gi'), '<b style="color:#1b8a3a">$1</b>');
-          if (!colContentSet[idx].has(highlighted)) {
-            colGroups[idx].push(highlighted);
-            colContentSet[idx].add(highlighted);
+  if (planViewerData && Array.isArray(planViewerData.ubicacion)) {
+    planViewerData.ubicacion.forEach(item => {
+      if (item.contenidos && Array.isArray(item.contenidos)) {
+        item.contenidos.forEach(contenidoObj => {
+          if (contenidoObj.pdas && Array.isArray(contenidoObj.pdas)) {
+            contenidoObj.pdas.forEach(pda => {
+              const trimmed = (pda||'').trim();
+              if (trimmed && !pdaSet.has(trimmed)) {
+                pdaList.push(trimmed);
+                pdaSet.add(trimmed);
+              }
+            });
           }
-        }
-      });
+        });
+      }
     });
-    // Si no se detectó ningún verbo taxonómico
-    if (!found) {
-      let html = pda;
-  
+  }
+  // Si no hay PDAs en la estructura, usar el mecanismo anterior como respaldo
+  if (pdaList.length === 0) {
+    const ubicacionTable = document.getElementById('ubicacionTable');
+    if (ubicacionTable) {
+      for (let i = 1; i < ubicacionTable.rows.length; i++) { // Saltar encabezado
+        const pdaCell = ubicacionTable.rows[i].cells[3];
+        if (pdaCell && pdaCell.textContent.trim()) {
+          pdaCell.textContent.split(/[#;\n]/).forEach(pda => {
+            const trimmed = pda.trim();
+            if (trimmed && !pdaSet.has(trimmed)) {
+              pdaList.push(trimmed);
+              pdaSet.add(trimmed);
+            }
+          });
+        }
+      }
     }
-  });
-  let maxRows = Math.max(...colGroups.map(arr => arr.length));
-  if (maxRows === 0) maxRows = 1;
+  }
 
-  // 2. Crear tabla HTML dinámica
+  // 3. Crear tabla HTML dinámica
   let tableHtml = '';
+  // Nueva tabla de Evaluación con columna PDA(s)
   tableHtml += '<table id="evaluacionTable">';
-  tableHtml += '<tr><th colspan="6">Nivel de logro</th></tr>';
+  tableHtml += '<tr><th colspan="7">Nivel de logro</th></tr>';
   tableHtml += '<tr>';
+  tableHtml += '<th rowspan="2">PDA(s)</th>';
   bloomLevels.forEach(lvl => tableHtml += `<th>${lvl.name}</th>`);
   tableHtml += '</tr>';
   tableHtml += '<tr>';
@@ -531,20 +534,122 @@ function crearTablaEvaluacionOrdenada() {
   tableHtml += `<td class="nivel-logro-def">Emitir juicios de valor, justificar y defender opiniones</td>`;
   tableHtml += `<td class="nivel-logro-def">Utilizar lo aprendido y las habilidades adquiridas para construir ideas nuevas.</td>`;
   tableHtml += '</tr>';
-  // Agregar filas de PDAs ordenados
-  for (let r = 0; r < maxRows; r++) {
+
+  // --- Lematización y resaltado de verbos de Bloom ---
+  // Diccionario simple para lematizar (puedes expandirlo)
+
+  // Verbos por nivel de Bloom
+  const bloomLevelsArr = [
+    {name: 'Recordar', verbs: verbosPorNivel.recordar.concat(['reconocer', 'reconoce', 'reconocen', 'reconoció', 'reconocieron'])},
+    {name: 'Comprender', verbs: verbosPorNivel.comprender},
+    {name: 'Analizar', verbs: verbosPorNivel.analizar.concat(['explorar', 'explora', 'exploran', 'exploró', 'exploraron'])},
+    {name: 'Aplicar', verbs: verbosPorNivel.aplicar},
+    {name: 'Valorar', verbs: verbosPorNivel.valorar.concat(['compartir', 'comparte', 'comparten', 'compartió', 'compartieron'])},
+    {name: 'Crear', verbs: verbosPorNivel.crear}
+  ];
+  // Función findBloomVerb eliminada: toda la lógica de comparación y lematización se centraliza en getBloomLevelsAndHighlight y lemmatize.
+
+
+  // Función para escapar HTML
+  function escapeHtml(text) {
+    return text
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#039;");
+  }
+
+  // --- Analizar y resaltar todos los verbos de Bloom en cada PDA ---
+  // (ELIMINADA: ahora se usa getBloomLevelsAndHighlight para todo PDA)
+
+
+  // Estado de ubicación de PDAs
+  let ubicados = JSON.parse(localStorage.getItem('evaluacionUbicados')||'{}');
+
+  // Convertir todos los PDA a minúsculas para evitar conflictos
+  pdaList = pdaList.map(pda => pda.toLowerCase());
+
+  // Renderizar tabla usando los PDAs ya analizados
+  let pdaAnalizados = pdaList.map((pda, idx) => {
+    // Escapa el texto ANTES de resaltar
+    let safeText = escapeHtml(pda);
+    const { levels, html } = getBloomLevelsAndHighlight(safeText, idx);
+    let nivelIdx = levels && levels.length > 0 ? bloomLevels.findIndex(lvl => lvl.name === levels[0]) : -1;
+    let nivel = levels && levels.length > 0 ? levels[0] : null;
+    return { original: pda, highlighted: html, nivelIdx, nivel };
+  });
+  pdaAnalizados.forEach((row, idx) => {
     tableHtml += '<tr>';
+    // Si el PDA ya fue ubicado, mostrarlo en gris y permitir reset con click derecho
+    if (ubicados[idx] && ubicados[idx].nivel >= 0) {
+      tableHtml += `<td style="color:#888;cursor:pointer;" class="pda-ubicado" data-pda-idx="${idx}">${row.highlighted}</td>`;
+    } else {
+      tableHtml += `<td>${row.highlighted}</td>`;
+    }
     for (let c = 0; c < 6; c++) {
-      let content = colGroups[c][r] || '';
-      tableHtml += `<td class='editable' contenteditable='true'>${content}</td>`;
+      if (ubicados[idx] && ubicados[idx].nivel === c) {
+        tableHtml += `<td style="position:relative;"><span style="font-weight:bold;color:#222;">${row.original}</span><button class="remove-pda-btn" data-pda-idx="${idx}" title="Quitar ubicación" style="position:absolute;top:4px;right:4px;width:20px;height:20px;background:#eee;border:1px solid #aaa;border-radius:50%;cursor:pointer;font-weight:bold;line-height:16px;padding:0;">&#10006;</button></td>`;
+      } else {
+        tableHtml += '<td></td>';
+      }
     }
     tableHtml += '</tr>';
-  }
-  tableHtml += '<tr><th colspan="6">Evidencia de aprendizaje</th></tr>';
-  tableHtml += '<tr><td colspan="6" class="editable" contenteditable="true"></td></tr>';
+  });
+
   tableHtml += '</table>';
   document.getElementById('evaluacionTableContainer').innerHTML = tableHtml;
+
+  // Interactividad: click en verbo destacado (negrita verde)
+  document.querySelectorAll('.bloom-verb-clickable').forEach(el => {
+    el.addEventListener('click', function(e) {
+      const idx = parseInt(this.getAttribute('data-pda-idx'));
+      const nivelName = this.getAttribute('data-nivel');
+      let nivel = bloomLevels.findIndex(lvl => lvl.name === nivelName);
+// Si no se encontró el nivel por nombre, buscar por verbo lematizado
+if (nivel < 0 && this.hasAttribute('data-verb')) {
+  const verbo = this.getAttribute('data-verb').toLowerCase();
+  const lemma = lemmatize(verbo);
+  for (let i = 0; i < bloomLevels.length; i++) {
+    if (bloomLevels[i].verbs.includes(lemma)) {
+      nivel = i;
+      break;
+    }
+  }
 }
+      // Guardar ubicación
+      ubicados[idx] = {nivel};
+      localStorage.setItem('evaluacionUbicados', JSON.stringify(ubicados));
+      // Feedback visual
+      this.style.background = '#ffe066';
+      // Volver a renderizar para actualizar la tabla
+      crearTablaEvaluacionOrdenada();
+    });
+  });
+  // Interactividad: botón para quitar ubicación
+  document.querySelectorAll('.remove-pda-btn').forEach(el => {
+    el.addEventListener('click', function(e) {
+      e.stopPropagation();
+      const idx = parseInt(this.getAttribute('data-pda-idx'));
+      delete ubicados[idx];
+      localStorage.setItem('evaluacionUbicados', JSON.stringify(ubicados));
+      crearTablaEvaluacionOrdenada();
+    });
+  });
+  // Interactividad: click derecho para resetear ubicación (opcional, sigue disponible)
+  document.querySelectorAll('.pda-ubicado').forEach(el => {
+    el.addEventListener('contextmenu', function(e) {
+      e.preventDefault();
+      const idx = parseInt(this.getAttribute('data-pda-idx'));
+      delete ubicados[idx];
+      localStorage.setItem('evaluacionUbicados', JSON.stringify(ubicados));
+      crearTablaEvaluacionOrdenada();
+    });
+  });
+}
+
+
+
 
 
 // Ejecutar al cargar y cada vez que cambien los PDAs
@@ -566,11 +671,11 @@ window.addEventListener('DOMContentLoaded', () => {
   <table>
   <tr>
     <th>Nombre del proyecto</th>
-    <td id="nombreProyecto" class="editable bordered-black" contenteditable="true"></td>
+    <td id="nombreProyecto" class="bordered-black no-edit" style="background:#f5f5f5;cursor:default;" tabindex="-1"></td>
   </tr>
   <tr>
     <th>Metodología/Estrategia</th>
-    <td id="metodologia" class="editable bordered-black" contenteditable="true"></td>
+    <td id="metodologia" class="bordered-black no-edit" style="background:#f5f5f5;cursor:default;" tabindex="-1"></td>
   </tr>
 </table>
   <div id="secuenciaTableContainer"></div>
@@ -594,6 +699,41 @@ window.addEventListener('DOMContentLoaded', () => {
   <button id="addOrganizacionRowBtn" class="add-alumnos-btn">+ Añadir Fila</button>
   <div id="recycleMediosMenu" style="display:none;position:absolute;background:#fff;border:1px solid #ccc;z-index:2000;"></div>
 
+</div>
+
+<!-- MODAL DE ALUMNOS -->
+<div id="alumnosModal" class="modal">
+  <div class="modal-content">
+    <span class="close" onclick="closeAlumnosModal()">&times;</span>
+    <h2>Lista de Alumnos</h2>
+    <div class="alumnos-table-scroll" style="max-height:320px;overflow-y:auto;">
+      <table class="alumnos-table" style="width:100%;margin-bottom:20px;">
+        <thead style="position: sticky; top: 0; background-color: white;">
+          <tr>
+            <th>Nombre</th>
+            <th>Recordar</th>
+            <th>Comprender</th>
+            <th>Analizar</th>
+            <th>Aplicar</th>
+            <th>Valorar</th>
+            <th>Crear</th>
+            <th>Acción</th>
+          </tr>
+        </thead>
+        <tbody id="alumnosTableBody">
+          <!-- Filas de alumnos se llenan por JS -->
+        </tbody>
+      </table>
+    </div>
+    <div class="alumnos-modal-footer">
+      <button class="btn-import" onclick="document.getElementById('excelInput').click()">Importar Excel</button>
+      <input type="file" id="excelInput" class="file-input" accept=".xlsx,.xls" style="display:none;" onchange="handleExcelImport(event)">
+      <button class="btn-download" onclick="downloadExcelTemplate()">Descargar Formato</button>
+      <button class="btn-yellow" id="addAlumnoBtn" onclick="addNewAlumno()">Añadir Alumno</button>
+      <button class="btn-yellow" id="saveAlumnosBtn" onclick="saveAlumnosData()">Guardar</button>
+      <button class="btn-yellow" onclick="closeAlumnosModal()">Cerrar</button>
+    </div>
+  </div>
 </div>
 
 <div id="loadModal" class="load-modal">
@@ -660,13 +800,28 @@ window.addEventListener('DOMContentLoaded', function() {
   let logroChart = null;
   let canvasData = null;
   const verbosPorNivel = {
-    recordar: ['definir', 'describir', 'enumerar', 'identificar', 'listar', 'memorizar', 'nombrar', 'recordar', 'repetir', 'reconocer'],
-    comprender: ['comprender', 'comparar', 'contrastar', 'discutir', 'explicar', 'interpretar', 'parafrasear', 'resumir', 'traducir', 'ejemplificar'],
-    analizar: ['analizar', 'categorizar', 'clasificar', 'diferenciar', 'discriminar', 'distinguir', 'examinar', 'investigar', 'organizar', 'relacionar'],
-    aplicar: ['aplicar', 'calcular', 'demostrar', 'emplear', 'implementar', 'operar', 'practicar', 'resolver', 'utilizar', 'ejecutar'],
-    valorar: ['valorar', 'argumentar', 'criticar', 'defender', 'evaluar', 'juzgar', 'justificar', 'priorizar', 'seleccionar', 'validar'],
-    crear: ['crear', 'componer', 'construir', 'diseñar', 'desarrollar', 'elaborar', 'formular', 'generar', 'inventar', 'producir']
+    recordar: [
+      'recordar', 'reconocer', 'reconoce', 'reconocen', 'reconoció', 'reconocieron', 'identificar', 'nombrar', 'definir', 'repetir', 'listar', 'describir', 'señalar', 'enumerar', 'ubicar', 'etiquetar', 'emparejar', 'reproducir', 'seleccionar', 'recitar'
+    ],
+    comprender: [
+      'aprender', 'aprende', 'aprenden', 'aprendió', 'aprendieron', 'explicar', 'resumir', 'interpretar', 'comparar', 'clasificar', 'parafrasear', 'ilustrar', 'predecir', 'discutir', 'estimar', 'inferir', 'traducir', 'ejemplificar', 'expresar', 'reorganizar', 'ordenar', 'mostrar'
+    ],
+    aplicar: [
+      'aplicar', 'usar', 'implementar', 'resolver', 'demostrar', 'practicar', 'ejecutar', 'operar', 'construir', 'calcular', 'manipular', 'desarrollar', 'modificar', 'modelar', 'emplear', 'experimentar', 'dramatizar'
+    ],
+    analizar: [
+      'analizar', 'explorar', 'explora', 'exploran', 'exploró', 'exploraron', 'diferenciar', 'organizar', 'comparar', 'contrastar', 'examinar', 'categorizar', 'identificar', 'relacionar', 'separar', 'investigar', 'distinguir', 'descomponer', 'encontrar evidencia', 'aislar', 'estructurar', 'mapear'
+    ],
+    valorar: [
+      'evaluar', 'compartir', 'comparte', 'comparten', 'compartió', 'compartieron', 'juzgar', 'justificar', 'criticar', 'defender', 'concluir', 'determinar', 'argumentar', 'valorar', 'recomendar', 'seleccionar', 'verificar', 'validar', 'calificar', 'priorizar', 'decidir', 'reflexionar'
+    ],
+    crear: [
+      'crear', 'diseñar', 'construir', 'planificar', 'inventar', 'proponer', 'desarrollar', 'generar', 'formular', 'elaborar', 'idear', 'componer', 'escribir', 'organizar', 'reestructurar', 'integrar', 'modificar', 'mezclar', 'combinar'
+    ]
   };
+
+
+
 
   // Función para cargar datos del usuario
   async function loadUserData() {
@@ -740,6 +895,8 @@ window.addEventListener('DOMContentLoaded', function() {
     
     // PDAs
     const pdaCell = row.insertCell();
+    // Inicializar lista global si no existe
+    if (!window.pdaListGlobal) window.pdaListGlobal = [];
     if (Array.isArray(canvasData.pdas)) {
       canvasData.pdas.forEach(pda => {
         const pdaDiv = document.createElement('div');
@@ -747,11 +904,17 @@ window.addEventListener('DOMContentLoaded', function() {
         pdaDiv.setAttribute('contenteditable', 'true');
         pdaDiv.textContent = pda;
         pdaCell.appendChild(pdaDiv);
+        if (pda && !window.pdaListGlobal.includes(pda.trim())) window.pdaListGlobal.push(pda.trim());
       });
     } else if (canvasData.pdas) {
       pdaCell.textContent = canvasData.pdas;
+      canvasData.pdas.split(/[#;\n]/).forEach(pda => {
+        const trimmed = pda.trim();
+        if (trimmed && !window.pdaListGlobal.includes(trimmed)) window.pdaListGlobal.push(trimmed);
+      });
     }
     pdaCell.classList.add('editable');
+
     
     // Contenidos
     const contenidoCell = row.insertCell();
@@ -783,69 +946,13 @@ window.addEventListener('DOMContentLoaded', function() {
     }
     campoCell.classList.add('editable');
 
-    // Evaluación - Distribuir PDAs por niveles
-    if (canvasData.pdas && canvasData.pdas.length > 0) {
-      const evaluacionRows = document.querySelectorAll('#evaluacionTable tr');
-      const niveles = ['recordar', 'comprender', 'analizar', 'aplicar', 'valorar', 'crear'];
-      
-      // Limpiar celdas
-      for (let i = 2; i <= 3; i++) {
-        for (let j = 0; j < 6; j++) {
-          evaluacionRows[i].cells[j].innerHTML = '';
-        }
-      }
-      
-      canvasData.pdas.forEach(pda => {
-        const verbo = encontrarVerboEnPDA(pda);
-        const nivel = determinarNivel(verbo);
-        
-        if (nivel && niveles.includes(nivel)) {
-          const rowIndex = 2;
-          const cellIndex = niveles.indexOf(nivel);
-          
-          if (rowIndex < evaluacionRows.length && cellIndex < 6) {
-            const cell = evaluacionRows[rowIndex].cells[cellIndex];
-            const pdaConVerboDestacado = pda.replace(new RegExp(verbo, 'i'), `<span class="verb">${verbo}</span>`);
-            
-            if (cell.textContent.trim() === '') {
-              cell.innerHTML = pdaConVerboDestacado;
-            } else {
-              cell.innerHTML += '<div class="table-item">' + pdaConVerboDestacado + '</div>';
-            }
-          }
-        }
-      });
-    }
+    
 
-    // Proyecto y metodología
-    if (canvasData.proyecto) {
-      document.getElementById('nombreProyecto').textContent = canvasData.proyecto;
-    }
-    if (canvasData.metodologia) {
-      document.getElementById('metodologia').textContent = canvasData.metodologia;
-    }
   }
 
-  // Funciones para análisis de verbos en PDAs
-  function encontrarVerboEnPDA(pda) {
-    if (!pda) return '';
-    const pdaLower = pda.toLowerCase();
-    for (const nivel in verbosPorNivel) {
-      for (const verbo of verbosPorNivel[nivel]) {
-        if (pdaLower.includes(verbo)) return verbo;
-      }
-    }
-    return '';
-  }
 
-  function determinarNivel(verbo) {
-    if (!verbo) return '';
-    verbo = verbo.toLowerCase();
-    for (const nivel in verbosPorNivel) {
-      if (verbosPorNivel[nivel].includes(verbo)) return nivel;
-    }
-    return '';
-  }
+
+ 
 
   // Funciones para manejo de tablas
   function populateTable(tableId, data) {
@@ -885,9 +992,34 @@ window.addEventListener('DOMContentLoaded', function() {
     alumnosData.forEach((alumno, index) => {
       const row = document.createElement('tr');
       
-      const nombreCell = document.createElement('td');
-      nombreCell.textContent = alumno.nombre;
-      row.appendChild(nombreCell);
+      const nameCell = document.createElement('td');
+      nameCell.textContent = alumno.nombre;
+      nameCell.style.cursor = 'pointer';
+      nameCell.title = 'Doble clic para editar';
+      nameCell.ondblclick = function() {
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.value = alumno.nombre;
+        input.style.width = '95%';
+        input.style.fontSize = 'inherit';
+        input.style.padding = '2px 4px';
+        input.onblur = function() {
+          alumnosData[index].nombre = input.value.trim() || alumno.nombre;
+          renderAlumnosTable();
+        };
+        input.onkeydown = function(e) {
+          if (e.key === 'Enter') {
+            input.blur();
+          } else if (e.key === 'Escape') {
+            renderAlumnosTable();
+          }
+        };
+        nameCell.textContent = '';
+        nameCell.appendChild(input);
+        input.focus();
+        input.select();
+      };
+      row.appendChild(nameCell);
       
       const niveles = ['recordar', 'comprender', 'analizar', 'aplicar', 'valorar', 'crear'];
       niveles.forEach(nivel => {
@@ -933,7 +1065,7 @@ window.addEventListener('DOMContentLoaded', function() {
   function addNewAlumno() {
     alumnosData.push({ nombre: `Alumno ${alumnosData.length + 1}`, nivel: '' });
     renderAlumnosTable();
-  }
+  } // Solo debe ejecutarse una vez por click, listeners únicos.
 
   function saveAlumnosData() {
     localStorage.setItem('alumnosData', JSON.stringify(alumnosData));
@@ -1034,7 +1166,12 @@ window.addEventListener('DOMContentLoaded', function() {
         });
         
         if (newAlumnos.length > 0) {
-          alumnosData = alumnosData.concat(newAlumnos);
+          // Evita duplicados: solo agrega si no existe ya ese nombre
+          newAlumnos.forEach(nuevo => {
+            if (!alumnosData.some(a => a.nombre === nuevo.nombre)) {
+              alumnosData.push(nuevo);
+            }
+          });
           renderAlumnosTable();
           alert(`${newAlumnos.length} alumnos importados correctamente.`);
         } else {
@@ -1159,24 +1296,42 @@ window.addEventListener('DOMContentLoaded', function() {
 
     // --- NUEVO: Cargar planViewerData si existe ---
     let planViewerData = null;
+    let canvasDataDebug = null;
     try {
       planViewerData = JSON.parse(localStorage.getItem('planViewerData'));
     } catch (e) { planViewerData = null; }
-    if (planViewerData) {
-      if (planViewerData.proyecto)
-        document.getElementById('nombreProyecto').textContent = planViewerData.proyecto;
-      if (planViewerData.metodologia)
-        document.getElementById('metodologia').textContent = planViewerData.metodologia;
-      if (planViewerData.metodologia) {
-        construirTablaSecuencia(planViewerData.metodologia);
-      }
-      if (document.getElementById('planViewerDataRaw'))
-        document.getElementById('planViewerDataRaw').value = JSON.stringify(planViewerData, null, 2);
+    try {
+      canvasDataDebug = JSON.parse(localStorage.getItem('canvasData'));
+    } catch (e) { canvasDataDebug = null; }
+    // Prefer planViewerData, fallback to canvasData
+    let proyectoValue = (planViewerData && planViewerData.proyecto) ? planViewerData.proyecto : (canvasDataDebug && canvasDataDebug.proyecto ? canvasDataDebug.proyecto : '');
+    let metodologiaValue = (planViewerData && planViewerData.metodologia) ? planViewerData.metodologia : (canvasDataDebug && canvasDataDebug.metodologia ? canvasDataDebug.metodologia : '');
+    document.getElementById('nombreProyecto').textContent = proyectoValue;
+    document.getElementById('metodologia').textContent = metodologiaValue;
+    if (planViewerData && planViewerData.metodologia) {
+      construirTablaSecuencia(planViewerData.metodologia);
     }
+    if (document.getElementById('planViewerDataRaw'))
+      document.getElementById('planViewerDataRaw').value = JSON.stringify(planViewerData, null, 2);
+    // Debug
+    console.log('[DEBUG] planViewerData:', planViewerData);
+    console.log('[DEBUG] canvasData:', canvasDataDebug);
+    console.log('[DEBUG] Proyecto mostrado:', proyectoValue);
+    console.log('[DEBUG] Metodología mostrada:', metodologiaValue);
     if (document.getElementById('add-alumnos-btn')) document.getElementById('add-alumnos-btn').addEventListener('click', openAlumnosModal);
-    if (document.getElementById('addAlumnoBtn')) document.getElementById('addAlumnoBtn').addEventListener('click', addNewAlumno);
-    if (document.getElementById('saveAlumnosBtn')) document.getElementById('saveAlumnosBtn').addEventListener('click', saveAlumnosData);
-    if (document.getElementById('excelInput')) document.getElementById('excelInput').addEventListener('change', handleExcelImport);
+    // Elimina listeners previos si existen para evitar duplicados
+    if (document.getElementById('addAlumnoBtn')) {
+      document.getElementById('addAlumnoBtn').onclick = null;
+      document.getElementById('addAlumnoBtn').addEventListener('click', addNewAlumno);
+    }
+    if (document.getElementById('saveAlumnosBtn')) {
+      document.getElementById('saveAlumnosBtn').onclick = null;
+      document.getElementById('saveAlumnosBtn').addEventListener('click', saveAlumnosData);
+    }
+    if (document.getElementById('excelInput')) {
+      document.getElementById('excelInput').onchange = null;
+      document.getElementById('excelInput').addEventListener('change', handleExcelImport);
+    }
     if (document.getElementById('downloadTemplateBtn')) document.getElementById('downloadTemplateBtn').addEventListener('click', downloadExcelTemplate);
     if (document.querySelector('#alumnosModal .close')) document.querySelector('#alumnosModal .close').addEventListener('click', closeAlumnosModal);
     if (document.querySelector('#loadModal .close')) document.querySelector('#loadModal .close').addEventListener('click', closeLoadModal);
@@ -1208,15 +1363,32 @@ window.addEventListener('DOMContentLoaded', function() {
         localStorage.setItem('canvasData', JSON.stringify(canvasData));
         loadCanvasDataToTables();
 
-        document.getElementById('nombreProyecto').textContent = event.data.config.proyecto || '';
-        document.getElementById('metodologia').textContent = event.data.config.metodologia || '';
+        let planViewerData = {};
+        let canvasDataDebug = null;
+        try {
+          planViewerData = JSON.parse(localStorage.getItem('planViewerData')) || {};
+        } catch (e) { planViewerData = {}; }
+        try {
+          canvasDataDebug = JSON.parse(localStorage.getItem('canvasData'));
+        } catch (e) { canvasDataDebug = null; }
+        // Prefer planViewerData, fallback to canvasData
+        let proyectoValue = (planViewerData && planViewerData.proyecto) ? planViewerData.proyecto : (canvasDataDebug && canvasDataDebug.proyecto ? canvasDataDebug.proyecto : '');
+        let metodologiaValue = (planViewerData && planViewerData.metodologia) ? planViewerData.metodologia : (canvasDataDebug && canvasDataDebug.metodologia ? canvasDataDebug.metodologia : '');
+        document.getElementById('nombreProyecto').textContent = proyectoValue;
+        document.getElementById('metodologia').textContent = metodologiaValue;
+        // Debug
+        console.log('[DEBUG][msg event] planViewerData:', planViewerData);
+        console.log('[DEBUG][msg event] canvasData:', canvasDataDebug);
+        console.log('[DEBUG][msg event] Proyecto mostrado:', proyectoValue);
+        console.log('[DEBUG][msg event] Metodología mostrada:', metodologiaValue);
         
         if (event.data.tables.secuencia) populateTable('secuenciaTable', event.data.tables.secuencia);
         if (event.data.tables.organizacion) populateTable('organizacionTable', event.data.tables.organizacion);
         if (event.data.tables.actividades) populateTable('actividadesTable', event.data.tables.actividades);
         if (event.data.reflexiones) document.getElementById('reflexiones').innerHTML = event.data.reflexiones;
         
-        makeAllCellsEditable();
+        // Excluir las celdas de nombreProyecto y metodologia de ser editables
+        makeAllCellsEditable(['nombreProyecto', 'metodologia']);
         
       } catch (error) {
         console.error('Error al cargar datos:', error);
@@ -1224,122 +1396,116 @@ window.addEventListener('DOMContentLoaded', function() {
       }
     }
   });
-</script>
-<script>
+
 // --- UBICACIÓN CURRICULAR: RECOLECCIÓN Y TABLA DESDE EL CANVAS ---
 function buildUbicacionTableFromCanvas() {
   const tableBody = document.querySelector('#ubicacionTable tbody');
   tableBody.innerHTML = '';
-  let canvasState = localStorage.getItem('canvasState');
-  // --- LLENAR LA TABLA UBICACIÓN CURRICULAR ---
-  // Mostrar todas las combinaciones posibles entre Entrada, Campo, Contenido y PDA
-  const entradas = nodosPorTipo['Entrada'] || [];
-  const campos = nodosPorTipo['Campos Formativos'] || [];
-  const contenidos = nodosPorTipo['Contenido'] || [];
-  const pdas = nodosPorTipo['PDA'] || [];
+  
+  // Obtener datos del canvas
+  let planViewerData = null;
+  try {
+    planViewerData = JSON.parse(localStorage.getItem('planViewerData'));
+  } catch (e) {
+    console.error('Error parsing planViewerData:', e);
+    return;
+  }
+  
+  if (!planViewerData || !planViewerData.ubicacion) return;
 
-  if (!entradas.length) return;
+  // Crear un mapa para organizar los datos jerárquicamente
+  const hierarchyMap = new Map();
 
-  entradas.forEach(entrada => {
-    let rows = [];
-    // Si hay campos, contenidos y pdas, haz el producto cartesiano
-    if (campos.length && contenidos.length && pdas.length) {
-      campos.forEach(campo => {
-        contenidos.forEach(contenido => {
-          pdas.forEach(pda => {
-            rows.push({
-              problema: getValue(entrada, 'text'),
-              campo: getValue(campo, 'campo'),
-              contenido: getValue(contenido, 'contenido'),
-              pda: getValue(pda, 'pdas')
-            });
-          });
-        });
-      });
-    } else if (campos.length && contenidos.length) {
-      campos.forEach(campo => {
-        contenidos.forEach(contenido => {
-          rows.push({
-            problema: getValue(entrada, 'text'),
-            campo: getValue(campo, 'campo'),
-            contenido: getValue(contenido, 'contenido'),
-            pda: ''
-          });
-        });
-      });
-    } else if (campos.length && pdas.length) {
-      campos.forEach(campo => {
-        pdas.forEach(pda => {
-          rows.push({
-            problema: getValue(entrada, 'text'),
-            campo: getValue(campo, 'campo'),
-            contenido: '',
-            pda: getValue(pda, 'pdas')
-          });
-        });
-      });
-    } else if (campos.length) {
-      campos.forEach(campo => {
-        rows.push({
-          problema: getValue(entrada, 'text'),
-          campo: getValue(campo, 'campo'),
-          contenido: '',
-          pda: ''
-        });
-      });
-    } else if (contenidos.length && pdas.length) {
-      contenidos.forEach(contenido => {
-        pdas.forEach(pda => {
-          rows.push({
-            problema: getValue(entrada, 'text'),
-            campo: '',
-            contenido: getValue(contenido, 'contenido'),
-            pda: getValue(pda, 'pdas')
-          });
-        });
-      });
-    } else if (contenidos.length) {
-      contenidos.forEach(contenido => {
-        rows.push({
-          problema: getValue(entrada, 'text'),
-          campo: '',
-          contenido: getValue(contenido, 'contenido'),
-          pda: ''
-        });
-      });
-    } else if (pdas.length) {
-      pdas.forEach(pda => {
-        rows.push({
-          problema: getValue(entrada, 'text'),
-          campo: '',
-          contenido: '',
-          pda: getValue(pda, 'pdas')
-        });
-      });
-    } else {
-      rows.push({
-        problema: getValue(entrada, 'text'),
-        campo: '',
-        contenido: '',
-        pda: ''
-      });
+  planViewerData.ubicacion.forEach(row => {
+    const problema = row['Problema'] || '';
+    const campo = row['Campo(s) Formativo(s)'] || '';
+    const contenido = row['Contenido(s)'] || '';
+    const pda = row['PDA(s)'] || '';
+
+    if (!hierarchyMap.has(problema)) {
+      hierarchyMap.set(problema, new Map());
     }
-    // Renderizar filas (NO usar colspan, siempre columnas separadas)
-    rows.forEach(row => {
-      const tr = document.createElement('tr');
-      const tdProblema = document.createElement('td');
-      tdProblema.textContent = row.problema;
-      tr.appendChild(tdProblema);
-      const tdCampo = document.createElement('td');
-      tdCampo.textContent = row.campo;
-      tr.appendChild(tdCampo);
-      const tdContenido = document.createElement('td');
-      tdContenido.textContent = row.contenido;
-      tr.appendChild(tdContenido);
-      const tdPDA = document.createElement('td');
-      tdPDA.textContent = row.pda;
-      tr.appendChild(tdPDA);
-      tableBody.appendChild(tr);
+    
+    const camposMap = hierarchyMap.get(problema);
+    if (!camposMap.has(campo)) {
+      camposMap.set(campo, new Map());
+    }
+    
+    const contenidosMap = camposMap.get(campo);
+    if (!contenidosMap.has(contenido)) {
+      contenidosMap.set(contenido, new Set());
+    }
+    
+    const pdaSet = contenidosMap.get(contenido);
+    if (pda) {
+      pda.split('#').forEach(p => pdaSet.add(p.trim()));
+    }
+  });
+
+  // Construir la tabla respetando la jerarquía
+  hierarchyMap.forEach((camposMap, problema) => {
+    let firstProblemaRow = true;
+    let problemaRowspan = 0;
+    
+    // Calcular rowspan para problema
+    camposMap.forEach(contenidosMap => {
+      contenidosMap.forEach(pdaSet => {
+        problemaRowspan += Math.max(1, pdaSet.size);
+      });
+    });
+
+    // Usar el valor seleccionado en Entrada si existe
+    let problemaMostrar = (planViewerData && planViewerData.problemaSeleccionado && planViewerData.problemaSeleccionado !== '-') ? planViewerData.problemaSeleccionado : problema;
+
+    camposMap.forEach((contenidosMap, campo) => {
+      let firstCampoRow = true;
+      let campoRowspan = 0;
+      
+      // Calcular rowspan para campo
+      contenidosMap.forEach(pdaSet => {
+        campoRowspan += Math.max(1, pdaSet.size);
+      });
+
+      contenidosMap.forEach((pdaSet, contenido) => {
+        const pdas = Array.from(pdaSet);
+        const contenidoRowspan = Math.max(1, pdaSet.size);
+
+        for (let i = 0; i < Math.max(1, pdas.length); i++) {
+          const row = document.createElement('tr');
+          // Celda de Problema (solo en la primera fila para este problema)
+          if (firstProblemaRow) {
+            const tdProblema = document.createElement('td');
+            tdProblema.textContent = problemaMostrar;
+            tdProblema.rowSpan = problemaRowspan;
+            tdProblema.style.verticalAlign = 'top';
+            row.appendChild(tdProblema);
+            firstProblemaRow = false;
+          }
+          // Celda de Campo (solo en la primera fila para este campo)
+          if (i === 0) {
+            const tdCampo = document.createElement('td');
+            tdCampo.textContent = campo;
+            tdCampo.rowSpan = campoRowspan;
+            tdCampo.style.verticalAlign = 'top';
+            row.appendChild(tdCampo);
+            firstCampoRow = false;
+          }
+          // Celda de Contenido (solo en la primera fila para este contenido)
+          if (i === 0) {
+            const tdContenido = document.createElement('td');
+            tdContenido.textContent = contenido;
+            tdContenido.rowSpan = contenidoRowspan;
+            tdContenido.style.verticalAlign = 'top';
+            row.appendChild(tdContenido);
+          }
+          // Celda de PDA
+          const tdPDA = document.createElement('td');
+          tdPDA.textContent = pdas[i] || '';
+          row.appendChild(tdPDA);
+          
+          tableBody.appendChild(row);
+        }
+      });
     });
   });
 }
@@ -1355,237 +1521,372 @@ document.addEventListener('DOMContentLoaded', function() {
 function buildUbicacionTableFromCanvas() {
   const tableBody = document.querySelector('#ubicacionTable tbody');
   tableBody.innerHTML = '';
-  let planViewerData = localStorage.getItem('planViewerData');
-  if (!planViewerData) return;
-  try { planViewerData = JSON.parse(planViewerData); } catch (e) { return; }
-  const ubicacion = planViewerData.ubicacion || [];
-
-  // Construir agrupación: Problema > Campo > Contenido > [PDAs...]
-  const problemasMap = {};
-  ubicacion.forEach(row => {
-    const problema = (row['Problema'] || '').trim();
-    const campos = (row['Campo(s) Formativo(s)'] || '').split('#').map(s => s.trim()).filter(Boolean);
-    const contenidos = (row['Contenido(s)'] || '').split('#').map(s => s.trim()).filter(Boolean);
-    const pdas = (row['PDA(s)'] || '').split('#').map(s => s.trim()).filter(Boolean);
-    if (!problemasMap[problema]) problemasMap[problema] = {};
-    campos.forEach(campo => {
-      if (!problemasMap[problema][campo]) problemasMap[problema][campo] = {};
-      contenidos.forEach(contenido => {
-        if (!problemasMap[problema][campo][contenido]) problemasMap[problema][campo][contenido] = [];
-        // Asociar todos los PDAs de este contenido (sin repetir)
-        pdas.forEach(pda => {
-          if (pda && !problemasMap[problema][campo][contenido].includes(pda)) {
-            problemasMap[problema][campo][contenido].push(pda);
+  
+  // Obtener datos del canvas
+  let planViewerData = null;
+  try {
+    planViewerData = JSON.parse(localStorage.getItem('planViewerData'));
+  } catch (e) {
+    console.error('Error parsing planViewerData:', e);
+    return;
+  }
+  
+  // DEBUG: Inspeccionar estructura completa antes de procesar
+  console.log('planViewerData:', planViewerData);
+  if (planViewerData && Array.isArray(planViewerData.ubicacion)) {
+    planViewerData.ubicacion.forEach((problemaObj, idx) => {
+      console.log(`Problema #${idx}:`, problemaObj);
+      if (problemaObj.campos && Array.isArray(problemaObj.campos)) {
+        problemaObj.campos.forEach((campoObj, cidx) => {
+          console.log(`  Campo #${cidx}:`, campoObj);
+          if (campoObj.contenidos && Array.isArray(campoObj.contenidos)) {
+            campoObj.contenidos.forEach((contenidoObj, coidx) => {
+              console.log(`    Contenido #${coidx}:`, contenidoObj);
+              if (Array.isArray(contenidoObj.pdas)) {
+                console.log(`      PDAs:`, contenidoObj.pdas);
+              }
+            });
           }
         });
-        // Si no hay PDAs, poner una celda vacía para ese contenido
-        if (pdas.length === 0 && !problemasMap[problema][campo][contenido].includes('')) {
-          problemasMap[problema][campo][contenido].push('');
+      }
+    });
+  }
+  if (!planViewerData || !planViewerData.ubicacion || !Array.isArray(planViewerData.ubicacion) || planViewerData.ubicacion.length === 0) {
+    // Mostrar fila vacía si no hay datos
+    const row = document.createElement('tr');
+    for (let i = 0; i < 4; i++) {
+      const td = document.createElement('td');
+      td.textContent = '-';
+      row.appendChild(td);
+    }
+    tableBody.appendChild(row);
+    return;
+  }
+
+  // Helper para calcular rowspans
+  function calcRowspanCampo(contenidos) {
+    if (!Array.isArray(contenidos) || contenidos.length === 0) return 1;
+    return contenidos.reduce((sum, c) => sum + (Array.isArray(c.pdas) ? (c.pdas.length || 1) : 1), 0);
+  }
+  function calcRowspanProblema(campos) {
+    if (!Array.isArray(campos) || campos.length === 0) return 1;
+    return campos.reduce((sum, campo) => sum + calcRowspanCampo(campo.contenidos), 0);
+  }
+
+  // Renderizar la tabla jerárquica: problema → campo → contenidos → pdas
+  let idx = 0;
+  let lastProblema = null;
+  planViewerData.ubicacion.forEach((campoObj, i) => {
+    const problema = campoObj.problema || '-';
+    const campo = campoObj.campo || '-';
+    const contenidos = Array.isArray(campoObj.contenidos) ? campoObj.contenidos : [];
+    const campoRowspan = contenidos.reduce((sum, cont) => sum + (cont.pdas && cont.pdas.length ? cont.pdas.length : 1), 0) || 1;
+    // Calcular rowSpan para problema
+    let nextIdx = i;
+    let problemaRowspan = 0;
+    while (nextIdx < planViewerData.ubicacion.length && (planViewerData.ubicacion[nextIdx].problema === problema)) {
+      const c = planViewerData.ubicacion[nextIdx];
+      const cs = Array.isArray(c.contenidos) ? c.contenidos : [];
+      problemaRowspan += cs.reduce((sum, cont) => sum + (cont.pdas && cont.pdas.length ? cont.pdas.length : 1), 0) || 1;
+      nextIdx++;
+    }
+    let firstCampoRow = true;
+    contenidos.forEach((contenidoObj) => {
+      const contenido = contenidoObj.contenido || '-';
+      const pdas = Array.isArray(contenidoObj.pdas) && contenidoObj.pdas.length ? contenidoObj.pdas : ['-'];
+      let firstContenidoRow = true;
+      pdas.forEach((pda) => {
+        const row = document.createElement('tr');
+        // Problema solo en la primera fila del bloque
+        if (lastProblema !== problema) {
+          const tdProblema = document.createElement('td');
+          // Mostrar el valor seleccionado del nodo Entrada si existe
+          let problemaMostrar = (planViewerData && planViewerData.problemaSeleccionado && planViewerData.problemaSeleccionado !== '-') ? planViewerData.problemaSeleccionado : problema;
+          tdProblema.textContent = problemaMostrar;
+          tdProblema.rowSpan = problemaRowspan;
+          tdProblema.style.verticalAlign = 'top';
+          row.appendChild(tdProblema);
+          lastProblema = problema;
         }
+        // Campo formativo solo en la primera fila del grupo
+        if (firstCampoRow) {
+          const tdCampo = document.createElement('td');
+          tdCampo.textContent = campo;
+          tdCampo.rowSpan = campoRowspan;
+          tdCampo.style.verticalAlign = 'top';
+          row.appendChild(tdCampo);
+          firstCampoRow = false;
+        }
+        // Contenido solo en la primera fila de su grupo
+        if (firstContenidoRow) {
+          const tdContenido = document.createElement('td');
+          tdContenido.textContent = contenido;
+          tdContenido.rowSpan = pdas.length;
+          tdContenido.style.verticalAlign = 'top';
+          row.appendChild(tdContenido);
+          firstContenidoRow = false;
+        }
+        // PDA
+        const tdPDA = document.createElement('td');
+        tdPDA.textContent = pda || '-';
+        row.appendChild(tdPDA);
+        tableBody.appendChild(row);
+        idx++;
       });
     });
-  });
-
-  // Renderizar la tabla con rowspan correcto
-  Object.entries(problemasMap).forEach(([problema, camposMap]) => {
-    // Calcular total de filas para el rowspan de Problema
-    let totalRowsProblema = 0;
-    Object.values(camposMap).forEach(contenidosMap => {
-      Object.values(contenidosMap).forEach(pdasArr => {
-        totalRowsProblema += pdasArr.length || 1;
-      });
-    });
-    let problemaPrinted = false;
-    Object.entries(camposMap).forEach(([campo, contenidosMap]) => {
-      // Calcular rowspan para este campo
-      let campoRowspan = 0;
-      Object.values(contenidosMap).forEach(pdasArr => {
-        campoRowspan += pdasArr.length || 1;
-      });
-      let campoPrinted = false;
-      Object.entries(contenidosMap).forEach(([contenido, pdasArr]) => {
-        let contenidoRowspan = pdasArr.length || 1;
-        let contenidoPrinted = false;
-        pdasArr.forEach((pda, idx) => {
-          const tr = document.createElement('tr');
-          // Problema
-          if (!problemaPrinted) {
-            const tdProblema = document.createElement('td');
-            tdProblema.textContent = problema;
-            tdProblema.rowSpan = totalRowsProblema;
-            tdProblema.style.verticalAlign = 'middle';
-            tdProblema.style.borderRight = '2px solid #ccc';
-            tr.appendChild(tdProblema);
-            problemaPrinted = true;
-          }
-          // Campo Formativo
-          if (!campoPrinted) {
-            const tdCampo = document.createElement('td');
-            tdCampo.textContent = campo;
-            tdCampo.rowSpan = campoRowspan;
-            tdCampo.style.verticalAlign = 'middle';
-            tdCampo.style.borderRight = '2px solid #ccc';
-            tr.appendChild(tdCampo);
-            campoPrinted = true;
-          }
-          // Contenido
-          if (!contenidoPrinted) {
-            const tdContenido = document.createElement('td');
-            tdContenido.textContent = contenido;
-            tdContenido.rowSpan = contenidoRowspan;
-            tdContenido.style.verticalAlign = 'middle';
-            tdContenido.style.borderRight = '2px solid #ccc';
-            tr.appendChild(tdContenido);
-            contenidoPrinted = true;
-          }
-          // PDA (si hay varios, una fila por cada uno)
-          const tdPDA = document.createElement('td');
-          tdPDA.textContent = pda;
-          tdPDA.style.verticalAlign = 'middle';
-          tr.appendChild(tdPDA);
-          tableBody.appendChild(tr);
-        });
-      });
-    });
+    // Si no hay contenidos, mostrar el campo solo
+    if (contenidos.length === 0) {
+      const row = document.createElement('tr');
+      if (lastProblema !== problema) {
+        const tdProblema = document.createElement('td');
+        tdProblema.textContent = problema;
+        tdProblema.rowSpan = campoRowspan;
+        tdProblema.style.verticalAlign = 'top';
+        row.appendChild(tdProblema);
+        lastProblema = problema;
+      }
+      const tdCampo = document.createElement('td');
+      tdCampo.textContent = campo;
+      row.appendChild(tdCampo);
+      const tdContenido = document.createElement('td');
+      tdContenido.textContent = '-';
+      row.appendChild(tdContenido);
+      const tdPDA = document.createElement('td');
+      tdPDA.textContent = '-';
+      row.appendChild(tdPDA);
+      tableBody.appendChild(row);
+      idx++;
+    }
   });
 }
 
 
+
 </script>
-<script src="construirTablaSecuencia.js"></script>
-  <!-- MODAL DE ALUMNOS -->
-  <div id="alumnosModal" class="modal">
-    <div class="modal-content">
-      <span class="close" onclick="closeAlumnosModal()">&times;</span>
-      <h2>Lista de Alumnos</h2>
-      <div style="display: flex; gap: 10px; align-items: center; margin-bottom: 12px; flex-wrap: wrap;">
-        <button class="add-alumnos-btn" onclick="addNewAlumno()">Agregar Alumno</button>
-<input type="file" id="excelInput" class="file-input" accept=".xlsx, .xls, .csv">
-<label for="excelInput" class="add-alumnos-btn" style="margin-bottom:0;">Importar Excel</label>
-<button id="downloadTemplateBtn" class="btn-yellow">Descargar Formato</button>
-      </div>
-      <div class="alumnos-table-scroll">
-        <table class="alumnos-table">
-          <thead>
-            <tr>
-              <th>Nombre</th>
-              <th>Recordar</th>
-              <th>Comprender</th>
-              <th>Analizar</th>
-              <th>Aplicar</th>
-              <th>Valorar</th>
-              <th>Crear</th>
-              <th>Acciones</th>
-            </tr>
-          </thead>
-          <tbody id="alumnosTableBody">
-            <!-- Filas generadas dinámicamente -->
-          </tbody>
-        </table>
-      </div>
-      <div class="alumnos-modal-footer">
-        <button class="btn-import" onclick="saveAlumnosData()">Guardar</button>
-        <button class="btn-import" onclick="closeAlumnosModal()">Cancelar</button>
-      </div>
-    </div>
-  </div>
-</body>
 <script>
 // ==================== BLOOM & PDA EVALUACION ====================
 const bloomLevels = [
   {
     name: 'Recordar',
-    verbs: ['identificar', 'recordar', 'listar', 'nombrar', 'reconocer', 'describir', 'definir', 'señalar', 'localizar', 'enumerar']
+    verbs: [
+      'identificar', 'recordar', 'listar', 'nombrar', 'definir', 'repetir', 'describir', 'señalar', 'enumerar',
+      'memorizar', 'buscar', 'observar', 'detallar', 'apuntar', 'mostrar', 'seleccionar', 'indicar', 'apreciar',
+      'leer', 'subrayar', 'marcar', 'datar', 'copiar', 'consultar', 'visualizar', 'detectar', 'reconocer',
+      'localizar', 'rememorar', 'indicar', 'asociar', 'recordar', 'citar', 'expresar', 'recitar', 'reproducir',
+      'señalar', 'nombrar', 'reiterar', 'evocar', 'identificar', 'subrayar', 'repetir', 'mostrar', 'transcribir',
+      'enumerar', 'distinguir', 'subrayar', 'escribir', 'marcar', 'leer', 'apuntar', 'copiar', 'consultar', 'visualizar'
+    ]
   },
   {
     name: 'Comprender',
-    verbs: ['explicar', 'interpretar', 'resumir', 'parafrasear', 'clasificar', 'comparar', 'distinguir', 'ilustrar', 'predecir', 'discutir']
+    verbs: [
+      'explicar', 'interpretar', 'resumir', 'parafrasear', 'clasificar', 'comparar', 'distinguir', 'ilustrar', 'predecir', 'discutir',
+      'expresar', 'traducir', 'argumentar', 'ejemplificar', 'inferir', 'concluir', 'reformular', 'relatar', 'expresarse',
+      'reconstruir', 'reproducir', 'mostrar', 'ordenar', 'organizar', 'clarificar', 'asociar', 'esquematizar', 'aprender',
+      'describir', 'expresar', 'resumir', 'ordenar', 'explicar', 'interpretar', 'comparar', 'clasificar', 'parafrasear',
+      'discutir', 'distinguir', 'ilustrar', 'predecir', 'expresar', 'concluir', 'reformular', 'relatar', 'expresarse',
+      'reorganizar', 'resumir', 'recontar', 'reformular', 'sintetizar', 'reelaborar', 'identificar', 'reconocer', 'repetir'
+    ]
   },
   {
     name: 'Analizar',
-    verbs: ['analizar', 'diferenciar', 'organizar', 'atribuir', 'descomponer', 'relacionar', 'examinar', 'contrastar', 'investigar']
+    verbs: [
+      'analizar', 'diferenciar', 'organizar', 'atribuir', 'descomponer', 'relacionar', 'examinar', 'contrastar', 'investigar',
+      'separar', 'comparar', 'categorizar', 'detectar', 'diagnosticar', 'argumentar', 'discernir', 'clasificar',
+      'esquematizar', 'desglosar', 'fragmentar', 'inspeccionar', 'desmenuzar', 'jerarquizar', 'revisar', 'explorar',
+      'descomponer', 'distinguir', 'comparar', 'relacionar', 'diferenciar', 'atribuir', 'examinar', 'clasificar',
+      'contrastar', 'identificar', 'investigar', 'separar', 'detectar', 'diagnosticar', 'discernir', 'esquematizar',
+      'desglosar', 'fragmentar', 'inspeccionar', 'desmenuzar', 'jerarquizar', 'revisar', 'evaluar', 'analizar', 'interpretar'
+    ]
   },
   {
     name: 'Aplicar',
-    verbs: ['aplicar', 'usar', 'ejecutar', 'resolver', 'demostrar', 'implementar', 'practicar', 'operar']
+    verbs: [
+      'aplicar', 'usar', 'ejecutar', 'resolver', 'demostrar', 'implementar', 'practicar', 'operar', 'emplear', 'realizar',
+      'poner', 'utilizar', 'manejar', 'desarrollar', 'construir', 'producir', 'ensayar', 'simular', 'experimentar', 'adaptar',
+      'modificar', 'transferir', 'ilustrar', 'presentar', 'actuar', 'representar', 'ensamblar',
+      'ejercitar', 'emplear', 'manejar', 'realizar', 'probar', 'resolver', 'dramatizar', 'utilizar', 'ensamblar',
+      'demostrar', 'practicar', 'simular', 'experimentar', 'adaptar', 'modificar', 'transferir', 'presentar', 'actuar',
+      'operar', 'producir', 'construir', 'elaborar', 'ejecutar', 'ensayar', 'interpretar', 'aplicar', 'usar', 'emplear','participar'
+    ]
   },
   {
     name: 'Valorar',
-    verbs: ['valorar', 'juzgar', 'defender', 'criticar', 'justificar', 'evaluar', 'argumentar', 'apreciar']
+    verbs: [
+      'valorar', 'juzgar', 'defender', 'criticar', 'justificar', 'evaluar', 'argumentar', 'apreciar', 'opinar', 'discriminar',
+      'seleccionar', 'estimar', 'ponderar', 'priorizar', 'reflexionar', 'concluir', 'analizar', 'comparar', 'recomendar',
+      'revisar', 'apoyar', 'cuestionar', 'contrastar', 'verificar', 'validar', 'aprobar', 'rechazar', 'sopesar', 'compartir',
+      'valorar', 'apreciar', 'evaluar', 'juzgar', 'criticar', 'argumentar', 'priorizar', 'ponderar', 'recomendar',
+      'decidir', 'aprobar', 'reflexionar', 'discriminar', 'seleccionar', 'verificar', 'validar', 'opinar', 'concluir',
+      'comparar', 'revisar', 'apoyar', 'cuestionar', 'contrastar', 'rechazar', 'sopesar', 'defender', 'justificar'
+    ]
   },
   {
     name: 'Crear',
-    verbs: ['crear', 'diseñar', 'construir', 'formular', 'planear', 'generar', 'producir', 'inventar', 'elaborar']
+    verbs: [
+      'crear', 'diseñar', 'construir', 'planificar', 'inventar', 'proponer', 'desarrollar', 'generar', 'formular', 'elaborar',
+      'idear', 'componer', 'escribir', 'organizar', 'reestructurar', 'integrar', 'modificar', 'mezclar', 'combinar',
+      'crear', 'componer', 'inventar', 'formular', 'elaborar', 'planificar', 'producir', 'diseñar', 'generar',
+      'reorganizar', 'reestructurar', 'integrar', 'modificar', 'mezclar', 'combinar', 'escribir', 'desarrollar', 'construir'
+    ]
   }
 ];
 
 // Lematizador simple para español enfocado en verbos taxonómicos
 const verbLemmas = {
   // Recordar
-  'identifica': 'identificar', 'identifican': 'identificar',
-  'recuerda': 'recordar', 'recuerdan': 'recordar',
-  'lista': 'listar', 'listan': 'listar',
-  'nombra': 'nombrar', 'nombran': 'nombrar',
-  'reconoce': 'reconocer', 'reconocen': 'reconocer',
-  'describe': 'describir', 'describen': 'describir',
-  'define': 'definir', 'definen': 'definir',
-  'señala': 'señalar', 'señalan': 'señalar',
-  'localiza': 'localizar', 'localizan': 'localizar',
-  'enumera': 'enumerar', 'enumeran': 'enumerar',
+  'identifica': 'identificar', 'identifican': 'identificar', 'identificó': 'identificar', 'identificaron': 'identificar',
+  'recuerda': 'recordar', 'recuerdan': 'recordar', 'recordó': 'recordar', 'recordaron': 'recordar',
+  'lista': 'listar', 'listan': 'listar', 'listó': 'listar', 'listaron': 'listar',
+  'nombra': 'nombrar', 'nombran': 'nombrar', 'nombró': 'nombrar', 'nombraron': 'nombrar',
+  'reconoce': 'reconocer', 'reconocen': 'reconocer', 'reconoció': 'reconocer', 'reconocieron': 'reconocer',
+  'describe': 'describir', 'describen': 'describir', 'describió': 'describir', 'describieron': 'describir',
+  'define': 'definir', 'definen': 'definir', 'definió': 'definir', 'definieron': 'definir',
+  'señala': 'señalar', 'señalan': 'señalar', 'señaló': 'señalar', 'señalaron': 'señalar',
+  'localiza': 'localizar', 'localizan': 'localizar', 'localizó': 'localizar', 'localizaron': 'localizar',
+  'enumera': 'enumerar', 'enumeran': 'enumerar', 'enumeró': 'enumerar', 'enumeraron': 'enumerar',
+  'memoriza': 'memorizar', 'memorizan': 'memorizar', 'memorizó': 'memorizar', 'memorizaron': 'memorizar',
+  'repite': 'repetir', 'repiten': 'repetir', 'repitió': 'repetir', 'repitieron': 'repetir',
+  'busca': 'buscar', 'buscan': 'buscar', 'buscó': 'buscar', 'buscaron': 'buscar',
+  'observa': 'observar', 'observan': 'observar', 'observó': 'observar', 'observaron': 'observar',
+  'detalla': 'detallar', 'detallan': 'detallar', 'detalló': 'detallar', 'detallaron': 'detallar',
+  'apunta': 'apuntar', 'apuntan': 'apuntar', 'apuntó': 'apuntar', 'apuntaron': 'apuntar',
+  'muestra': 'mostrar', 'muestran': 'mostrar', 'mostró': 'mostrar', 'mostraron': 'mostrar',
+  'selecciona': 'seleccionar', 'seleccionan': 'seleccionar', 'seleccionó': 'seleccionar', 'seleccionaron': 'seleccionar',
+  'indica': 'indicar', 'indican': 'indicar', 'indicó': 'indicar', 'indicaron': 'indicar',
+  'lee': 'leer', 'leen': 'leer', 'leyó': 'leer', 'leyeron': 'leer',
+  'subraya': 'subrayar', 'subrayan': 'subrayar', 'subrayó': 'subrayar', 'subrayaron': 'subrayar',
+  'marca': 'marcar', 'marcan': 'marcar', 'marcó': 'marcar', 'marcaron': 'marcar',
+  'data': 'datar', 'datan': 'datar', 'dató': 'datar', 'dataron': 'datar',
+  'copia': 'copiar', 'copian': 'copiar', 'copió': 'copiar', 'copiaron': 'copiar',
+  'consulta': 'consultar', 'consultan': 'consultar', 'consultó': 'consultar', 'consultaron': 'consultar',
+  'visualiza': 'visualizar', 'visualizan': 'visualizar', 'visualizó': 'visualizar', 'visualizaron': 'visualizar',
+  'detecta': 'detectar', 'detectan': 'detectar', 'detectó': 'detectar', 'detectaron': 'detectar',
   // Comprender
-  'explica': 'explicar', 'explican': 'explicar',
-  'interpreta': 'interpretar', 'interpretan': 'interpretar',
-  'resume': 'resumir', 'resumen': 'resumir',
-  'parafrasea': 'parafrasear', 'parafrasean': 'parafrasear',
-  'clasifica': 'clasificar', 'clasifican': 'clasificar',
-  'compara': 'comparar', 'comparan': 'comparar',
-  'distingue': 'distinguir', 'distinguen': 'distinguir',
-  'ilustra': 'ilustrar', 'ilustran': 'ilustrar',
-  'predice': 'predecir', 'predicen': 'predecir',
-  'discute': 'discutir', 'discuten': 'discutir',
+  'explica': 'explicar', 'explican': 'explicar', 'explicó': 'explicar', 'explicaron': 'explicar',
+  'interpreta': 'interpretar', 'interpretan': 'interpretar', 'interpretó': 'interpretar', 'interpretaron': 'interpretar',
+  'resume': 'resumir', 'resumen': 'resumir', 'resumió': 'resumir', 'resumieron': 'resumir',
+  'parafrasea': 'parafrasear', 'parafrasean': 'parafrasear', 'parafraseó': 'parafrasear', 'parafrasearon': 'parafrasear',
+  'clasifica': 'clasificar', 'clasifican': 'clasificar', 'clasificó': 'clasificar', 'clasificaron': 'clasificar',
+  'compara': 'comparar', 'comparan': 'comparar', 'comparó': 'comparar', 'compararon': 'comparar',
+  'distingue': 'distinguir', 'distinguen': 'distinguir', 'distinguió': 'distinguir', 'distinguieron': 'distinguir',
+  'ilustra': 'ilustrar', 'ilustran': 'ilustrar', 'ilustró': 'ilustrar', 'ilustraron': 'ilustrar',
+  'predice': 'predecir', 'predicen': 'predecir', 'predijo': 'predecir', 'predijeron': 'predecir',
+  'discute': 'discutir', 'discuten': 'discutir', 'discutió': 'discutir', 'discutieron': 'discutir',
+  'expresa': 'expresar', 'expresan': 'expresar', 'expresó': 'expresar', 'expresaron': 'expresar',
+  'traduce': 'traducir', 'traducen': 'traducir', 'tradujo': 'traducir', 'tradujeron': 'traducir',
+  'argumenta': 'argumentar', 'argumentan': 'argumentar', 'argumentó': 'argumentar', 'argumentaron': 'argumentar',
+  'ejemplifica': 'ejemplificar', 'ejemplifican': 'ejemplificar', 'ejemplificó': 'ejemplificar', 'ejemplificaron': 'ejemplificar',
+  'infiere': 'inferir', 'infieren': 'inferir', 'infirió': 'inferir', 'infirieron': 'inferir',
+  'concluye': 'concluir', 'concluyen': 'concluir', 'concluyó': 'concluir', 'concluyeron': 'concluir',
+  'reformula': 'reformular', 'reformulan': 'reformular', 'reformuló': 'reformular', 'reformularon': 'reformular',
+  'relata': 'relatar', 'relatan': 'relatar', 'relató': 'relatar', 'relataron': 'relatar',
+  'expresarse': 'expresarse', 'expresarse': 'expresarse',
+  'reconstruye': 'reconstruir', 'reconstruyen': 'reconstruir', 'reconstruyó': 'reconstruir', 'reconstruyeron': 'reconstruir',
+  'reproduce': 'reproducir', 'reproducen': 'reproducir', 'reprodujo': 'reproducir', 'reprodujeron': 'reproducir',
+  'muestra': 'mostrar', 'muestran': 'mostrar', 'mostró': 'mostrar', 'mostraron': 'mostrar',
+  'ordena': 'ordenar', 'ordenan': 'ordenar', 'ordenó': 'ordenar', 'ordenaron': 'ordenar',
+  'organiza': 'organizar', 'organizan': 'organizar', 'organizó': 'organizar', 'organizaron': 'organizar',
+  'clarifica': 'clarificar', 'clarifican': 'clarificar', 'clarificó': 'clarificar', 'clarificaron': 'clarificar',
+  'asocia': 'asociar', 'asocian': 'asociar', 'asoció': 'asociar', 'asociaron': 'asociar',
+'aprender': 'aprender', 'aprende': 'aprender', 'aprenden': 'aprender', 'aprendió': 'aprender', 'aprendieron': 'aprender',
+  'esquematiza': 'esquematizar', 'esquematizan': 'esquematizar', 'esquematizó': 'esquematizar', 'esquematizaron': 'esquematizar',
   // Analizar
-  'analiza': 'analizar', 'analizan': 'analizar',
-  'diferencia': 'diferenciar', 'diferencian': 'diferenciar',
-  'organiza': 'organizar', 'organizan': 'organizar',
-  'atribuye': 'atribuir', 'atribuyen': 'atribuir',
-  'descompone': 'descomponer', 'descomponen': 'descomponer',
-  'relaciona': 'relacionar', 'relacionan': 'relacionar',
-  'examina': 'examinar', 'examinan': 'examinar',
-  'contrasta': 'contrastar', 'contrastan': 'contrastar',
-  'investiga': 'investigar', 'investigan': 'investigar',
+  'analiza': 'analizar', 'analizan': 'analizar', 'analizó': 'analizar', 'analizaron': 'analizar',
+  'explora': 'explorar', 'exploran': 'explorar', 'exploró': 'explorar', 'exploraron': 'explorar',
+  'diferencia': 'diferenciar', 'diferencian': 'diferenciar', 'diferenció': 'diferenciar', 'diferenciaron': 'diferenciar',
+  'organiza': 'organizar', 'organizan': 'organizar', 'organizó': 'organizar', 'organizaron': 'organizar',
+  'atribuye': 'atribuir', 'atribuyen': 'atribuir', 'atribuyó': 'atribuir', 'atribuyeron': 'atribuir',
+  'descompone': 'descomponer', 'descomponen': 'descomponer', 'descompuso': 'descomponer', 'descompusieron': 'descomponer',
+  'relaciona': 'relacionar', 'relacionan': 'relacionar', 'relacionó': 'relacionar', 'relacionaron': 'relacionar',
+  'examina': 'examinar', 'examinan': 'examinar', 'examinó': 'examinar', 'examinaron': 'examinar',
+  'contrasta': 'contrastar', 'contrastan': 'contrastar', 'contrastó': 'contrastar', 'contrastaron': 'contrastar',
+  'investiga': 'investigar', 'investigan': 'investigar', 'investigó': 'investigar', 'investigaron': 'investigar',
+  'separa': 'separar', 'separan': 'separar', 'separó': 'separar', 'separaron': 'separar',
+  'categoriza': 'categorizar', 'categorizaron': 'categorizar', 'categorizaron': 'categorizar',
+  'detecta': 'detectar', 'detectan': 'detectar', 'detectó': 'detectar', 'detectaron': 'detectar',
+  'diagnostica': 'diagnosticar', 'diagnostican': 'diagnosticar', 'diagnosticó': 'diagnosticar', 'diagnosticaron': 'diagnosticar',
+  'discierne': 'discernir', 'disciernen': 'discernir', 'discernió': 'discernir', 'discernieron': 'discernir',
+  'distingue': 'distinguir', 'distinguen': 'distinguir', 'distinguió': 'distinguir', 'distinguieron': 'distinguir',
+  'clasifica': 'clasificar', 'clasifican': 'clasificar', 'clasificó': 'clasificar', 'clasificaron': 'clasificar',
+  'esquematiza': 'esquematizar', 'esquematizan': 'esquematizar', 'esquematizó': 'esquematizar', 'esquematizaron': 'esquematizar',
+  'desglosa': 'desglosar', 'desglosan': 'desglosar', 'desglosó': 'desglosar', 'desglosaron': 'desglosar',
+  'fragmenta': 'fragmentar', 'fragmentan': 'fragmentar', 'fragmentó': 'fragmentar', 'fragmentaron': 'fragmentar',
+  'inspecciona': 'inspeccionar', 'inspeccionan': 'inspeccionar', 'inspeccionó': 'inspeccionar', 'inspeccionaron': 'inspeccionar',
+  'desmenuza': 'desmenuzar', 'desmenuzan': 'desmenuzar', 'desmenuzó': 'desmenuzar', 'desmenuzaron': 'desmenuzar',
+  'jerarquiza': 'jerarquizar', 'jerarquizan': 'jerarquizar', 'jerarquizó': 'jerarquizar', 'jerarquizaron': 'jerarquizar',
+  'revisa': 'revisar', 'revisan': 'revisar', 'revisó': 'revisar', 'revisaron': 'revisar',
   // Aplicar
-  'aplica': 'aplicar', 'aplican': 'aplicar',
-  'usa': 'usar', 'usan': 'usar',
-  'ejecuta': 'ejecutar', 'ejecutan': 'ejecutar',
-  'resuelve': 'resolver', 'resuelven': 'resolver',
-  'demuestra': 'demostrar', 'demuestran': 'demostrar',
-  'implementa': 'implementar', 'implementan': 'implementar',
-  'practica': 'practicar', 'practican': 'practicar',
-  'opera': 'operar', 'operan': 'operar',
+  'aplica': 'aplicar', 'aplican': 'aplicar', 'aplicó': 'aplicar', 'aplicaron': 'aplicar',
+  'usa': 'usar', 'usan': 'usar', 'usó': 'usar', 'usaron': 'usar',
+  'ejecuta': 'ejecutar', 'ejecutan': 'ejecutar', 'ejecutó': 'ejecutar', 'ejecutaron': 'ejecutar',
+  'resuelve': 'resolver', 'resuelven': 'resolver', 'resolvió': 'resolver', 'resolvieron': 'resolver',
+  'demuestra': 'demostrar', 'demuestran': 'demostrar', 'demostró': 'demostrar', 'demostraron': 'demostrar',
+  'implementa': 'implementar', 'implementan': 'implementar', 'implementó': 'implementar', 'implementaron': 'implementar',
+  'practica': 'practicar', 'practican': 'practicar', 'practicó': 'practicar', 'practicaron': 'practicar',
+  'opera': 'operar', 'operan': 'operar', 'operó': 'operar', 'operaron': 'operar',
+  'emplea': 'emplear', 'emplean': 'emplear', 'empleó': 'emplear', 'emplearon': 'emplear',
+  'realiza': 'realizar', 'realizan': 'realizar', 'realizó': 'realizar', 'realizaron': 'realizar',
+  'pone': 'poner', 'ponen': 'poner', 'puso': 'poner', 'pusieron': 'poner',
+  'utiliza': 'utilizar', 'utilizan': 'utilizar', 'utilizó': 'utilizar', 'utilizaron': 'utilizar',
+  'maneja': 'manejar', 'manejan': 'manejar', 'manejó': 'manejar', 'manejaron': 'manejar',
+  'desarrolla': 'desarrollar', 'desarrollan': 'desarrollar', 'desarrolló': 'desarrollar', 'desarrollaron': 'desarrollar',
+  'construye': 'construir', 'construyen': 'construir', 'construyó': 'construir', 'construyeron': 'construir',
+  'produce': 'producir', 'producen': 'producir', 'produjo': 'producir', 'produjeron': 'producir',
+  'ensaya': 'ensayar', 'ensayan': 'ensayar', 'ensayó': 'ensayar', 'ensayaron': 'ensayar',
+  'simula': 'simular', 'simulan': 'simular', 'simuló': 'simular', 'simularon': 'simular',
+  'experimenta': 'experimentar', 'experimentan': 'experimentar', 'experimentó': 'experimentar', 'experimentaron': 'experimentar',
+  'adapta': 'adaptar', 'adaptan': 'adaptar', 'adaptó': 'adaptar', 'adaptaron': 'adaptar',
+  'modifica': 'modificar', 'modifican': 'modificar', 'modificó': 'modificar', 'modificaron': 'modificar',
+  'transfiere': 'transferir', 'transfieren': 'transferir', 'transfirió': 'transferir', 'transfirieron': 'transferir',
+  'presenta': 'presentar', 'presentan': 'presentar', 'presentó': 'presentar', 'presentaron': 'presentar',
+  'actúa': 'actuar', 'actúan': 'actuar', 'actuó': 'actuar', 'actuaron': 'actuar',
+  'representa': 'representar', 'representan': 'representar', 'representó': 'representar', 'representaron': 'representar',
+  'ensambla': 'ensamblar', 'ensamblan': 'ensamblar', 'ensambló': 'ensamblar', 'ensamblaron': 'ensamblar',
+  'participa': 'participar', 'participan': 'participar', 'participó': 'participar', 'participaron': 'participar',
   // Valorar
-  'valora': 'valorar', 'valoran': 'valorar',
-  'juzga': 'juzgar', 'juzgan': 'juzgar',
-  'defiende': 'defender', 'defienden': 'defender',
-  'critica': 'criticar', 'critican': 'criticar',
-  'justifica': 'justificar', 'justifican': 'justificar',
-  'evalua': 'evaluar', 'evalúan': 'evaluar', 'evalúan': 'evaluar',
-  'argumenta': 'argumentar', 'argumentan': 'argumentar',
-  'aprecia': 'apreciar', 'aprecian': 'apreciar',
+  'valora': 'valorar', 'valoran': 'valorar', 'valoró': 'valorar', 'valoraron': 'valorar',
+  'comparte': 'compartir', 'comparten': 'compartir', 'compartió': 'compartir', 'compartieron': 'compartir',
+  'juzga': 'juzgar', 'juzgan': 'juzgar', 'juzgó': 'juzgar', 'juzgaron': 'juzgar',
+  'defiende': 'defender', 'defienden': 'defender', 'defendió': 'defender', 'defendieron': 'defender',
+  'critica': 'criticar', 'critican': 'criticar', 'criticó': 'criticar', 'criticaron': 'criticar',
+  'justifica': 'justificar', 'justifican': 'justificar', 'justificó': 'justificar', 'justificaron': 'justificar',
+  'evalua': 'evaluar', 'evalúan': 'evaluar', 'evalúan': 'evaluar', 'evaluó': 'evaluar', 'evaluaron': 'evaluar',
+  'argumenta': 'argumentar', 'argumentan': 'argumentar', 'argumentó': 'argumentar', 'argumentaron': 'argumentar',
+  'aprecia': 'apreciar', 'aprecian': 'apreciar', 'apreció': 'apreciar', 'apreciaron': 'apreciar',
+  'opina': 'opinar', 'opinan': 'opinar', 'opinó': 'opinar', 'opinaron': 'opinar',
+  'discrimina': 'discriminar', 'discriminan': 'discriminar', 'discriminó': 'discriminar', 'discriminaron': 'discriminar',
+  'selecciona': 'seleccionar', 'seleccionan': 'seleccionar', 'seleccionó': 'seleccionar', 'seleccionaron': 'seleccionar',
+  'estima': 'estimar', 'estiman': 'estimar', 'estimó': 'estimar', 'estimaron': 'estimar',
+  'pondera': 'ponderar', 'ponderan': 'ponderar', 'ponderó': 'ponderar', 'ponderaron': 'ponderar',
+  'prioriza': 'priorizar', 'priorizan': 'priorizar', 'priorizó': 'priorizar', 'priorizaron': 'priorizar',
+  'reflexiona': 'reflexionar', 'reflexionan': 'reflexionar', 'reflexionó': 'reflexionar', 'reflexionaron': 'reflexionar',
+  'concluye': 'concluir', 'concluyen': 'concluir', 'concluyó': 'concluir', 'concluyeron': 'concluir',
+  'analiza': 'analizar', 'analizan': 'analizar', 'analizó': 'analizar', 'analizaron': 'analizar',
+  'compara': 'comparar', 'comparan': 'comparar', 'comparó': 'comparar', 'compararon': 'comparar',
+  'recomienda': 'recomendar', 'recomiendan': 'recomendar', 'recomendó': 'recomendar', 'recomendaron': 'recomendar',
+  'revisa': 'revisar', 'revisan': 'revisar', 'revisó': 'revisar', 'revisaron': 'revisar',
+  'apoya': 'apoyar', 'apoyan': 'apoyar', 'apoyó': 'apoyar', 'apoyaron': 'apoyar',
+  'cuestiona': 'cuestionar', 'cuestionan': 'cuestionar', 'cuestionó': 'cuestionar', 'cuestionaron': 'cuestionar',
+  'contrasta': 'contrastar', 'contrastan': 'contrastar', 'contrastó': 'contrastar', 'contrastaron': 'contrastar',
+  'verifica': 'verificar', 'verifican': 'verificar', 'verificó': 'verificar', 'verificaron': 'verificar',
+  'valida': 'validar', 'validan': 'validar', 'validó': 'validar', 'validaron': 'validar',
+  'aprueba': 'aprobar', 'aprueban': 'aprobar', 'aprobó': 'aprobar', 'aprobaron': 'aprobar',
+  'rechaza': 'rechazar', 'rechazan': 'rechazar', 'rechazó': 'rechazar', 'rechazaron': 'rechazar',
+  'sopesa': 'sopesar', 'sopesan': 'sopesar', 'sopesó': 'sopesar', 'sopesaron': 'sopesar',
   // Crear
-  'crea': 'crear', 'crean': 'crear',
-  'diseña': 'diseñar', 'diseñan': 'diseñar',
-  'construye': 'construir', 'construyen': 'construir',
-  'formula': 'formular', 'formulan': 'formular',
-  'planea': 'planear', 'planean': 'planear',
-  'genera': 'generar', 'generan': 'generar',
-  'produce': 'producir', 'producen': 'producir',
-  'inventa': 'inventar', 'inventan': 'inventar',
-  'elabora': 'elaborar', 'elaboran': 'elaborar',
-  // Otros comunes
-  'estima': 'estimar', 'estiman': 'estimar',
-  'mide': 'medir', 'miden': 'medir',
-  'compara': 'comparar', 'comparan': 'comparar',
-  'ordena': 'ordenar', 'ordenan': 'ordenar',
+  'crea': 'crear', 'crean': 'crear', 'creó': 'crear', 'crearon': 'crear',
+  'diseña': 'diseñar', 'diseñan': 'diseñar', 'diseñó': 'diseñar', 'diseñaron': 'diseñar',
+  'construye': 'construir', 'construyen': 'construir', 'construyó': 'construir', 'construyeron': 'construir',
+  'formula': 'formular', 'formulan': 'formular', 'formuló': 'formular', 'formularon': 'formular',
+  'planea': 'planear', 'planean': 'planear', 'planeó': 'planear', 'planearon': 'planear',
+  'genera': 'generar', 'generan': 'generar', 'generó': 'generar', 'generaron': 'generar',
+  'produce': 'producir', 'producen': 'producir', 'produjo': 'producir', 'produjeron': 'producir',
+  'inventa': 'inventar', 'inventan': 'inventar', 'inventó': 'inventar', 'inventaron': 'inventar',
+  'elabora': 'elaborar', 'elaboran': 'elaborar', 'elaboró': 'elaborar', 'elaboraron': 'elaborar',
+  'propone': 'proponer', 'proponen': 'proponer', 'propuso': 'proponer', 'propusieron': 'proponer',
+  'organiza': 'organizar', 'organizan': 'organizar', 'organizó': 'organizar', 'organizaron': 'organizar',
+  'compone': 'componer', 'componen': 'componer', 'compuso': 'componer', 'compusieron': 'componer',
   'registra': 'registrar', 'registran': 'registrar',
 };
 
@@ -1593,22 +1894,47 @@ function lemmatize(word) {
   return verbLemmas[word.toLowerCase()] || word.toLowerCase();
 }
 
-function getBloomLevelsAndHighlight(pda) {
+function getBloomLevelsAndHighlight(pda, pdaIdx) {
   let levels = [];
   let html = pda;
   // Extraer todas las palabras del PDA
-  let words = pda.match(/\w+|[áéíóúñ]+/gi) || [];
+  let words = (pda.match(/\w+|[áéíóúñ]+/gi) || []).map(w => w.normalize('NFD').replace(/[^\w\u0300-\u036fáéíóúüñÁÉÍÓÚÜÑ-]/gi, '').toLowerCase());
   // Para resaltar todos los verbos, primero construimos un regex global de todos los verbos y sus formas
   let allVerbs = [];
   bloomLevels.forEach(level => {
     allVerbs = allVerbs.concat(level.verbs);
   });
   allVerbs = allVerbs.concat(Object.keys(verbLemmas));
+  // Soporte para acentos y mayúsculas, buscar variantes
+  allVerbs = Array.from(new Set(allVerbs.map(v => v.normalize('NFD').replace(/[^\w\u0300-\u036fáéíóúüñÁÉÍÓÚÜÑ-]/gi, ''))));
   allVerbs.sort((a, b) => b.length - a.length);
   let regex = new RegExp(`\\b(${allVerbs.join('|')})\\b`, 'gi');
   // Resaltar todos los verbos encontrados (formas y lemmas)
   html = html.replace(regex, (match) => {
-    return '<b style="color:#1b8a3a">' + match + '</b>';
+    // Determinar el nivel de logro para el verbo lematizado
+    const lemma = lemmatize(match.normalize('NFD').replace(/[^\w\u0300-\u036fáéíóúüñÁÉÍÓÚÜÑ-]/gi, ''));
+    let nivel = null;
+    for (let i = 0; i < bloomLevels.length; i++) {
+      if (bloomLevels[i].verbs.includes(lemma)) {
+        nivel = bloomLevels[i].name;
+        break;
+      }
+    }
+    // Si no se encuentra el lemma directo, buscar por match directo
+    if (!nivel) {
+      for (let i = 0; i < bloomLevels.length; i++) {
+        if (bloomLevels[i].verbs.includes(match.toLowerCase())) {
+          nivel = bloomLevels[i].name;
+          break;
+        }
+      }
+    }
+    // Todos los verbos destacados son clickeables, tengan o no nivel Bloom
+    if (nivel) {
+      return `<b style="color:#1b8a3a;cursor:pointer;text-decoration:underline;" class="bloom-verb-clickable" data-verb="${match}" data-nivel="${nivel}" data-pda-idx="${pdaIdx}">${match}</b>`;
+    } else {
+      return `<b style=\"color:#1b8a3a;cursor:pointer;text-decoration:underline;\" class=\"bloom-verb-clickable no-bloom-level\" data-verb=\"${match}\" data-nivel=\"\" data-pda-idx=\"${pdaIdx}\" title=\"Verbo no indexado en Bloom\">${match}</b>`;
+    }
   });
   // Identificar los niveles presentes usando lematización
   bloomLevels.forEach(level => {
@@ -1624,100 +1950,14 @@ function getBloomLevelsAndHighlight(pda) {
 }
 
 
-function distribuirPDAsEnEvaluacion() {
-  const evaluacionTable = document.getElementById('evaluacionTable');
-  if (!evaluacionTable) return;
 
-  // Eliminar todas las filas de PDAs existentes (desde la fila 4 en adelante)
-  while (evaluacionTable.rows.length > 4) {
-    evaluacionTable.deleteRow(4);
-  }
-
-  // Obtener todos los PDAs de la tabla Ubicación Curricular
-  const ubicacionTable = document.getElementById('ubicacionTable');
-  let pdaSet = new Set();
-
-  if (ubicacionTable) {
-    for (let i = 1; i < ubicacionTable.rows.length; i++) { // Saltar encabezado
-      const pdaCell = ubicacionTable.rows[i].cells[3];
-      if (pdaCell && pdaCell.textContent.trim()) {
-        // Permitir múltiples PDAs separados por # o ; o salto de línea
-        pdaCell.textContent.split(/[#;\n]/).forEach(pda => {
-          if (pda.trim()) pdaSet.add(pda.trim());
-        });
-      }
-    }
-  }
-
-  // También obtener PDAs de planViewerData si existen
-  try {
-    let planViewerData = localStorage.getItem('planViewerData');
-    if (planViewerData) {
-      planViewerData = JSON.parse(planViewerData);
-      if (Array.isArray(planViewerData.ubicacion)) {
-        planViewerData.ubicacion.forEach(row => {
-          if (row['PDA(s)'] && typeof row['PDA(s)'] === 'string') {
-            row['PDA(s)'].split(/[#;\n]/).forEach(pda => {
-              if (pda.trim()) pdaSet.add(pda.trim());
-            });
-          }
-        });
-      }
-    }
-  } catch (e) {}
-
-  // Convertir a array único
-  let pdaArray = Array.from(pdaSet);
-
-  // Clasificar y ubicar cada enunciado según Bloom
-  let pdaEntries = [];
-  pdaArray.forEach(pda => {
-    const { levels, html } = getBloomLevelsAndHighlight(pda);
-    if (levels.length > 0) {
-      levels.forEach(lvl => {
-        let idx = bloomLevels.findIndex(b => b.name.toLowerCase() === lvl.toLowerCase());
-        if (idx === -1) idx = 0;
-        pdaEntries.push({ html, cols: [idx] });
-      });
-    }
-  });
-
-  // Agrupar PDAs por columna (puede haber más de uno por columna)
-  let colGroups = [[],[],[],[],[],[]];
-  pdaEntries.forEach(entry => {
-    entry.cols.forEach(col => {
-      if (col >= 0 && col < 6) {
-        // Evitar duplicados visuales en la columna
-        if (!colGroups[col].includes(entry.html)) {
-          colGroups[col].push(entry.html);
-        }
-      }
-    });
-  });
-
-  // Determinar el número máximo de PDAs en una columna
-  let maxRows = Math.max(1, ...colGroups.map(arr => arr.length));
-
-  // Crear una fila por cada "nivel" de PDA
-  for (let r = 0; r < maxRows; r++) {
-    let row = evaluacionTable.insertRow(4 + r); // Insertar después de la fila de descriptores
-    for (let c = 0; c < 6; c++) {
-      let cell = row.insertCell();
-      cell.className = 'editable';
-      cell.setAttribute('contenteditable', 'true');
-      cell.innerHTML = colGroups[c][r] || '';
-    }
-  }
-}
 
 
 
 
 // Ejecutar al cargar y cada vez que cambien los PDAs
-window.addEventListener('DOMContentLoaded', () => {
-  setTimeout(distribuirPDAsEnEvaluacion, 500); // Espera para asegurar que las tablas estén llenas
-});
-// Si tienes un evento donde se actualiza la tabla de PDAs, llama también a distribuirPDAsEnEvaluacion();
+// Ejecutar al cargar y cada vez que cambien los PDAs
+// Si tienes un evento donde se actualiza la tabla de PDAs, llama también a crearTablaEvaluacionOrdenada();
 // --- ORGANIZACIÓN TABLE DYNAMIC LOGIC ---
 
 let fasesSecuencia = [];
@@ -1817,6 +2057,7 @@ function renderOrganizacionTable(rows) {
     const mediosTd = document.createElement('td');
     const mediosInput = document.createElement('textarea');
     mediosInput.value = row.Medios || '';
+
     mediosInput.className = 'auto-grow';
     mediosInput.style.width = '90%';
     mediosInput.style.minHeight = '38px';
@@ -1830,8 +2071,42 @@ function renderOrganizacionTable(rows) {
     mediosTd.appendChild(mediosInput);
     const recycleBtn = document.createElement('button');
     recycleBtn.type = 'button';
-    recycleBtn.title = 'Reutilizar recurso';
-    recycleBtn.innerHTML = '♻️';
+    recycleBtn.className = 'recycle-btn';
+    recycleBtn.textContent = '♻️';
+    // Bloqueo robusto para cuentas básicas: el click NUNCA llega al handler IA
+    recycleBtn.addEventListener('click', function(e) {
+      try {
+        const userData = JSON.parse(localStorage.getItem('userData'));
+        if (!userData || userData.membership !== 'premium') {
+          alert('Solo usuarios premium pueden usar la IA.');
+          e.preventDefault();
+          e.stopImmediatePropagation();
+          return false;
+        }
+      } catch(err) {
+        alert('Solo usuarios premium pueden usar la IA.');
+        e.preventDefault();
+        e.stopImmediatePropagation();
+        return false;
+      }
+      // Si es premium, el handler IA se ejecutará normalmente
+    }, true);
+    // Handler IA (solo si es premium y con crédito)
+    recycleBtn.addEventListener('click', async function(e) {
+      try {
+        const userData = JSON.parse(localStorage.getItem('userData'));
+        if (!userData || userData.membership !== 'premium') return; // Ya bloqueado arriba
+        if (typeof descontarCreditoUsuario === 'function') {
+          const creditosRestantes = await descontarCreditoUsuario();
+          if (creditosRestantes <= 0) {
+            alert('No tienes créditos suficientes para usar la IA.');
+            e.preventDefault();
+            return;
+          }
+        }
+      } catch(err) { return; }
+      // Aquí sigue el flujo IA normal
+    });
     // Enable/disable ♻️ button based on required fields
     function checkRecycleEnabled() {
       const faseVal = faseSel.value;
@@ -1908,9 +2183,64 @@ function renderOrganizacionTable(rows) {
           .map(palabra => lemas[palabra] || palabra)
           .join(" ");
       }
-      // Construir prompt optimizado
-      const prompt = `Eres experto en didáctica. Dame solo los materiales, herramientas o lecturas necesarias para ejecutar el siguiente momento según la estrategia. Responde con una lista breve, sin explicaciones ni repeticiones.\nEstrategia: ${filtrarYLematizar(estrategia)}\nMomento: ${filtrarYLematizar(momentoText)}\nFase: ${filtrarYLematizar(fase)}${etapa ? `\nEtapa: ${filtrarYLematizar(etapa)}` : ''}\nTiempo: ${filtrarYLematizar(tiempo)} min\nEspacio: ${filtrarYLematizar(espacio)}`;
+      // --- Filtrado avanzado como en construirTablaSecuencia.js ---
+      function filtrarYLematizarAvanzado(texto) {
+        if (!texto) return '';
+        const articulos = ["el","la","los","las","un","una","unos","unas"];
+        const preposiciones = ["a","ante","bajo","cabe","con","contra","de","desde","en","entre","hacia","hasta","para","por","según","sin","so","sobre","tras"];
+        const pronombres = ["yo","tú","él","ella","nosotros","vosotros","ellos","ellas","me","te","se","nos","os","mi","tu","su","nuestro","vuestro","sus","le","les"];
+        const auxiliaresYModales = ["ser","estar","haber","tener","poder","deber","querer","ir","venir","ver","dar","decir","hacer","gustar","soler"];
+        const conectores = ["y","o","u","e","pero","aunque","sino","también","además","incluso","solo","sólo","ya","aquí","allí","así","cada","otro","otra","otros","otras","más","menos","muy","poco","mucho","casi","siempre","nunca","antes","después","nuevo","nueva","nuevos","nuevas"];
+        const lemas = {
+          "problema": "problema",
+          "manera": "modo",
+          "forma": "modo",
+          "eficiente": "eficiente",
+          "eficiencia": "eficiente",
+          "cultivos": "cultivo",
+          "recursos": "recurso",
+          "zonas": "zona",
+          "lugares": "lugar",
+          "región": "región",
+          "anual": "anual"
+        };
+        const stopwords = new Set([
+          ...articulos,
+          ...preposiciones,
+          ...pronombres,
+          ...auxiliaresYModales,
+          ...conectores
+        ]);
+        const palabras = texto
+          .toLowerCase()
+          .replace(/[.,;:()¿?!¡"\d]/g, "")
+          .split(/\s+/)
+          .filter(palabra => palabra.length > 2 && !stopwords.has(palabra));
+        const lematizadas = palabras.map(palabra => lemas[palabra] || palabra);
+        return [...new Set(lematizadas)].join(" ");
+      }
+      // Construir prompt optimizado y específico
+      const prompt = `Eres experto en didáctica. Dame solo los materiales y herramientas muy específicos y concretos necesarios para ejecutar la siguiente actividad, considerando el contexto didáctico. Responde solo con una lista breve, sin explicaciones ni repeticiones.\nActividad: ${filtrarYLematizarAvanzado(momentoText)}\nEstrategia: ${filtrarYLematizarAvanzado(estrategia)}\nFase: ${filtrarYLematizarAvanzado(fase)}${etapa ? `\nEtapa: ${filtrarYLematizarAvanzado(etapa)}` : ''}\nTiempo: ${filtrarYLematizarAvanzado(tiempo)} min\nEspacio: ${filtrarYLematizarAvanzado(espacio)}`;
+      // Solo premium puede usar IA
+      if (typeof isPremiumUser === 'function' && !isPremiumUser()) {
+        if (typeof mostrarMensajeSoloPremium === 'function') mostrarMensajeSoloPremium();
+        mediosInput.value = 'Solo usuarios premium pueden usar la IA.';
+        recycleBtn.textContent = '♻️';
+        recycleBtn.disabled = false;
+        return;
+      }
+      // Descontar crédito antes de la solicitud IA
       try {
+        if (typeof descontarCreditoUsuario === 'function') {
+          const creditosRestantes = await descontarCreditoUsuario();
+          if (creditosRestantes <= 0) {
+            mediosInput.value = 'Sin créditos disponibles.';
+            recycleBtn.textContent = '♻️';
+            recycleBtn.disabled = false;
+            alert('No tienes créditos disponibles para solicitar a la IA.');
+            return;
+          }
+        }
         const res = await fetch('/api/ia/generatePlan', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -2058,6 +2388,7 @@ window.loadTablesData = function(data) {
 // --- END ORGANIZACIÓN TABLE LOGIC ---
 
 </script>
+<script src="construirTablaSecuencia.js"></script>
 <script>
 // --- Exportar e importar el plan completo como JSON ---
 function updatePlanViewerDataRaw() {
@@ -2183,6 +2514,12 @@ function saveEditableCell(e) {
 }
 function restoreEditableCells() {
   document.querySelectorAll('.editable[contenteditable="true"]').forEach(elem => {
+    // NO editar nombreProyecto ni metodologia
+    if (elem.id === 'nombreProyecto' || elem.id === 'metodologia' || elem.classList.contains('no-edit')) {
+      elem.removeAttribute('contenteditable');
+      elem.classList.remove('editable');
+      return;
+    }
     const key = getCellKey(elem);
     if (key && localStorage.getItem(key) !== null) {
       elem.innerHTML = localStorage.getItem(key);

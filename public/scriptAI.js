@@ -198,7 +198,16 @@ Formato: texto plano, sin introducciones. Máximo 250 palabras.`;
             if (!response.ok) throw new Error('Error en la API');
 
             const data = await response.json();
-            if (typeof descontarCredito === 'function') descontarCredito();
+            // Descontar crédito (nuevo sistema API)
+            if (window.isPremiumUser && isPremiumUser() && window.descontarCreditoUsuario) {
+                const creditosRestantes = await descontarCreditoUsuario();
+                if (typeof actualizarCreditosUI === 'function') actualizarCreditosUI();
+                if (creditosRestantes <= 0) {
+                    resultadoPlan.textContent = '❌ No tienes créditos suficientes para usar la IA.';
+                    exportPdfBtn.disabled = true;
+                    return;
+                }
+            }
             resultadoPlan.textContent = data.response || data.choices?.[0]?.text;
             exportPdfBtn.disabled = false;
 

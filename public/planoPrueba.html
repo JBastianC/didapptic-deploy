@@ -1,0 +1,2195 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Planificación Didáctica</title>
+<style>
+  body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    line-height: 1.6;
+    color: #333;
+    margin: 0;
+    padding: 20px;
+    background-color: #f9f9f9;
+  }
+  .container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+    background-color: white;
+    box-shadow: 0 0 10px rgba(0,0,0,0.1);
+  }
+  h1, h2, h3 {
+    color: #2c3e50;
+    margin-top: 30px;
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 20px 0;
+  }
+  th, td {
+    border: 1.5px solid #333;
+    padding: 12px;
+    text-align: center;
+    vertical-align: middle;
+  }
+  td.momento {
+    min-width: 110px;
+    max-width: 220px;
+    width: 220px;
+    overflow: visible;
+    word-break: break-word;
+  }
+  td.momento textarea {
+    width: 100%;
+    min-height: 38px;
+    max-width: 100%;
+    resize: none;
+    overflow-x: hidden;
+    box-sizing: border-box;
+    font-size: 14px;
+    line-height: 1.2;
+    display: block;
+    transition: height 0.1s;
+  }
+  td.momento textarea.auto-grow {
+    overflow-y: hidden;
+  }
+  td.momento div {
+    display: flex;
+    align-items: flex-start;
+    gap: 4px;
+  }
+  td.momento button {
+    padding: 0 6px;
+    font-size: 18px;
+    line-height: 1;
+    background: none;
+    border: none;
+    cursor: pointer;
+  }
+  #evaluacionTable th, #evaluacionTable td {
+    border: 1.5px solid #333;
+    text-align: center;
+    vertical-align: middle;
+  }
+  #evaluacionTable .editable {
+    text-align: justify;
+    vertical-align: middle;
+  }
+  th {
+    background-color: #f2f2f2;
+    font-weight: bold;
+  }
+  .editable {
+    min-height: 20px;
+    padding: 8px;
+    border: 1px dashed transparent;
+  }
+  .editable:hover {
+    border-color: #ccc;
+  }
+  .editable:focus {
+    outline: none;
+    border-color: #007bff;
+    background-color: #f8f9fa;
+  }
+  .toolbar {
+    background: #f8f9fa;
+    padding: 10px;
+    margin-bottom: 20px;
+    border-radius: 5px;
+    display: flex;
+    gap: 10px;
+  }
+  .toolbar button {
+    padding: 8px 16px;
+    background: #007bff;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+  }
+  .toolbar button:hover {
+    background: #0056b3;
+  }
+  .logo-container {
+    text-align: center;
+    margin: 20px 0;
+  }
+  .logo-img {
+    width: 120px;
+    height: 90px;
+    object-fit: contain;
+    border-radius: 0;
+    border: none;
+    background: #f4f4f4;
+    display: block;
+    margin: 0 auto;
+    box-shadow: none;
+  }
+  footer {
+    margin-top: 40px;
+    text-align: center;
+    font-size: 14px;
+    color: #666;
+    padding-top: 20px;
+    border-top: 1px solid #eee;
+  }
+  .print-mode {
+    width: 21.59cm;
+    margin: 0 auto;
+    padding: 1cm;
+    background-color: white;
+    box-shadow: none;
+  }
+  .print-mode .container {
+    max-width: 100%;
+    padding: 0;
+    box-shadow: none;
+  }
+  .print-mode .toolbar {
+    display: none;
+  }
+  .modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0,0,0,0.5);
+  }
+  .modal-content {
+    background-color: #fefefe;
+    margin: 5% auto;
+    padding: 20px;
+    border: 1px solid #888;
+    width: 80%;
+    max-width: 900px;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    display: flex;
+    flex-direction: column;
+    max-height: 80vh;
+    overflow: hidden;
+  }
+  .alumnos-table-scroll {
+    flex: 1 1 auto;
+    overflow-y: auto;
+    margin-bottom: 16px;
+    max-height: 50vh;
+  }
+  .alumnos-modal-footer {
+    flex-shrink: 0;
+    background: #fff;
+    padding-top: 12px;
+    border-top: 1px solid #eee;
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    position: sticky;
+    bottom: 0;
+    z-index: 2;
+  }
+  .close {
+    color: #aaa;
+    float: right;
+    font-size: 28px;
+    font-weight: bold;
+    cursor: pointer;
+  }
+  .close:hover {
+    color: black;
+  }
+  .alumnos-table {
+    width: 100%;
+    margin-bottom: 20px;
+  }
+  .alumnos-table th {
+    background-color: #4CAF50;
+    color: white;
+  }
+  .alumnos-table td {
+    vertical-align: middle;
+  }
+  .radio-selected {
+    background-color: #d4edda;
+  }
+  .chart-container {
+    width: 100%;
+    height: 400px;
+    margin-top: 30px;
+  }
+  .add-alumnos-btn {
+    margin: 10px 0;
+    padding: 10px 15px;
+    background-color: #28a745;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+  }
+  .add-alumnos-btn:hover {
+    background-color: #218838;
+  }
+  .file-input {
+    display: none;
+  }
+  .btn-import {
+    padding: 10px 15px;
+    background-color: #17a2b8;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    margin-left: 10px;
+  }
+  .btn-import:hover {
+    background-color: #138496;
+  }
+  .btn-download {
+    padding: 10px 15px;
+    background-color: #6c757d;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    margin-left: 10px;
+  }
+  .btn-download:hover {
+    background-color: #5a6268;
+  }
+  .btn-yellow {
+    padding: 10px 15px;
+    background-color: #ffe066;
+    color: #333;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    margin-left: 10px;
+    font-weight: bold;
+    box-shadow: 0 1px 2px #0001;
+    transition: background 0.2s;
+  }
+  .btn-yellow:hover {
+    background-color: #ffd43b;
+    color: #222;
+  }
+  .load-modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0,0,0,0.5);
+  }
+  .load-modal-content {
+    background-color: #fefefe;
+    margin: 5% auto;
+    padding: 20px;
+    border: 1px solid #888;
+    width: 80%;
+    max-width: 600px;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+  }
+  .load-options {
+    margin: 20px 0;
+  }
+  .load-option {
+    padding: 10px;
+    margin: 10px 0;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    cursor: pointer;
+  }
+  .load-option:hover {
+    background-color: #f0f0f0;
+  }
+  .verb {
+    font-weight: bold;
+    color: #2c3e50;
+  }
+  .table-item {
+    margin: 5px 0;
+    padding: 5px;
+    border-bottom: 1px solid #eee;
+  }
+.nivel-logro-def {
+  font-size: 0.85em;
+  background: #f2f2f2;
+  color: #00bb67;
+  border-radius: 4px;
+  padding: 4px 6px;
+  font-weight: 500;
+  box-shadow: 0 1px 3px #0001;
+  border: 1.5px solid #e0e0e0;
+  margin: 2px;
+}
+.bordered-black {
+  border: 2px solid #111 !important;
+}
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="toolbar">
+    <button onclick="exportPlanJSON()">Guardar Plan</button>
+    <button onclick="togglePrintMode()">Modo Impresión</button>
+    <button onclick="document.getElementById('planFileInput').click()">Cargar Plan</button>
+    <input type="file" id="planFileInput" accept="application/json" style="display:none;" onchange="importPlanJSON(event)">
+  </div>
+
+  <div class="logo-container">
+  <label for="logoInput" style="cursor:pointer;display:inline-block;">
+    <img id="customLogo" src="assets/Ddapptic.svg" alt="Logo" class="logo-img">
+  </label>
+  <input type="file" id="logoInput" accept="image/*" style="display:none;">
+  <p id="currentDate" class="editable" contenteditable="true"></p>
+</div>
+
+  <h1>Datos Generales</h1>
+  <table style="border-collapse:collapse;">
+    <tr>
+      <th style="border:1.5px solid #333;">Nivel Educativo</th>
+      <td id="nivelEducativo" class="editable" contenteditable="true" style="border:1.5px solid #333;"></td>
+      <th style="border:1.5px solid #333;">Nombre del Centro</th>
+      <td id="centroTrabajo" class="editable" contenteditable="true" style="border:1.5px solid #333;"></td>
+    </tr>
+    <tr>
+      <th style="border:1.5px solid #333;">Sector Educativo</th>
+      <td id="sectorEducativo" class="editable" contenteditable="true" style="border:1.5px solid #333;"></td>
+      <th style="border:1.5px solid #333;">Zona Escolar</th>
+      <td id="zonaEscolar" class="editable" contenteditable="true" style="border:1.5px solid #333;"></td>
+    </tr>
+    <tr>
+      <th style="border:1.5px solid #333;">Fase</th>
+      <td id="fase" class="editable" contenteditable="true" style="border:1.5px solid #333;"></td>
+      <th style="border:1.5px solid #333;">Grado</th>
+      <td id="grado" class="editable" contenteditable="true" style="border:1.5px solid #333;"></td>
+    </tr>
+    <tr>
+      <th style="border:1.5px solid #333;">Grupo</th>
+      <td id="grupo" class="editable" contenteditable="true" style="border:1.5px solid #333;"></td>
+      <th style="border:1.5px solid #333;">Nombre del Docente</th>
+      <td id="nombreDocente" class="editable" contenteditable="true" style="border:1.5px solid #333;"></td>
+    </tr>
+    <tr>
+      <th style="border:1.5px solid #333;">Nombre del Director</th>
+      <td id="nombreDirector" class="editable" contenteditable="true" style="border:1.5px solid #333;"></td>
+      <th style="border:1.5px solid #333;">Periodo de realización</th>
+      <td style="border:1.5px solid #333;"><span id="inicioPeriodo" class="editable" contenteditable="true"></span> al <span id="finPeriodo" class="editable" contenteditable="true"></span></td>
+    </tr>
+  </table>
+
+  <div style="display:none">
+    <h2>planViewerData (JSON crudo)</h2>
+    <textarea id="planViewerDataRaw" readonly style="width:100%;height:150px;font-family:monospace;"></textarea>
+  </div>
+  
+  <h1>Ubicación Curricular</h1>
+  <table id="ubicacionTable">
+    <thead>
+      <tr>
+        <th>Problema</th>
+        <th>Campo(s) Formativo(s)</th>
+        <th>Contenido(s)</th>
+        <th>PDA(s)</th>
+      </tr>
+    </thead>
+    <tbody>
+      <!-- Las filas se llenan automáticamente por JS -->
+    </tbody>
+  </table>
+
+
+  <h1>Evaluación</h1>
+  <div id="evaluacionTableContainer"></div>
+<script>
+function crearTablaEvaluacionOrdenada() {
+  // 1. Extraer los PDAs directamente de planViewerData.ubicacion
+  let planViewerData = null;
+  try {
+    planViewerData = JSON.parse(localStorage.getItem('planViewerData'));
+  } catch (e) { planViewerData = null; }
+  if (!planViewerData || !Array.isArray(planViewerData.ubicacion)) return;
+
+  // Recopilar todos los enunciados PDA únicos del campo 'PDA(s)'
+  let pdaSet = new Set();
+  planViewerData.ubicacion.forEach(row => {
+    if (row['PDA(s)'] && typeof row['PDA(s)'] === 'string') {
+      // Separar por el símbolo # (pda1#pda2)
+      row['PDA(s)'].split('#').forEach(pdaRaw => {
+        const pda = pdaRaw.trim();
+        if (pda) pdaSet.add(pda);
+      });
+    }
+  });
+  let pdaArray = Array.from(pdaSet);
+
+  // Clasificar y ordenar los PDAs según los niveles de Bloom
+  let colGroups = [[],[],[],[],[],[]];
+  let colContentSet = [new Set(), new Set(), new Set(), new Set(), new Set(), new Set()];
+  pdaArray.forEach(pda => {
+    // Buscar todos los verbos taxonómicos presentes en el enunciado
+    let found = false;
+    bloomLevels.forEach((level, idx) => {
+      level.verbs.forEach(verb => {
+        // Buscar el verbo en el enunciado (usando lematización simple)
+        let regex = new RegExp(`\\b${verb}\\b`, 'i');
+        if (regex.test(pda)) {
+          found = true;
+          // Resaltar SOLO este verbo en el enunciado
+          let highlighted = pda.replace(new RegExp(`\\b(${verb})\\b`, 'gi'), '<b style="color:#1b8a3a">$1</b>');
+          if (!colContentSet[idx].has(highlighted)) {
+            colGroups[idx].push(highlighted);
+            colContentSet[idx].add(highlighted);
+          }
+        }
+      });
+    });
+    // Si no se detectó ningún verbo taxonómico
+    if (!found) {
+      let html = pda;
+  
+    }
+  });
+  let maxRows = Math.max(...colGroups.map(arr => arr.length));
+  if (maxRows === 0) maxRows = 1;
+
+  // 2. Crear tabla HTML dinámica
+  let tableHtml = '';
+  tableHtml += '<table id="evaluacionTable">';
+  tableHtml += '<tr><th colspan="6">Nivel de logro</th></tr>';
+  tableHtml += '<tr>';
+  bloomLevels.forEach(lvl => tableHtml += `<th>${lvl.name}</th>`);
+  tableHtml += '</tr>';
+  tableHtml += '<tr>';
+  tableHtml += `<td class="nivel-logro-def">Uso y dominio de la memoria a largo plazo</td>`;
+  tableHtml += `<td class="nivel-logro-def">Comprensión de las ideas y de los conceptos</td>`;
+  tableHtml += `<td class="nivel-logro-def">Capacidad de fragmentar la información, descomponerla y relacionarla.</td>`;
+  tableHtml += `<td class="nivel-logro-def">Capacidad de fragmentar la información, descomponerla y relacionarla.</td>`;
+  tableHtml += `<td class="nivel-logro-def">Emitir juicios de valor, justificar y defender opiniones</td>`;
+  tableHtml += `<td class="nivel-logro-def">Utilizar lo aprendido y las habilidades adquiridas para construir ideas nuevas.</td>`;
+  tableHtml += '</tr>';
+  // Agregar filas de PDAs ordenados
+  for (let r = 0; r < maxRows; r++) {
+    tableHtml += '<tr>';
+    for (let c = 0; c < 6; c++) {
+      let content = colGroups[c][r] || '';
+      tableHtml += `<td class='editable' contenteditable='true'>${content}</td>`;
+    }
+    tableHtml += '</tr>';
+  }
+  tableHtml += '<tr><th colspan="6">Evidencia de aprendizaje</th></tr>';
+  tableHtml += '<tr><td colspan="6" class="editable" contenteditable="true"></td></tr>';
+  tableHtml += '</table>';
+  document.getElementById('evaluacionTableContainer').innerHTML = tableHtml;
+}
+
+
+// Ejecutar al cargar y cada vez que cambien los PDAs
+window.addEventListener('DOMContentLoaded', () => {
+  setTimeout(crearTablaEvaluacionOrdenada, 500);
+});
+// Si tienes un evento donde se actualiza la tabla de PDAs, llama también a crearTablaEvaluacionOrdenada();
+</script>
+  
+  
+  <div id="chartContainer" class="chart-container" style="display: none;">
+    <h3>Aprovechamiento General</h3>
+    <canvas id="logroChart"></canvas>
+  </div>
+
+  <button id="addAlumnosBtn" class="add-alumnos-btn" onclick="openAlumnosModal()">+ Añadir Alumnos</button>
+
+  <h1>Secuencia Didáctica</h1>
+  <table>
+  <tr>
+    <th>Nombre del proyecto</th>
+    <td id="nombreProyecto" class="editable bordered-black" contenteditable="true"></td>
+  </tr>
+  <tr>
+    <th>Metodología/Estrategia</th>
+    <td id="metodologia" class="editable bordered-black" contenteditable="true"></td>
+  </tr>
+</table>
+  <div id="secuenciaTableContainer"></div>
+
+  <h1>Organización</h1>
+  <table id="organizacionTable">
+    <thead>
+      <tr>
+        <th>Fase</th>
+        <th id="etapaHeader" style="display:none;">Etapa</th>
+        <th>Tiempo (min)</th>
+        <th>Espacio</th>
+        <th>Medios</th>
+        <th>Acciones</th>
+      </tr>
+    </thead>
+    <tbody id="organizacionTableBody">
+      <!-- Rows will be dynamically inserted -->
+    </tbody>
+  </table>
+  <button id="addOrganizacionRowBtn" class="add-alumnos-btn">+ Añadir Fila</button>
+  <div id="recycleMediosMenu" style="display:none;position:absolute;background:#fff;border:1px solid #ccc;z-index:2000;"></div>
+
+</div>
+
+<div id="loadModal" class="load-modal">
+  <div class="load-modal-content">
+    <span class="close">&times;</span>
+    <h2>Cargar Datos</h2>
+    <div class="load-options">
+      <div class="load-option" onclick="loadFromLocalStorage()">
+        <h3>Cargar desde almacenamiento local</h3>
+        <p>Recupera los datos guardados anteriormente en este navegador</p>
+      </div>
+      <div class="load-option" onclick="loadFromCanvasData()">
+        <h3>Cargar desde datos del canvas</h3>
+        <p>Importa los datos generados en el plano didáctico</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script>
+// Logo personalizado
+window.addEventListener('DOMContentLoaded', function() {
+  const logoInput = document.getElementById('logoInput');
+  const customLogo = document.getElementById('customLogo');
+  if (logoInput && customLogo) {
+    logoInput.addEventListener('change', function(e) {
+      const file = e.target.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = function(evt) {
+          customLogo.src = evt.target.result;
+        };
+        reader.readAsDataURL(file);
+      }
+    });
+    customLogo.onclick = function() {
+      logoInput.click();
+    };
+  }
+});
+  // Variables globales
+  let alumnosData = [];
+  let logroChart = null;
+  let canvasData = null;
+  const verbosPorNivel = {
+    recordar: ['definir', 'describir', 'enumerar', 'identificar', 'listar', 'memorizar', 'nombrar', 'recordar', 'repetir', 'reconocer'],
+    comprender: ['comprender', 'comparar', 'contrastar', 'discutir', 'explicar', 'interpretar', 'parafrasear', 'resumir', 'traducir', 'ejemplificar'],
+    analizar: ['analizar', 'categorizar', 'clasificar', 'diferenciar', 'discriminar', 'distinguir', 'examinar', 'investigar', 'organizar', 'relacionar'],
+    aplicar: ['aplicar', 'calcular', 'demostrar', 'emplear', 'implementar', 'operar', 'practicar', 'resolver', 'utilizar', 'ejecutar'],
+    valorar: ['valorar', 'argumentar', 'criticar', 'defender', 'evaluar', 'juzgar', 'justificar', 'priorizar', 'seleccionar', 'validar'],
+    crear: ['crear', 'componer', 'construir', 'diseñar', 'desarrollar', 'elaborar', 'formular', 'generar', 'inventar', 'producir']
+  };
+
+  // Función para cargar datos del usuario
+  async function loadUserData() {
+    const userData = JSON.parse(localStorage.getItem('userData'));
+    if (!userData) return;
+
+    try {
+      const response = await fetch('/api/config', {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      });
+      
+      if (!response.ok) throw new Error('Error al cargar configuración');
+      
+      const data = await response.json();
+      
+      if (data.success && data.config) {
+        document.getElementById('nivelEducativo').textContent = data.config.nivelEducativo || '';
+        document.getElementById('centroTrabajo').textContent = data.config.centroTrabajo || '';
+        document.getElementById('sectorEducativo').textContent = data.config.sectorEducativo || '';
+        document.getElementById('zonaEscolar').textContent = data.config.zonaEscolar || '';
+        document.getElementById('fase').textContent = data.config.fase || '';
+        document.getElementById('grado').textContent = data.config.grado || '';
+        document.getElementById('grupo').textContent = data.config.grupo || '';
+        document.getElementById('nombreDocente').textContent = data.config.nombreDocente || '';
+        document.getElementById('nombreDirector').textContent = data.config.nombreDirector || '';
+        document.getElementById('inicioPeriodo').textContent = data.config.inicioPeriodo || '';
+        document.getElementById('finPeriodo').textContent = data.config.finPeriodo || '';
+        
+        document.getElementById('currentDate').textContent = new Date().toLocaleDateString('es-MX', { 
+          weekday: 'long', 
+          year: 'numeric', 
+          month: 'long', 
+          day: 'numeric' 
+        });
+      }
+    } catch (error) {
+      console.error('Error al cargar configuración:', error);
+    }
+
+    // Cargar datos guardados
+    const savedAlumnos = localStorage.getItem('alumnosData');
+    if (savedAlumnos) alumnosData = JSON.parse(savedAlumnos);
+
+    const savedTables = localStorage.getItem('tablesData');
+    if (savedTables) loadTablesData(JSON.parse(savedTables));
+
+    const savedCanvasData = localStorage.getItem('canvasData');
+    if (savedCanvasData) {
+      canvasData = JSON.parse(savedCanvasData);
+      loadCanvasDataToTables();
+    }
+  }
+
+  // Función principal para cargar datos del canvas
+  function loadCanvasDataToTables() {
+    if (!canvasData) return;
+
+    // Ubicación Curricular
+    const ubicacionTable = document.getElementById('ubicacionTable');
+    while (ubicacionTable.rows.length > 1) ubicacionTable.deleteRow(1);
+
+    const row = ubicacionTable.insertRow();
+    
+    // Problema
+    const problemaCell = row.insertCell();
+    problemaCell.textContent = canvasData.entrada || '';
+    problemaCell.classList.add('editable');
+    problemaCell.setAttribute('contenteditable', 'true');
+    
+    // PDAs
+    const pdaCell = row.insertCell();
+    if (Array.isArray(canvasData.pdas)) {
+      canvasData.pdas.forEach(pda => {
+        const pdaDiv = document.createElement('div');
+        pdaDiv.classList.add('table-item', 'editable');
+        pdaDiv.setAttribute('contenteditable', 'true');
+        pdaDiv.textContent = pda;
+        pdaCell.appendChild(pdaDiv);
+      });
+    } else if (canvasData.pdas) {
+      pdaCell.textContent = canvasData.pdas;
+    }
+    pdaCell.classList.add('editable');
+    
+    // Contenidos
+    const contenidoCell = row.insertCell();
+    if (Array.isArray(canvasData.contenidos)) {
+      canvasData.contenidos.forEach(contenido => {
+        const contenidoDiv = document.createElement('div');
+        contenidoDiv.classList.add('table-item', 'editable');
+        contenidoDiv.setAttribute('contenteditable', 'true');
+        contenidoDiv.textContent = contenido;
+        contenidoCell.appendChild(contenidoDiv);
+      });
+    } else if (canvasData.contenidos) {
+      contenidoCell.textContent = canvasData.contenidos;
+    }
+    contenidoCell.classList.add('editable');
+    
+    // Campos Formativos
+    const campoCell = row.insertCell();
+    if (Array.isArray(canvasData.campos)) {
+      canvasData.campos.forEach(campo => {
+        const campoDiv = document.createElement('div');
+        campoDiv.classList.add('table-item', 'editable');
+        campoDiv.setAttribute('contenteditable', 'true');
+        campoDiv.textContent = campo;
+        campoCell.appendChild(campoDiv);
+      });
+    } else if (canvasData.campos) {
+      campoCell.textContent = canvasData.campos;
+    }
+    campoCell.classList.add('editable');
+
+    // Evaluación - Distribuir PDAs por niveles
+    if (canvasData.pdas && canvasData.pdas.length > 0) {
+      const evaluacionRows = document.querySelectorAll('#evaluacionTable tr');
+      const niveles = ['recordar', 'comprender', 'analizar', 'aplicar', 'valorar', 'crear'];
+      
+      // Limpiar celdas
+      for (let i = 2; i <= 3; i++) {
+        for (let j = 0; j < 6; j++) {
+          evaluacionRows[i].cells[j].innerHTML = '';
+        }
+      }
+      
+      canvasData.pdas.forEach(pda => {
+        const verbo = encontrarVerboEnPDA(pda);
+        const nivel = determinarNivel(verbo);
+        
+        if (nivel && niveles.includes(nivel)) {
+          const rowIndex = 2;
+          const cellIndex = niveles.indexOf(nivel);
+          
+          if (rowIndex < evaluacionRows.length && cellIndex < 6) {
+            const cell = evaluacionRows[rowIndex].cells[cellIndex];
+            const pdaConVerboDestacado = pda.replace(new RegExp(verbo, 'i'), `<span class="verb">${verbo}</span>`);
+            
+            if (cell.textContent.trim() === '') {
+              cell.innerHTML = pdaConVerboDestacado;
+            } else {
+              cell.innerHTML += '<div class="table-item">' + pdaConVerboDestacado + '</div>';
+            }
+          }
+        }
+      });
+    }
+
+    // Proyecto y metodología
+    if (canvasData.proyecto) {
+      document.getElementById('nombreProyecto').textContent = canvasData.proyecto;
+    }
+    if (canvasData.metodologia) {
+      document.getElementById('metodologia').textContent = canvasData.metodologia;
+    }
+  }
+
+  // Funciones para análisis de verbos en PDAs
+  function encontrarVerboEnPDA(pda) {
+    if (!pda) return '';
+    const pdaLower = pda.toLowerCase();
+    for (const nivel in verbosPorNivel) {
+      for (const verbo of verbosPorNivel[nivel]) {
+        if (pdaLower.includes(verbo)) return verbo;
+      }
+    }
+    return '';
+  }
+
+  function determinarNivel(verbo) {
+    if (!verbo) return '';
+    verbo = verbo.toLowerCase();
+    for (const nivel in verbosPorNivel) {
+      if (verbosPorNivel[nivel].includes(verbo)) return nivel;
+    }
+    return '';
+  }
+
+  // Funciones para manejo de tablas
+  function populateTable(tableId, data) {
+    const table = document.getElementById(tableId);
+    if (!table || !Array.isArray(data)) return;
+    
+    while (table.rows.length > 1) table.deleteRow(1);
+    
+    data.forEach(row => {
+      if (typeof row !== 'object') return;
+      const tr = table.insertRow();
+      Object.values(row).forEach(value => {
+        const td = tr.insertCell();
+        td.className = 'editable';
+        td.setAttribute('contenteditable', 'true');
+        td.textContent = value || '';
+      });
+    });
+  }
+
+  function loadTablesData(data) {
+    if (!data) return;
+
+    if (data.ubicacionCurricular) populateTable('ubicacionTable', data.ubicacionCurricular);
+    if (data.evaluacion) populateTable('evaluacionTable', data.evaluacion);
+    if (data.secuenciaDidactica) populateTable('secuenciaTable', data.secuenciaDidactica);
+    if (data.organizacion) populateTable('organizacionTable', data.organizacion);
+    if (data.actividades) populateTable('actividadesTable', data.actividades);
+    if (data.reflexiones) document.getElementById('reflexiones').innerHTML = data.reflexiones;
+  }
+
+  // Funciones para alumnos
+  function renderAlumnosTable() {
+    const tableBody = document.getElementById('alumnosTableBody');
+    tableBody.innerHTML = '';
+
+    alumnosData.forEach((alumno, index) => {
+      const row = document.createElement('tr');
+      
+      const nombreCell = document.createElement('td');
+      nombreCell.textContent = alumno.nombre;
+      row.appendChild(nombreCell);
+      
+      const niveles = ['recordar', 'comprender', 'analizar', 'aplicar', 'valorar', 'crear'];
+      niveles.forEach(nivel => {
+        const cell = document.createElement('td');
+        const radio = document.createElement('input');
+        radio.type = 'radio';
+        radio.name = `nivel-${index}`;
+        radio.value = nivel;
+        radio.checked = alumno.nivel === nivel;
+        radio.addEventListener('change', function() {
+          if (this.checked) {
+            row.querySelectorAll('td:not(:first-child)').forEach(c => c.classList.remove('radio-selected'));
+            this.parentElement.classList.add('radio-selected');
+            alumnosData[index].nivel = nivel;
+          }
+        });
+        
+        if (alumno.nivel === nivel) cell.classList.add('radio-selected');
+        cell.appendChild(radio);
+        row.appendChild(cell);
+      });
+      
+      const deleteCell = document.createElement('td');
+      const deleteBtn = document.createElement('button');
+      deleteBtn.textContent = 'Eliminar';
+      deleteBtn.style.padding = '5px 10px';
+      deleteBtn.style.backgroundColor = '#dc3545';
+      deleteBtn.style.color = 'white';
+      deleteBtn.style.border = 'none';
+      deleteBtn.style.borderRadius = '4px';
+      deleteBtn.style.cursor = 'pointer';
+      deleteBtn.addEventListener('click', () => {
+        alumnosData.splice(index, 1);
+        renderAlumnosTable();
+      });
+      deleteCell.appendChild(deleteBtn);
+      row.appendChild(deleteCell);
+      
+      tableBody.appendChild(row);
+    });
+  }
+
+  function addNewAlumno() {
+    alumnosData.push({ nombre: `Alumno ${alumnosData.length + 1}`, nivel: '' });
+    renderAlumnosTable();
+  }
+
+  function saveAlumnosData() {
+    localStorage.setItem('alumnosData', JSON.stringify(alumnosData));
+    closeAlumnosModal();
+    updateChart();
+  }
+
+  function updateChart() {
+    const chartContainer = document.getElementById('chartContainer');
+    const ctx = document.getElementById('logroChart').getContext('2d');
+    
+    if (alumnosData.length === 0) {
+      chartContainer.style.display = 'none';
+      return;
+    }
+    
+    chartContainer.style.display = 'block';
+    
+    const niveles = ['recordar', 'comprender', 'analizar', 'aplicar', 'valorar', 'crear'];
+    const counts = niveles.map(nivel => alumnosData.filter(alumno => alumno.nivel === nivel).length);
+    
+    if (logroChart) logroChart.destroy();
+    
+    logroChart = new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: ['Recordar', 'Comprender', 'Analizar', 'Aplicar', 'Valorar', 'Crear'],
+        datasets: [{
+          label: 'Número de alumnos',
+          data: counts,
+          backgroundColor: [
+            'rgba(255, 99, 132, 0.7)',
+            'rgba(54, 162, 235, 0.7)',
+            'rgba(255, 206, 86, 0.7)',
+            'rgba(75, 192, 192, 0.7)',
+            'rgba(153, 102, 255, 0.7)',
+            'rgba(255, 159, 64, 0.7)'
+          ],
+          borderColor: [
+            'rgba(255, 99, 132, 1)',
+            'rgba(54, 162, 235, 1)',
+            'rgba(255, 206, 86, 1)',
+            'rgba(75, 192, 192, 1)',
+            'rgba(153, 102, 255, 1)',
+            'rgba(255, 159, 64, 1)'
+          ],
+          borderWidth: 1
+        }]
+      },
+      options: {
+        responsive: true,
+        scales: {
+          y: {
+            beginAtZero: true,
+            title: { display: true, text: 'Número de alumnos' },
+            ticks: { stepSize: 1, precision: 0 }
+          },
+          x: {
+            title: { display: true, text: 'Niveles de logro' }
+          }
+        }
+      }
+    });
+  }
+
+  // Funciones para importar/exportar
+  function downloadExcelTemplate() {
+    const wb = XLSX.utils.book_new();
+    const wsData = [
+      ["Nombre del Alumno"],
+      ["Ejemplo: Juan Pérez"],
+      [""],
+      [""],
+      [""]
+    ];
+    const ws = XLSX.utils.aoa_to_sheet(wsData);
+    XLSX.utils.book_append_sheet(wb, ws, "Alumnos");
+    XLSX.writeFile(wb, "Formato_Alumnos.xlsx");
+  }
+
+  function handleExcelImport(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      try {
+        const data = new Uint8Array(e.target.result);
+        const workbook = XLSX.read(data, { type: 'array' });
+        const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+        const jsonData = XLSX.utils.sheet_to_json(firstSheet, { header: 1 });
+        
+        const newAlumnos = [];
+        jsonData.forEach((row, index) => {
+          if (index > 0 && row[0] && typeof row[0] === 'string' && row[0].trim() !== '') {
+            newAlumnos.push({ nombre: row[0].trim(), nivel: '' });
+          }
+        });
+        
+        if (newAlumnos.length > 0) {
+          alumnosData = alumnosData.concat(newAlumnos);
+          renderAlumnosTable();
+          alert(`${newAlumnos.length} alumnos importados correctamente.`);
+        } else {
+          alert('No se encontraron nombres de alumnos en el archivo.');
+        }
+      } catch (error) {
+        console.error('Error al procesar el archivo Excel:', error);
+        alert('Error al procesar el archivo Excel.');
+      }
+    };
+    reader.readAsArrayBuffer(file);
+  }
+
+  // Funciones para modales
+  function openAlumnosModal() {
+    document.getElementById('alumnosModal').style.display = 'block';
+    renderAlumnosTable();
+  }
+
+  function closeAlumnosModal() {
+    document.getElementById('alumnosModal').style.display = 'none';
+  }
+
+  function openLoadModal() {
+    document.getElementById('loadModal').style.display = 'block';
+  }
+
+  function closeLoadModal() {
+    document.getElementById('loadModal').style.display = 'none';
+  }
+
+  function loadFromLocalStorage() {
+    const savedData = localStorage.getItem('tablesData');
+    if (savedData) {
+      loadTablesData(JSON.parse(savedData));
+      alert('Datos cargados desde almacenamiento local');
+    } else {
+      alert('No hay datos guardados localmente');
+    }
+    closeLoadModal();
+  }
+
+  function loadFromCanvasData() {
+    if (!canvasData) {
+      alert('No hay datos del canvas disponibles');
+      closeLoadModal();
+      return;
+    }
+    loadCanvasDataToTables();
+    alert('Datos del canvas cargados correctamente');
+    closeLoadModal();
+  }
+
+  // Funciones generales
+  function makeAllCellsEditable() {
+    document.querySelectorAll('td').forEach(td => {
+      if (!td.hasAttribute('contenteditable')) {
+        td.setAttribute('contenteditable', 'true');
+        td.classList.add('editable');
+      }
+    });
+  }
+
+  function togglePrintMode() {
+    document.body.classList.toggle('print-mode');
+    const btn = document.querySelector('.toolbar button:nth-child(3)');
+    btn.textContent = document.body.classList.contains('print-mode') ? 'Modo Edición' : 'Modo Impresión';
+  }
+
+  function savePlan() {
+    const planContent = {
+      datosGenerales: {},
+      ubicacionCurricular: [],
+      evaluacion: [],
+      secuenciaDidactica: [],
+      organizacion: [],
+      actividades: [],
+      reflexiones: document.getElementById('reflexiones').innerHTML,
+      alumnosData: alumnosData
+    };
+
+    document.querySelectorAll('table').forEach(table => {
+      if (table.id === 'evaluacionTable' || table.id === 'alumnosTable') return;
+      
+      const rows = Array.from(table.rows).slice(1);
+      rows.forEach(row => {
+        const rowData = {};
+        Array.from(row.cells).forEach((cell, i) => {
+          if (!cell.querySelector('button')) {
+            const header = table.rows[0].cells[i].textContent;
+            rowData[header] = cell.textContent;
+          }
+        });
+        
+        if (table.id === 'ubicacionTable') planContent.ubicacionCurricular.push(rowData);
+        else if (table.id === 'evaluacionTable') planContent.evaluacion.push(rowData);
+        else if (table.id === 'secuenciaTable') planContent.secuenciaDidactica.push(rowData);
+        else if (table.id === 'organizacionTable') planContent.organizacion.push(rowData);
+        else if (table.id === 'actividadesTable') planContent.actividades.push(rowData);
+      });
+    });
+
+    localStorage.setItem('tablesData', JSON.stringify(planContent));
+
+    const blob = new Blob([JSON.stringify(planContent, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'plan-didactico-' + new Date().toISOString().slice(0,10) + '.json';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+
+    alert('Plan guardado correctamente');
+  }
+
+  // Event listeners
+  document.addEventListener('DOMContentLoaded', () => {
+    loadUserData();
+    makeAllCellsEditable();
+
+    // --- NUEVO: Cargar planViewerData si existe ---
+    let planViewerData = null;
+    try {
+      planViewerData = JSON.parse(localStorage.getItem('planViewerData'));
+    } catch (e) { planViewerData = null; }
+    if (planViewerData) {
+      if (planViewerData.proyecto)
+        document.getElementById('nombreProyecto').textContent = planViewerData.proyecto;
+      if (planViewerData.metodologia)
+        document.getElementById('metodologia').textContent = planViewerData.metodologia;
+      if (planViewerData.metodologia) {
+        construirTablaSecuencia(planViewerData.metodologia);
+      }
+      if (document.getElementById('planViewerDataRaw'))
+        document.getElementById('planViewerDataRaw').value = JSON.stringify(planViewerData, null, 2);
+    }
+    if (document.getElementById('add-alumnos-btn')) document.getElementById('add-alumnos-btn').addEventListener('click', openAlumnosModal);
+    if (document.getElementById('addAlumnoBtn')) document.getElementById('addAlumnoBtn').addEventListener('click', addNewAlumno);
+    if (document.getElementById('saveAlumnosBtn')) document.getElementById('saveAlumnosBtn').addEventListener('click', saveAlumnosData);
+    if (document.getElementById('excelInput')) document.getElementById('excelInput').addEventListener('change', handleExcelImport);
+    if (document.getElementById('downloadTemplateBtn')) document.getElementById('downloadTemplateBtn').addEventListener('click', downloadExcelTemplate);
+    if (document.querySelector('#alumnosModal .close')) document.querySelector('#alumnosModal .close').addEventListener('click', closeAlumnosModal);
+    if (document.querySelector('#loadModal .close')) document.querySelector('#loadModal .close').addEventListener('click', closeLoadModal);
+
+    window.addEventListener('click', function(event) {
+      if (event.target === document.getElementById('alumnosModal')) closeAlumnosModal();
+      if (event.target === document.getElementById('loadModal')) closeLoadModal();
+    });
+});
+
+// Listener para mensajes del canvas
+  window.addEventListener('message', (event) => {
+    if (event.data.type === 'loadData') {
+      try {
+        if (!event.data.tables || !event.data.config) {
+          throw new Error('Formato de datos incorrecto');
+        }
+
+        canvasData = {
+          proyecto: event.data.config.proyecto || '',
+          metodologia: event.data.config.metodologia || '',
+          entrada: event.data.tables.ubicacion?.[0]?.Problema || '',
+          pdas: event.data.tables.ubicacion?.[0]?.['PDA(s)']?.split(', ') || [],
+          campos: event.data.tables.ubicacion?.[0]?.['Campo(s) Formativo(s)']?.split(', ') || [],
+          contenidos: event.data.tables.ubicacion?.[0]?.['Contenido(s)']?.split(', ') || [],
+          fases: event.data.tables.organizacion?.map(row => row.Fase) || []
+        };
+        
+        localStorage.setItem('canvasData', JSON.stringify(canvasData));
+        loadCanvasDataToTables();
+
+        document.getElementById('nombreProyecto').textContent = event.data.config.proyecto || '';
+        document.getElementById('metodologia').textContent = event.data.config.metodologia || '';
+        
+        if (event.data.tables.secuencia) populateTable('secuenciaTable', event.data.tables.secuencia);
+        if (event.data.tables.organizacion) populateTable('organizacionTable', event.data.tables.organizacion);
+        if (event.data.tables.actividades) populateTable('actividadesTable', event.data.tables.actividades);
+        if (event.data.reflexiones) document.getElementById('reflexiones').innerHTML = event.data.reflexiones;
+        
+        makeAllCellsEditable();
+        
+      } catch (error) {
+        console.error('Error al cargar datos:', error);
+        alert('Error al cargar los datos generados por IA');
+      }
+    }
+  });
+</script>
+<script>
+// --- UBICACIÓN CURRICULAR: RECOLECCIÓN Y TABLA DESDE EL CANVAS ---
+function buildUbicacionTableFromCanvas() {
+  const tableBody = document.querySelector('#ubicacionTable tbody');
+  tableBody.innerHTML = '';
+  let canvasState = localStorage.getItem('canvasState');
+  // --- LLENAR LA TABLA UBICACIÓN CURRICULAR ---
+  // Mostrar todas las combinaciones posibles entre Entrada, Campo, Contenido y PDA
+  const entradas = nodosPorTipo['Entrada'] || [];
+  const campos = nodosPorTipo['Campos Formativos'] || [];
+  const contenidos = nodosPorTipo['Contenido'] || [];
+  const pdas = nodosPorTipo['PDA'] || [];
+
+  if (!entradas.length) return;
+
+  entradas.forEach(entrada => {
+    let rows = [];
+    // Si hay campos, contenidos y pdas, haz el producto cartesiano
+    if (campos.length && contenidos.length && pdas.length) {
+      campos.forEach(campo => {
+        contenidos.forEach(contenido => {
+          pdas.forEach(pda => {
+            rows.push({
+              problema: getValue(entrada, 'text'),
+              campo: getValue(campo, 'campo'),
+              contenido: getValue(contenido, 'contenido'),
+              pda: getValue(pda, 'pdas')
+            });
+          });
+        });
+      });
+    } else if (campos.length && contenidos.length) {
+      campos.forEach(campo => {
+        contenidos.forEach(contenido => {
+          rows.push({
+            problema: getValue(entrada, 'text'),
+            campo: getValue(campo, 'campo'),
+            contenido: getValue(contenido, 'contenido'),
+            pda: ''
+          });
+        });
+      });
+    } else if (campos.length && pdas.length) {
+      campos.forEach(campo => {
+        pdas.forEach(pda => {
+          rows.push({
+            problema: getValue(entrada, 'text'),
+            campo: getValue(campo, 'campo'),
+            contenido: '',
+            pda: getValue(pda, 'pdas')
+          });
+        });
+      });
+    } else if (campos.length) {
+      campos.forEach(campo => {
+        rows.push({
+          problema: getValue(entrada, 'text'),
+          campo: getValue(campo, 'campo'),
+          contenido: '',
+          pda: ''
+        });
+      });
+    } else if (contenidos.length && pdas.length) {
+      contenidos.forEach(contenido => {
+        pdas.forEach(pda => {
+          rows.push({
+            problema: getValue(entrada, 'text'),
+            campo: '',
+            contenido: getValue(contenido, 'contenido'),
+            pda: getValue(pda, 'pdas')
+          });
+        });
+      });
+    } else if (contenidos.length) {
+      contenidos.forEach(contenido => {
+        rows.push({
+          problema: getValue(entrada, 'text'),
+          campo: '',
+          contenido: getValue(contenido, 'contenido'),
+          pda: ''
+        });
+      });
+    } else if (pdas.length) {
+      pdas.forEach(pda => {
+        rows.push({
+          problema: getValue(entrada, 'text'),
+          campo: '',
+          contenido: '',
+          pda: getValue(pda, 'pdas')
+        });
+      });
+    } else {
+      rows.push({
+        problema: getValue(entrada, 'text'),
+        campo: '',
+        contenido: '',
+        pda: ''
+      });
+    }
+    // Renderizar filas (NO usar colspan, siempre columnas separadas)
+    rows.forEach(row => {
+      const tr = document.createElement('tr');
+      const tdProblema = document.createElement('td');
+      tdProblema.textContent = row.problema;
+      tr.appendChild(tdProblema);
+      const tdCampo = document.createElement('td');
+      tdCampo.textContent = row.campo;
+      tr.appendChild(tdCampo);
+      const tdContenido = document.createElement('td');
+      tdContenido.textContent = row.contenido;
+      tr.appendChild(tdContenido);
+      const tdPDA = document.createElement('td');
+      tdPDA.textContent = row.pda;
+      tr.appendChild(tdPDA);
+      tableBody.appendChild(tr);
+    });
+  });
+}
+document.addEventListener('DOMContentLoaded', function() {
+  // Mostrar JSON crudo de planViewerData
+  const rawArea = document.getElementById('planViewerDataRaw');
+  const raw = localStorage.getItem('planViewerData');
+  rawArea.value = raw ? raw : 'No hay datos en localStorage.planViewerData';
+  buildUbicacionTableFromCanvas();
+});
+
+// --- UBICACIÓN CURRICULAR: ASOCIAR PDAs SOLO A SU CONTENIDO CORRECTO ---
+function buildUbicacionTableFromCanvas() {
+  const tableBody = document.querySelector('#ubicacionTable tbody');
+  tableBody.innerHTML = '';
+  let planViewerData = localStorage.getItem('planViewerData');
+  if (!planViewerData) return;
+  try { planViewerData = JSON.parse(planViewerData); } catch (e) { return; }
+  const ubicacion = planViewerData.ubicacion || [];
+
+  // Agrupar datos por Campo Formativo -> Contenido -> PDAs
+  // Suponemos que solo hay un Problema en la tabla (por requerimiento)
+  if (!ubicacion.length) return;
+
+  const problema = ubicacion[0]['Problema'] || '';
+
+  // Construir estructura jerárquica: campo -> contenido -> [pdas]
+  const camposMap = {};
+  ubicacion.forEach(row => {
+    const campos = (row['Campo(s) Formativo(s)'] || '').split('#');
+    const contenidos = (row['Contenido(s)'] || '').split('#');
+    const pdas = (row['PDA(s)'] || '').split('#');
+    campos.forEach((campo, i) => {
+      if (!camposMap[campo]) camposMap[campo] = {};
+      contenidos.forEach((contenido, j) => {
+        if (!camposMap[campo][contenido]) camposMap[campo][contenido] = [];
+        pdas.forEach((pda, k) => {
+          if (pda && !camposMap[campo][contenido].includes(pda)) {
+            camposMap[campo][contenido].push(pda);
+          }
+        });
+        // Si no hay PDAs, igual agregamos una fila vacía para ese contenido
+        if (pdas.length === 0 || (pdas.length === 1 && pdas[0] === '')) {
+          if (!camposMap[campo][contenido].includes('')) {
+            camposMap[campo][contenido].push('');
+          }
+        }
+      });
+    });
+  });
+
+  // Calcular el total de filas necesarias para el rowspan de Problema
+  let totalRows = 0;
+  Object.values(camposMap).forEach(contenidosMap => {
+    Object.values(contenidosMap).forEach(pdasArr => {
+      totalRows += Math.max(pdasArr.length, 1);
+    });
+  });
+
+  let problemaPrinted = false;
+  Object.entries(camposMap).forEach(([campo, contenidosMap]) => {
+    // Calcular rowspan para este campo
+    let campoRowspan = 0;
+    Object.values(contenidosMap).forEach(pdasArr => {
+      campoRowspan += Math.max(pdasArr.length, 1);
+    });
+    let campoPrinted = false;
+    Object.entries(contenidosMap).forEach(([contenido, pdasArr]) => {
+      // Rowspan para este contenido
+      let contenidoRowspan = Math.max(pdasArr.length, 1);
+      let contenidoPrinted = false;
+      pdasArr.forEach((pda, idx) => {
+        const tr = document.createElement('tr');
+        // Problema
+        if (!problemaPrinted) {
+          const tdProblema = document.createElement('td');
+          tdProblema.textContent = problema;
+          tdProblema.rowSpan = totalRows;
+          tdProblema.style.verticalAlign = 'middle';
+          tdProblema.style.borderRight = '2px solid #ccc';
+          tr.appendChild(tdProblema);
+          problemaPrinted = true;
+        }
+        // Campo Formativo
+        if (!campoPrinted) {
+          const tdCampo = document.createElement('td');
+          tdCampo.textContent = campo;
+          tdCampo.rowSpan = campoRowspan;
+          tdCampo.style.verticalAlign = 'middle';
+          tdCampo.style.borderRight = '2px solid #ccc';
+          tr.appendChild(tdCampo);
+          campoPrinted = true;
+        }
+        // Contenido
+        if (!contenidoPrinted) {
+          const tdContenido = document.createElement('td');
+          tdContenido.textContent = contenido;
+          tdContenido.rowSpan = contenidoRowspan;
+          tdContenido.style.verticalAlign = 'middle';
+          tdContenido.style.borderRight = '2px solid #ccc';
+          tr.appendChild(tdContenido);
+          contenidoPrinted = true;
+        }
+        // PDA
+        const tdPDA = document.createElement('td');
+        tdPDA.textContent = pda;
+        tdPDA.style.verticalAlign = 'middle';
+        tr.appendChild(tdPDA);
+        tableBody.appendChild(tr);
+      });
+      // Si no hay PDAs, igual poner una fila vacía
+      if (pdasArr.length === 0) {
+        const tr = document.createElement('tr');
+        if (!problemaPrinted) {
+          const tdProblema = document.createElement('td');
+          tdProblema.textContent = problema;
+          tdProblema.rowSpan = totalRows;
+          tdProblema.style.verticalAlign = 'middle';
+          tdProblema.style.borderRight = '2px solid #ccc';
+          tr.appendChild(tdProblema);
+          problemaPrinted = true;
+        }
+        if (!campoPrinted) {
+          const tdCampo = document.createElement('td');
+          tdCampo.textContent = campo;
+          tdCampo.rowSpan = campoRowspan;
+          tdCampo.style.verticalAlign = 'middle';
+          tdCampo.style.borderRight = '2px solid #ccc';
+          tr.appendChild(tdCampo);
+          campoPrinted = true;
+        }
+        if (!contenidoPrinted) {
+          const tdContenido = document.createElement('td');
+          tdContenido.textContent = contenido;
+          tdContenido.rowSpan = contenidoRowspan;
+          tdContenido.style.verticalAlign = 'middle';
+          tdContenido.style.borderRight = '2px solid #ccc';
+          tr.appendChild(tdContenido);
+          contenidoPrinted = true;
+        }
+        const tdPDA = document.createElement('td');
+        tdPDA.textContent = '';
+        tdPDA.style.verticalAlign = 'middle';
+        tr.appendChild(tdPDA);
+        tableBody.appendChild(tr);
+      }
+    });
+  });
+}
+
+
+
+
+
+</script>
+<script src="construirTablaSecuencia.js"></script>
+  <!-- MODAL DE ALUMNOS -->
+  <div id="alumnosModal" class="modal">
+    <div class="modal-content">
+      <span class="close" onclick="closeAlumnosModal()">&times;</span>
+      <h2>Lista de Alumnos</h2>
+      <div style="display: flex; gap: 10px; align-items: center; margin-bottom: 12px; flex-wrap: wrap;">
+        <button class="add-alumnos-btn" onclick="addNewAlumno()">Agregar Alumno</button>
+<input type="file" id="excelInput" class="file-input" accept=".xlsx, .xls, .csv">
+<label for="excelInput" class="add-alumnos-btn" style="margin-bottom:0;">Importar Excel</label>
+<button id="downloadTemplateBtn" class="btn-yellow">Descargar Formato</button>
+      </div>
+      <div class="alumnos-table-scroll">
+        <table class="alumnos-table">
+          <thead>
+            <tr>
+              <th>Nombre</th>
+              <th>Recordar</th>
+              <th>Comprender</th>
+              <th>Analizar</th>
+              <th>Aplicar</th>
+              <th>Valorar</th>
+              <th>Crear</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody id="alumnosTableBody">
+            <!-- Filas generadas dinámicamente -->
+          </tbody>
+        </table>
+      </div>
+      <div class="alumnos-modal-footer">
+        <button class="btn-import" onclick="saveAlumnosData()">Guardar</button>
+        <button class="btn-import" onclick="closeAlumnosModal()">Cancelar</button>
+      </div>
+    </div>
+  </div>
+</body>
+<script>
+// ==================== BLOOM & PDA EVALUACION ====================
+const bloomLevels = [
+  {
+    name: 'Recordar',
+    verbs: ['identificar', 'recordar', 'listar', 'nombrar', 'reconocer', 'describir', 'definir', 'señalar', 'localizar', 'enumerar']
+  },
+  {
+    name: 'Comprender',
+    verbs: ['explicar', 'interpretar', 'resumir', 'parafrasear', 'clasificar', 'comparar', 'distinguir', 'ilustrar', 'predecir', 'discutir']
+  },
+  {
+    name: 'Analizar',
+    verbs: ['analizar', 'diferenciar', 'organizar', 'atribuir', 'descomponer', 'relacionar', 'examinar', 'contrastar', 'investigar']
+  },
+  {
+    name: 'Aplicar',
+    verbs: ['aplicar', 'usar', 'ejecutar', 'resolver', 'demostrar', 'implementar', 'practicar', 'operar']
+  },
+  {
+    name: 'Valorar',
+    verbs: ['valorar', 'juzgar', 'defender', 'criticar', 'justificar', 'evaluar', 'argumentar', 'apreciar']
+  },
+  {
+    name: 'Crear',
+    verbs: ['crear', 'diseñar', 'construir', 'formular', 'planear', 'generar', 'producir', 'inventar', 'elaborar']
+  }
+];
+
+// Lematizador simple para español enfocado en verbos taxonómicos
+const verbLemmas = {
+  // Recordar
+  'identifica': 'identificar', 'identifican': 'identificar',
+  'recuerda': 'recordar', 'recuerdan': 'recordar',
+  'lista': 'listar', 'listan': 'listar',
+  'nombra': 'nombrar', 'nombran': 'nombrar',
+  'reconoce': 'reconocer', 'reconocen': 'reconocer',
+  'describe': 'describir', 'describen': 'describir',
+  'define': 'definir', 'definen': 'definir',
+  'señala': 'señalar', 'señalan': 'señalar',
+  'localiza': 'localizar', 'localizan': 'localizar',
+  'enumera': 'enumerar', 'enumeran': 'enumerar',
+  // Comprender
+  'explica': 'explicar', 'explican': 'explicar',
+  'interpreta': 'interpretar', 'interpretan': 'interpretar',
+  'resume': 'resumir', 'resumen': 'resumir',
+  'parafrasea': 'parafrasear', 'parafrasean': 'parafrasear',
+  'clasifica': 'clasificar', 'clasifican': 'clasificar',
+  'compara': 'comparar', 'comparan': 'comparar',
+  'distingue': 'distinguir', 'distinguen': 'distinguir',
+  'ilustra': 'ilustrar', 'ilustran': 'ilustrar',
+  'predice': 'predecir', 'predicen': 'predecir',
+  'discute': 'discutir', 'discuten': 'discutir',
+  // Analizar
+  'analiza': 'analizar', 'analizan': 'analizar',
+  'diferencia': 'diferenciar', 'diferencian': 'diferenciar',
+  'organiza': 'organizar', 'organizan': 'organizar',
+  'atribuye': 'atribuir', 'atribuyen': 'atribuir',
+  'descompone': 'descomponer', 'descomponen': 'descomponer',
+  'relaciona': 'relacionar', 'relacionan': 'relacionar',
+  'examina': 'examinar', 'examinan': 'examinar',
+  'contrasta': 'contrastar', 'contrastan': 'contrastar',
+  'investiga': 'investigar', 'investigan': 'investigar',
+  // Aplicar
+  'aplica': 'aplicar', 'aplican': 'aplicar',
+  'usa': 'usar', 'usan': 'usar',
+  'ejecuta': 'ejecutar', 'ejecutan': 'ejecutar',
+  'resuelve': 'resolver', 'resuelven': 'resolver',
+  'demuestra': 'demostrar', 'demuestran': 'demostrar',
+  'implementa': 'implementar', 'implementan': 'implementar',
+  'practica': 'practicar', 'practican': 'practicar',
+  'opera': 'operar', 'operan': 'operar',
+  // Valorar
+  'valora': 'valorar', 'valoran': 'valorar',
+  'juzga': 'juzgar', 'juzgan': 'juzgar',
+  'defiende': 'defender', 'defienden': 'defender',
+  'critica': 'criticar', 'critican': 'criticar',
+  'justifica': 'justificar', 'justifican': 'justificar',
+  'evalua': 'evaluar', 'evalúan': 'evaluar', 'evalúan': 'evaluar',
+  'argumenta': 'argumentar', 'argumentan': 'argumentar',
+  'aprecia': 'apreciar', 'aprecian': 'apreciar',
+  // Crear
+  'crea': 'crear', 'crean': 'crear',
+  'diseña': 'diseñar', 'diseñan': 'diseñar',
+  'construye': 'construir', 'construyen': 'construir',
+  'formula': 'formular', 'formulan': 'formular',
+  'planea': 'planear', 'planean': 'planear',
+  'genera': 'generar', 'generan': 'generar',
+  'produce': 'producir', 'producen': 'producir',
+  'inventa': 'inventar', 'inventan': 'inventar',
+  'elabora': 'elaborar', 'elaboran': 'elaborar',
+  // Otros comunes
+  'estima': 'estimar', 'estiman': 'estimar',
+  'mide': 'medir', 'miden': 'medir',
+  'compara': 'comparar', 'comparan': 'comparar',
+  'ordena': 'ordenar', 'ordenan': 'ordenar',
+  'registra': 'registrar', 'registran': 'registrar',
+};
+
+function lemmatize(word) {
+  return verbLemmas[word.toLowerCase()] || word.toLowerCase();
+}
+
+function getBloomLevelsAndHighlight(pda) {
+  let levels = [];
+  let html = pda;
+  // Extraer todas las palabras del PDA
+  let words = pda.match(/\w+|[áéíóúñ]+/gi) || [];
+  // Para resaltar todos los verbos, primero construimos un regex global de todos los verbos y sus formas
+  let allVerbs = [];
+  bloomLevels.forEach(level => {
+    allVerbs = allVerbs.concat(level.verbs);
+  });
+  allVerbs = allVerbs.concat(Object.keys(verbLemmas));
+  allVerbs.sort((a, b) => b.length - a.length);
+  let regex = new RegExp(`\\b(${allVerbs.join('|')})\\b`, 'gi');
+  // Resaltar todos los verbos encontrados (formas y lemmas)
+  html = html.replace(regex, (match) => {
+    return '<b style="color:#1b8a3a">' + match + '</b>';
+  });
+  // Identificar los niveles presentes usando lematización
+  bloomLevels.forEach(level => {
+    level.verbs.forEach(verb => {
+      for (let w of words) {
+        if (lemmatize(w) === verb && !levels.includes(level.name)) {
+          levels.push(level.name);
+        }
+      }
+    });
+  });
+  return { levels, html };
+}
+
+
+function distribuirPDAsEnEvaluacion() {
+  const evaluacionTable = document.getElementById('evaluacionTable');
+  if (!evaluacionTable) return;
+
+  // Eliminar todas las filas de PDAs existentes (desde la fila 4 en adelante)
+  while (evaluacionTable.rows.length > 4) {
+    evaluacionTable.deleteRow(4);
+  }
+
+  // Obtener todos los PDAs de la tabla Ubicación Curricular
+  const ubicacionTable = document.getElementById('ubicacionTable');
+  let pdaSet = new Set();
+
+  if (ubicacionTable) {
+    for (let i = 1; i < ubicacionTable.rows.length; i++) { // Saltar encabezado
+      const pdaCell = ubicacionTable.rows[i].cells[3];
+      if (pdaCell && pdaCell.textContent.trim()) {
+        // Permitir múltiples PDAs separados por # o ; o salto de línea
+        pdaCell.textContent.split(/[#;\n]/).forEach(pda => {
+          if (pda.trim()) pdaSet.add(pda.trim());
+        });
+      }
+    }
+  }
+
+  // También obtener PDAs de planViewerData si existen
+  try {
+    let planViewerData = localStorage.getItem('planViewerData');
+    if (planViewerData) {
+      planViewerData = JSON.parse(planViewerData);
+      if (Array.isArray(planViewerData.ubicacion)) {
+        planViewerData.ubicacion.forEach(row => {
+          if (row['PDA(s)'] && typeof row['PDA(s)'] === 'string') {
+            row['PDA(s)'].split(/[#;\n]/).forEach(pda => {
+              if (pda.trim()) pdaSet.add(pda.trim());
+            });
+          }
+        });
+      }
+    }
+  } catch (e) {}
+
+  // Convertir a array único
+  let pdaArray = Array.from(pdaSet);
+
+  // Clasificar y ubicar cada enunciado según Bloom
+  let pdaEntries = [];
+  pdaArray.forEach(pda => {
+    const { levels, html } = getBloomLevelsAndHighlight(pda);
+    if (levels.length > 0) {
+      levels.forEach(lvl => {
+        let idx = bloomLevels.findIndex(b => b.name.toLowerCase() === lvl.toLowerCase());
+        if (idx === -1) idx = 0;
+        pdaEntries.push({ html, cols: [idx] });
+      });
+    }
+  });
+
+  // Agrupar PDAs por columna (puede haber más de uno por columna)
+  let colGroups = [[],[],[],[],[],[]];
+  pdaEntries.forEach(entry => {
+    entry.cols.forEach(col => {
+      if (col >= 0 && col < 6) {
+        // Evitar duplicados visuales en la columna
+        if (!colGroups[col].includes(entry.html)) {
+          colGroups[col].push(entry.html);
+        }
+      }
+    });
+  });
+
+  // Determinar el número máximo de PDAs en una columna
+  let maxRows = Math.max(1, ...colGroups.map(arr => arr.length));
+
+  // Crear una fila por cada "nivel" de PDA
+  for (let r = 0; r < maxRows; r++) {
+    let row = evaluacionTable.insertRow(4 + r); // Insertar después de la fila de descriptores
+    for (let c = 0; c < 6; c++) {
+      let cell = row.insertCell();
+      cell.className = 'editable';
+      cell.setAttribute('contenteditable', 'true');
+      cell.innerHTML = colGroups[c][r] || '';
+    }
+  }
+}
+
+
+
+
+// Ejecutar al cargar y cada vez que cambien los PDAs
+window.addEventListener('DOMContentLoaded', () => {
+  setTimeout(distribuirPDAsEnEvaluacion, 500); // Espera para asegurar que las tablas estén llenas
+});
+// Si tienes un evento donde se actualiza la tabla de PDAs, llama también a distribuirPDAsEnEvaluacion();
+// --- ORGANIZACIÓN TABLE DYNAMIC LOGIC ---
+
+let fasesSecuencia = [];
+let etapasSecuencia = [];
+let metodologiaActual = '';
+let mediosRecyclingList = [];
+
+function getSecuenciaFasesEtapas() {
+  // Try to get from secuenciaTable if present, fallback to planViewerData
+  fasesSecuencia = [];
+  etapasSecuencia = [];
+  metodologiaActual = '';
+  const secTable = document.getElementById('secuenciaTable');
+  if (secTable && secTable.rows.length > 1) {
+    for (let i = 1; i < secTable.rows.length; i++) {
+      const row = secTable.rows[i];
+      const fase = row.cells[0]?.textContent?.trim();
+      if (fase && !fasesSecuencia.includes(fase)) fasesSecuencia.push(fase);
+      if (row.cells.length > 1) {
+        const etapa = row.cells[1]?.textContent?.trim();
+        if (etapa && !etapasSecuencia.includes(etapa)) etapasSecuencia.push(etapa);
+      }
+    }
+  } else {
+    // fallback to planViewerData
+    let planViewerData = null;
+    try {
+      planViewerData = JSON.parse(localStorage.getItem('planViewerData'));
+    } catch (e) {}
+    if (planViewerData && Array.isArray(planViewerData.secuenciaDidactica)) {
+      planViewerData.secuenciaDidactica.forEach(row => {
+        if (row.Fase && !fasesSecuencia.includes(row.Fase)) fasesSecuencia.push(row.Fase);
+        if (row.Etapa && !etapasSecuencia.includes(row.Etapa)) etapasSecuencia.push(row.Etapa);
+      });
+      metodologiaActual = planViewerData.metodologia || '';
+    }
+  }
+  // Also try to get metodologia from DOM
+  const metoElem = document.getElementById('metodologia');
+  if (metoElem && metoElem.textContent.trim()) metodologiaActual = metoElem.textContent.trim();
+}
+
+function showHideEtapaColumn() {
+  const show = metodologiaActual.toLowerCase().includes('proyectos');
+  document.getElementById('etapaHeader').style.display = show ? '' : 'none';
+  document.querySelectorAll('.etapa-col').forEach(td => td.style.display = show ? '' : 'none');
+}
+
+function renderOrganizacionTable(rows) {
+  getSecuenciaFasesEtapas();
+  showHideEtapaColumn();
+  const tbody = document.getElementById('organizacionTableBody');
+  tbody.innerHTML = '';
+  rows.forEach((row, idx) => {
+    const tr = document.createElement('tr');
+    // Fase
+    const faseTd = document.createElement('td');
+    const faseSel = document.createElement('select');
+    faseSel.className = 'fase-select';
+    faseSel.innerHTML = '<option value="">Selecciona</option>' + fasesSecuencia.map(f => `<option value="${f}"${row.Fase===f?' selected':''}>${f}</option>`).join('');
+    faseSel.onchange = () => saveOrganizacionRows();
+    faseTd.appendChild(faseSel);
+    tr.appendChild(faseTd);
+    // Etapa (conditionally)
+    const etapaTd = document.createElement('td');
+    etapaTd.className = 'etapa-col';
+    etapaTd.style.display = metodologiaActual.toLowerCase().includes('proyectos') ? '' : 'none';
+    const etapaSel = document.createElement('select');
+    etapaSel.innerHTML = '<option value="">Selecciona</option>' + etapasSecuencia.map(e => `<option value="${e}"${row.Etapa===e?' selected':''}>${e}</option>`).join('');
+    etapaSel.onchange = () => saveOrganizacionRows();
+    etapaTd.appendChild(etapaSel);
+    tr.appendChild(etapaTd);
+    // Tiempo (numeric)
+    const tiempoTd = document.createElement('td');
+    const tiempoInput = document.createElement('input');
+    tiempoInput.type = 'number';
+    tiempoInput.min = 0;
+    tiempoInput.value = row.Tiempo || '';
+    tiempoInput.style.width = '70px';
+    tiempoInput.oninput = () => saveOrganizacionRows();
+    tiempoTd.appendChild(tiempoInput);
+    tr.appendChild(tiempoTd);
+    // Espacio (dropdown)
+    const espacioTd = document.createElement('td');
+    const espacioSel = document.createElement('select');
+    ['','Biblioteca','Aula','Exterior','Laboratorio'].forEach(opt => {
+      const o = document.createElement('option');
+      o.value = opt;
+      o.textContent = opt || 'Selecciona';
+      if (row.Espacio === opt) o.selected = true;
+      espacioSel.appendChild(o);
+    });
+    espacioSel.onchange = () => saveOrganizacionRows();
+    espacioTd.appendChild(espacioSel);
+    tr.appendChild(espacioTd);
+    // Medios (textarea autoajustable + recycle button)
+    const mediosTd = document.createElement('td');
+    const mediosInput = document.createElement('textarea');
+    mediosInput.value = row.Medios || '';
+    mediosInput.className = 'auto-grow';
+    mediosInput.style.width = '90%';
+    mediosInput.style.minHeight = '38px';
+    mediosInput.style.resize = 'vertical';
+    mediosInput.oninput = function() {
+      autoGrowTextarea(mediosInput);
+      saveOrganizacionRows();
+    };
+    // Ajuste inicial
+    setTimeout(() => autoGrowTextarea(mediosInput), 0);
+    mediosTd.appendChild(mediosInput);
+    const recycleBtn = document.createElement('button');
+    recycleBtn.type = 'button';
+    recycleBtn.title = 'Reutilizar recurso';
+    recycleBtn.innerHTML = '♻️';
+    // Enable/disable ♻️ button based on required fields
+    function checkRecycleEnabled() {
+      const faseVal = faseSel.value;
+      const etapaVal = metodologiaActual.toLowerCase().includes('proyectos') ? etapaSel.value : 'ok';
+      const tiempoVal = tiempoInput.value;
+      const espacioVal = espacioSel.value;
+      // All must be filled
+      recycleBtn.disabled = !(faseVal && etapaVal && tiempoVal && espacioVal);
+    }
+    // Initial check
+    checkRecycleEnabled();
+    // Attach change listeners
+    faseSel.addEventListener('change', checkRecycleEnabled);
+    etapaSel.addEventListener('change', checkRecycleEnabled);
+    tiempoInput.addEventListener('input', checkRecycleEnabled);
+    espacioSel.addEventListener('change', checkRecycleEnabled);
+
+    // Left-click: collect data, fetch moments, strategy, call AI, show result
+    recycleBtn.onclick = async (e) => {
+      if (recycleBtn.disabled) return;
+      recycleBtn.disabled = true;
+      recycleBtn.textContent = '⏳';
+      // Collect data
+      const fase = faseSel.value;
+      const etapa = metodologiaActual.toLowerCase().includes('proyectos') ? etapaSel.value : '';
+      const tiempo = tiempoInput.value;
+      const espacio = espacioSel.value;
+      // Buscar la estrategia y momento asociado
+      let estrategia = '';
+      let momentoText = '';
+      try {
+        const secTable = document.getElementById('secuenciaTable');
+        if (secTable) {
+          for (let i = 1; i < secTable.rows.length; i++) {
+            const row = secTable.rows[i];
+            const faseCell = row.cells[0]?.textContent?.trim();
+            const etapaCell = row.cells.length > 4 ? row.cells[1]?.textContent?.trim() : '';
+            if (faseCell === fase && (!etapa || etapaCell === etapa)) {
+              estrategia = row.cells[2]?.textContent?.trim() || '';
+              const momentoCell = row.cells[row.cells.length-1];
+              momentoText = momentoCell?.textContent?.trim() || '';
+              break;
+            }
+          }
+        }
+      } catch(e) {}
+
+      // --- Lematización y filtrado como en construirTablaSecuencia.js ---
+      function filtrarYLematizar(texto) {
+        if (!texto) return '';
+        const articulos = ["el","la","los","las","un","una","unos","unas"];
+        const preposiciones = ["a","ante","bajo","cabe","con","contra","de","desde","en","entre","hacia","hasta","para","por","según","sin","so","sobre","tras"];
+        const pronombres = ["yo","tú","él","ella","nosotros","vosotros","ellos","ellas","me","te","se","nos","os","mi","tu","su","nuestro","vuestro","sus","le","les"];
+        const auxiliaresYModales = ["he","has","ha","hemos","habéis","han","hube","hubiste","hubo","hubimos","hubisteis","hubieron","había","habías","habíamos","habíais","habían","habré","habrás","habrá","habremos","habréis","habrán","habría","habrías","habríamos","habríais","habrían","soy","eres","es","somos","sois","son","era","eras","éramos","erais","eran","seré","serás","será","seremos","seréis","serán","sería","serías","seríamos","seríais","serían","estoy","estás","está","estamos","estáis","están","estuve","estuviste","estuvo","estuvimos","estuvisteis","estuvieron","estaba","estabas","estábamos","estabais","estaban","estaré","estarás","estará","estaremos","estaréis","estarán","estaría","estarías","estaríamos","estaríais","estarían","tengo","tienes","tiene","tenemos","tenéis","tienen","tuve","tuviste","tuvo","tuvimos","tuvisteis","tuvieron","tenía","tenías","teníamos","teníais","tenían","tendré","tendrás","tendrá","tendremos","tendréis","tendrán","tendría","tendrías","tendríamos","tendríais","tendrían"];
+        const lemas = {
+          "realizando": "realizar", "realizaron": "realizar", "realizó": "realizar", "realiza": "realizar", "realizar": "realizar",
+          "momento": "momento", "momentos": "momento", "estrategias": "estrategia", "estrategia": "estrategia",
+          "materiales": "material", "material": "material", "herramientas": "herramienta", "herramienta": "herramienta",
+          "lecturas": "lectura", "lectura": "lectura", "recomendadas": "recomendar", "recomendada": "recomendar",
+          "ejecutar": "ejecutar", "ejecución": "ejecutar", "aplicar": "aplicar", "aplicación": "aplicar",
+          "fase": "fase", "etapa": "etapa", "tiempo": "tiempo", "espacio": "espacio", "minutos": "minuto", "minuto": "minuto"
+        };
+        const stopwords = new Set([
+          ...articulos,
+          ...preposiciones,
+          ...pronombres,
+          ...auxiliaresYModales
+        ]);
+        return texto
+          .toLowerCase()
+          .replace(/[.,;:()¿?!¡"]/g, "")
+          .split(/\s+/)
+          .filter(palabra => !stopwords.has(palabra))
+          .map(palabra => lemas[palabra] || palabra)
+          .join(" ");
+      }
+      // Construir prompt optimizado
+      const prompt = `Eres experto en didáctica. Dame solo los materiales, herramientas o lecturas necesarias para ejecutar el siguiente momento según la estrategia. Responde con una lista breve, sin explicaciones ni repeticiones.\nEstrategia: ${filtrarYLematizar(estrategia)}\nMomento: ${filtrarYLematizar(momentoText)}\nFase: ${filtrarYLematizar(fase)}${etapa ? `\nEtapa: ${filtrarYLematizar(etapa)}` : ''}\nTiempo: ${filtrarYLematizar(tiempo)} min\nEspacio: ${filtrarYLematizar(espacio)}`;
+      try {
+        const res = await fetch('/api/ia/generatePlan', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ prompt: prompt, max_tokens: 120 })
+        });
+        if (!res.ok) throw new Error('Error IA: ' + res.statusText);
+        const data = await res.json();
+        let txt = data.response || data.result || data.choices?.[0]?.text || JSON.stringify(data);
+        mediosInput.value = txt.trim();
+        autoGrowTextarea(mediosInput);
+      } catch(e) {
+        mediosInput.value = 'Error al generar materiales: ' + (e.message||e);
+      }
+      recycleBtn.textContent = '♻️';
+      recycleBtn.disabled = false;
+      saveOrganizacionRows();
+    };
+    // Right-click: show recycle menu
+    recycleBtn.addEventListener('contextmenu', function(e) {
+      e.preventDefault();
+      showRecycleMenu(e, mediosInput);
+    });
+    mediosTd.appendChild(recycleBtn);
+    tr.appendChild(mediosTd);
+    // Acciones
+    const accionesTd = document.createElement('td');
+    const delBtn = document.createElement('button');
+    delBtn.type = 'button';
+    delBtn.textContent = 'Eliminar';
+    delBtn.className = 'add-alumnos-btn';
+    delBtn.style.background = '#dc3545';
+    delBtn.onclick = function() {
+      // Obtener el índice real de la fila en el DOM
+      const trElement = this.closest('tr');
+      const tbody = trElement.parentNode;
+      const rowIndex = Array.from(tbody.children).indexOf(trElement);
+      // Obtener los datos actuales desde localStorage (siempre la fuente de verdad)
+      let currentRows = [];
+      try { currentRows = JSON.parse(localStorage.getItem('organizacionRows')) || []; } catch(e) { currentRows = []; }
+      // Eliminar la fila correspondiente
+      currentRows.splice(rowIndex, 1);
+      // Guardar y volver a renderizar
+      localStorage.setItem('organizacionRows', JSON.stringify(currentRows));
+      renderOrganizacionTable(currentRows);
+    };
+    accionesTd.appendChild(delBtn);
+    tr.appendChild(accionesTd);
+    tbody.appendChild(tr);
+  });
+}
+
+function saveOrganizacionRows() {
+  const tbody = document.getElementById('organizacionTableBody');
+  const rows = [];
+  tbody.querySelectorAll('tr').forEach(tr => {
+    const fase = tr.querySelector('.fase-select')?.value || '';
+    const etapa = tr.querySelector('.etapa-col select')?.value || '';
+    const tiempo = tr.querySelector('td:nth-child(3) input')?.value || '';
+    const espacio = tr.querySelector('td:nth-child(4) select')?.value || '';
+    const medios = tr.querySelector('td:nth-child(5) textarea')?.value || '';
+    if (medios && !mediosRecyclingList.includes(medios)) mediosRecyclingList.push(medios);
+    rows.push({ Fase: fase, Etapa: etapa, Tiempo: tiempo, Espacio: espacio, Medios: medios });
+  });
+  localStorage.setItem('organizacionRows', JSON.stringify(rows));
+}
+
+function loadOrganizacionRows() {
+  let rows = [];
+  try {
+    rows = JSON.parse(localStorage.getItem('organizacionRows')) || [];
+  } catch(e) { rows = []; }
+  renderOrganizacionTable(rows);
+}
+
+function showRecycleMenu(e, inputEl) {
+  e.stopPropagation();
+  const menu = document.getElementById('recycleMediosMenu');
+  menu.innerHTML = '';
+  mediosRecyclingList.filter(m => m).forEach(m => {
+    const item = document.createElement('div');
+    item.textContent = m;
+    item.style.padding = '6px 12px';
+    item.style.cursor = 'pointer';
+    item.onclick = () => { inputEl.value = m; saveOrganizacionRows(); menu.style.display = 'none'; };
+    menu.appendChild(item);
+  });
+  if (menu.innerHTML === '') {
+    const none = document.createElement('div');
+    none.textContent = 'No hay recursos previos';
+    none.style.padding = '6px 12px';
+    menu.appendChild(none);
+  }
+  menu.style.display = 'block';
+  menu.style.left = e.clientX + 'px';
+  menu.style.top = e.clientY + 'px';
+}
+document.body.addEventListener('click', () => {
+  document.getElementById('recycleMediosMenu').style.display = 'none';
+});
+
+document.getElementById('addOrganizacionRowBtn').onclick = function() {
+  let rows = [];
+  try { rows = JSON.parse(localStorage.getItem('organizacionRows')) || []; } catch(e){}
+  rows.push({ Fase: '', Etapa: '', Tiempo: '', Espacio: '', Medios: '' });
+  localStorage.setItem('organizacionRows', JSON.stringify(rows));
+  renderOrganizacionTable(rows);
+};
+
+// On DOMContentLoaded, load rows and update on methodology/secuencia changes
+window.addEventListener('DOMContentLoaded', () => {
+  // Medios recycling list
+  try { mediosRecyclingList = JSON.parse(localStorage.getItem('mediosRecyclingList')) || []; } catch(e){}
+  loadOrganizacionRows();
+  // Listen for changes to metodologia or secuencia
+  const metoElem = document.getElementById('metodologia');
+  if (metoElem) {
+    const observer = new MutationObserver(() => {
+      getSecuenciaFasesEtapas();
+      let rows = [];
+      try { rows = JSON.parse(localStorage.getItem('organizacionRows')) || []; } catch(e){}
+      renderOrganizacionTable(rows);
+    });
+    observer.observe(metoElem, { childList: true, subtree: true, characterData: true });
+  }
+  // Save medios recycling list on unload
+  window.addEventListener('beforeunload', () => {
+    localStorage.setItem('mediosRecyclingList', JSON.stringify(mediosRecyclingList));
+  });
+});
+
+// Update savePlan and loadTablesData to include organizacionRows
+const originalSavePlan = window.savePlan;
+window.savePlan = function() {
+  saveOrganizacionRows();
+  if (originalSavePlan) originalSavePlan();
+};
+const originalLoadTablesData = window.loadTablesData;
+window.loadTablesData = function(data) {
+  if (originalLoadTablesData) originalLoadTablesData(data);
+  if (data && data.organizacion) {
+    localStorage.setItem('organizacionRows', JSON.stringify(data.organizacion));
+    renderOrganizacionTable(data.organizacion);
+  }
+};
+// --- END ORGANIZACIÓN TABLE LOGIC ---
+
+</script>
+<script>
+// --- Exportar e importar el plan completo como JSON ---
+function updatePlanViewerDataRaw() {
+  // Igual que exportPlanJSON pero solo actualiza el textarea
+  const editables = Array.from(document.querySelectorAll('.editable[contenteditable="true"]'));
+  const editableData = {};
+  editables.forEach(elem => {
+    const key = getCellKey(elem);
+    if (key) editableData[key] = elem.innerHTML;
+  });
+  let organizacionRows = [];
+  try { organizacionRows = JSON.parse(localStorage.getItem('organizacionRows')) || []; } catch(e){}
+  let mediosRecyclingList = [];
+  try { mediosRecyclingList = JSON.parse(localStorage.getItem('mediosRecyclingList')) || []; } catch(e){}
+  const plan = {
+    editables: editableData,
+    organizacion: organizacionRows,
+    mediosRecyclingList
+  };
+  const raw = document.getElementById('planViewerDataRaw');
+  if (raw) raw.value = JSON.stringify(plan, null, 2);
+}
+function exportPlanJSON() {
+  // 1. Celdas editables
+  const editables = Array.from(document.querySelectorAll('.editable[contenteditable="true"]'));
+  const editableData = {};
+  editables.forEach(elem => {
+    const key = getCellKey(elem);
+    if (key) editableData[key] = elem.innerHTML;
+  });
+  // 2. Organización
+  let organizacionRows = [];
+  try { organizacionRows = JSON.parse(localStorage.getItem('organizacionRows')) || []; } catch(e){}
+  // 3. Medios reciclados (si aplica)
+  let mediosRecyclingList = [];
+  try { mediosRecyclingList = JSON.parse(localStorage.getItem('mediosRecyclingList')) || []; } catch(e){}
+  // 4. Otros datos relevantes (agrega aquí si necesitas más)
+  // 5. Empaquetar
+  const plan = {
+    editables: editableData,
+    organizacion: organizacionRows,
+    mediosRecyclingList
+  };
+  const blob = new Blob([JSON.stringify(plan, null, 2)], {type: 'application/json'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'plan-didactico.json';
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(() => { document.body.removeChild(a); }, 100);
+  updatePlanViewerDataRaw();
+}
+
+function importPlanJSON(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      const plan = JSON.parse(e.target.result);
+      // 1. Restaurar celdas editables
+      if (plan.editables) {
+        for (const [key, value] of Object.entries(plan.editables)) {
+          // Buscar el elemento por key
+          const selector = key.startsWith('plano_') ? `[id="${key.replace('plano_','')}"]` : '';
+          let elem = null;
+          if (selector) elem = document.querySelector(selector);
+          if (!elem) {
+            // Buscar por tabla+fila+columna
+            const parts = key.split('_');
+            if (parts.length >= 4) {
+              const tableId = parts[1];
+              const rowIdx = parseInt(parts[2]);
+              const colIdx = parseInt(parts[3]);
+              const table = document.getElementById(tableId);
+              if (table && table.rows && table.rows[rowIdx] && table.rows[rowIdx].children[colIdx]) {
+                elem = table.rows[rowIdx].children[colIdx];
+              }
+            }
+          }
+          if (elem && elem.classList.contains('editable') && elem.isContentEditable) {
+            elem.innerHTML = value;
+            localStorage.setItem(key, value);
+          }
+        }
+      }
+      // 2. Organización
+      if (plan.organizacion) {
+        localStorage.setItem('organizacionRows', JSON.stringify(plan.organizacion));
+        if (typeof renderOrganizacionTable === 'function') renderOrganizacionTable(plan.organizacion);
+      }
+      // 3. Medios reciclados
+      if (plan.mediosRecyclingList) {
+        localStorage.setItem('mediosRecyclingList', JSON.stringify(plan.mediosRecyclingList));
+      }
+      // 4. Refrescar persistencia visual
+      restoreEditableCells();
+      if (typeof restoreInputCells === 'function') restoreInputCells();
+      alert('Plan cargado correctamente.');
+      updatePlanViewerDataRaw();
+    } catch(e) {
+      alert('Error al cargar el plan: ' + e.message);
+    }
+  };
+  reader.readAsText(file);
+}
+// Persistencia para todas las celdas editables (datos generales, tablas, etc)
+function getCellKey(elem) {
+  // Usa id si existe, si no, genera con tabla+fila+columna
+  if (elem.id) return 'plano_' + elem.id;
+  let parentRow = elem.closest('tr');
+  let table = elem.closest('table');
+  if (!parentRow || !table) return null;
+  let rowIdx = Array.from(parentRow.parentNode.children).indexOf(parentRow);
+  let colIdx = Array.from(parentRow.children).indexOf(elem);
+  let tableId = table.id || table.parentNode.id || 'tabla';
+  return `plano_${tableId}_${rowIdx}_${colIdx}`;
+}
+function saveEditableCell(e) {
+  const elem = e.target;
+  const key = getCellKey(elem);
+  if (key) localStorage.setItem(key, elem.innerHTML);
+}
+function restoreEditableCells() {
+  document.querySelectorAll('.editable[contenteditable="true"]').forEach(elem => {
+    const key = getCellKey(elem);
+    if (key && localStorage.getItem(key) !== null) {
+      elem.innerHTML = localStorage.getItem(key);
+    }
+    elem.addEventListener('input', function(e) {
+      saveEditableCell(e);
+      updatePlanViewerDataRaw();
+    });
+    elem.addEventListener('blur', function(e) {
+      saveEditableCell(e);
+      updatePlanViewerDataRaw();
+    });
+  });
+}
+window.addEventListener('DOMContentLoaded', function() {
+  restoreEditableCells();
+  updatePlanViewerDataRaw();
+});
+// Si se agregan filas dinámicamente en tablas, llamar a restoreEditableCells tras agregarlas.
+</script>
+<script>
+// Auto-grow para textareas de momentos
+function autoGrowTextarea(textarea) {
+  textarea.style.height = 'auto';
+  textarea.style.height = (textarea.scrollHeight) + 'px';
+}
+document.addEventListener('input', function(e) {
+  if (e.target && e.target.matches('textarea.auto-grow')) {
+    autoGrowTextarea(e.target);
+  }
+});
+document.addEventListener('DOMContentLoaded', function() {
+  document.querySelectorAll('textarea.auto-grow').forEach(function(t) {
+    autoGrowTextarea(t);
+  });
+});
+</script>
+</html>

@@ -1,5 +1,6 @@
 // Función global para construir la tabla de secuencia didáctica
 function construirTablaSecuencia(metodologia) {
+
   // Control de visibilidad de columna Estrategia
   if (typeof window.estrategiaImprimir === 'undefined') {
     window.estrategiaImprimir = true;
@@ -88,18 +89,7 @@ function construirTablaSecuencia(metodologia) {
   if (tieneEtapa) {
     html += '<th style="border:1px solid #ddd; padding:8px; text-align:left; background-color:#f2f2f2;">Etapa</th>';
   }
-  
-  if (window.estrategiaImprimir) {
-    html += `<th style="border:1px solid #ddd; padding:8px; text-align:left; background-color:#f2f2f2;">
-      Estrategia 
-      <button id='toggleEstrategiaBtn' title='Mostrar/Ocultar Estrategia' 
-        style='margin-left:4px; font-size:13px; padding:1px 6px; border-radius:4px; border:1px solid #ccc; background:#fafafa; cursor:pointer;'>
-        ${window.estrategiaImprimir ? '🚫' : '👁️'}
-      </button>
-    </th>`;
-  }
-  
-  html += `<th style="border:1px solid #ddd; padding:8px; text-align:left; background-color:#f2f2f2; ${!window.estrategiaImprimir ? 'width:60%;' : ''}">Actividades</th>`;
+  html += `<th style="border:1px solid #ddd; padding:8px; text-align:left; background-color:#f2f2f2; width:60%;">Actividades</th>`;
   html += '</tr>';
 
   // Leyendas y descripciones
@@ -152,9 +142,8 @@ function construirTablaSecuencia(metodologia) {
         html += `<tr>
           <td style="border:1px solid #ddd; padding:8px;">${fase} ${leyendaIconFase}</td>
           <td style="border:1px solid #ddd; padding:8px;">${etapa} ${leyendaIconEtapa}</td>`;
-        
-        if (window.estrategiaImprimir) {
-          html += `<td style="border:1px solid #ddd; padding:8px;">
+        html += `<td style="border:1px solid #ddd; padding:8px; width:60%;">
+          <div style="margin-bottom:4px;">
             <select id="${selectId}" onchange="actualizarMomento(this)" style="width:100%; max-width:100%; padding:4px; border:1px solid #ccc; border-radius:4px;">
               <option value="" selected>Selecciona una estrategia</option>
               <optgroup label="Lenguaje y Comunicación">
@@ -223,20 +212,17 @@ function construirTablaSecuencia(metodologia) {
                 <option>Lectura de imagen</option>
               </optgroup>
             </select>
-          </td>`;
-        }
-        
-        html += `<td style="border:1px solid #ddd; padding:8px; ${!window.estrategiaImprimir ? 'width:60%;' : ''}">
+          </div>
           <div class="momentos-clave" style="font-size:13px; margin-bottom:4px; color:#333;"></div>
           <div style="display:flex; gap:4px;">
-            <textarea disabled class="auto-grow" style="flex:1; width:100%; min-height:60px; padding:6px; border:1px solid #ddd; border-radius:4px; resize:vertical;"></textarea>
-            <button type="button" title="Reemplazar momentos" disabled style="padding:0 8px; font-size:16px; background:none; border:1px solid #ddd; border-radius:4px; cursor:pointer; align-self:flex-start;">♻️</button>
+            <textarea class="auto-grow" style="flex:1; width:100%; min-height:60px; padding:6px; border:1px solid #ddd; border-radius:4px; resize:vertical;"></textarea>
+            <button type="button" title="Reemplazar momentos" disabled style="padding:0 8px; font-size:16px; background:none; border:1px solid #ddd; border-radius:4px; cursor:pointer; align-self:flex-start;" onclick="reemplazarMomentos(this)">♻️</button>
           </div>
         </td></tr>`;
       });
     });
   } else if (fases.length) {
-    fases.forEach(fase => {
+    fases.forEach((fase, idx) => {
       const fila = secuenciaGuardada.find(f => (f.fase||'').trim()===fase);
       const faseKey = (fase || '').replace(/^[0-9. ]+/, '').trim();
       const leyendaDesc = leyendaFaseDescripciones[faseKey] || '';
@@ -246,85 +232,99 @@ function construirTablaSecuencia(metodologia) {
       html += `<tr><td style="border:1px solid #ddd; padding:8px;">${fase} ${leyendaIcon}</td>`;
       
       if (window.estrategiaImprimir) {
-        html += `<td style="border:1px solid #ddd; padding:8px;">
-          <select id="${selectId}" onchange="actualizarMomento(this)" style="width:100%; max-width:100%; padding:4px; border:1px solid #ccc; border-radius:4px;">
-            <option value="" selected>Selecciona una estrategia</option>
-            <optgroup label="Lenguaje y Comunicación">
-              <option>Taller de escritores</option>
-              <option>Lectura</option>
-              <option>Entrevista</option>
-              <option>Diálogo y conversación</option>
-              <option>Exposición de temas</option>
-              <option>Discusión organizativa</option>
-              <option>Diario de grupo y personal</option>
-              <option>Correspondencia escolar</option>
-              <option>Periódico mural</option>
-            </optgroup>
-            <optgroup label="Matemáticas">
-              <option>Planteamiento y resolución de problemas en seriación y algoritmos</option>
-              <option>Planteamiento y resolución de problemas apoyándose del rincón de la tiendita</option>
-              <option>Planteamiento y resolución de problemas utilizando el cálculo mental</option>
-              <option>Planteamiento y resolución de problemas en juegos matemáticos</option>
-            </optgroup>
-            <optgroup label="Ciencias Naturales">
-              <option>Experimentos</option>
-              <option>Consulta en materiales diversos</option>
-              <option>Elaboración de maquetas y álbumes</option>
-              <option>Mapas conceptuales</option>
-              <option>Cápsulas científicas</option>
-              <option>Diccionario científico</option>
-            </optgroup>
-            <optgroup label="Geografía e Historia">
-              <option>Recorridos y visitas</option>
-              <option>Línea del tiempo</option>
-              <option>Cartas a personajes del pasado</option>
-              <option>Noticiero histórico</option>
-              <option>Escenificación y teatro guiñol</option>
-              <option>Historieta</option>
-              <option>Mapas históricos</option>
-              <option>Lectura de mapas</option>
-              <option>Maquetas, dioramas y modelos</option>
-              <option>Registro climático</option>
-              <option>Uso de gráficas</option>
-              <option>Recorrido por la comunidad</option>
-              <option>Uso de la fotografía</option>
-              <option>Uso de mapas y croquis</option>
-            </optgroup>
-            <optgroup label="Formación Cívica y Ética">
-              <option>Juicio crítico a los medios</option>
-              <option>Juego de roles</option>
-              <option>Artículos de opinión</option>
-              <option>Debate</option>
-              <option>Asamblea escolar</option>
-              <option>Dilemas morales</option>
-            </optgroup>
-            <optgroup label="Educación Física">
-              <option>Juego con reglas</option>
-              <option>Juegos modificados</option>
-              <option>Circuitos de acción motriz</option>
-              <option>Actividades alternativas</option>
-              <option>Juegos naturales</option>
-            </optgroup>
-            <optgroup label="Artes">
-              <option>Elaboración de títeres y máscaras</option>
-              <option>Presentación de bailes y danzas</option>
-              <option>Muestras y exposiciones</option>
-              <option>Apreciación y exploración musical</option>
-              <option>Escenificaciones</option>
-              <option>¿Cómo mirar el teatro?</option>
-              <option>Lectura de imagen</option>
-            </optgroup>
-          </select>
-        </td>`;
+        html += `<td style="border:1px solid #ddd; padding:8px; width:100%;">
+          <div style="margin-bottom:4px;">
+            <select id="${selectId}" onchange="actualizarMomento(this)" style="width:100%; max-width:100%; padding:4px; border:1px solid #ccc; border-radius:4px;">
+              <option value="" selected>Selecciona una estrategia</option>
+              <optgroup label="Lenguaje y Comunicación">
+                <option>Taller de escritores</option>
+                <option>Lectura</option>
+                <option>Entrevista</option>
+                <option>Diálogo y conversación</option>
+                <option>Exposición de temas</option>
+                <option>Discusión organizativa</option>
+                <option>Diario de grupo y personal</option>
+                <option>Correspondencia escolar</option>
+                <option>Periódico mural</option>
+              </optgroup>
+              <optgroup label="Matemáticas">
+                <option>Planteamiento y resolución de problemas en seriación y algoritmos</option>
+                <option>Planteamiento y resolución de problemas apoyándose del rincón de la tiendita</option>
+                <option>Planteamiento y resolución de problemas utilizando el cálculo mental</option>
+                <option>Planteamiento y resolución de problemas en juegos matemáticos</option>
+              </optgroup>
+              <optgroup label="Ciencias Naturales">
+                <option>Experimentos</option>
+                <option>Consulta en materiales diversos</option>
+                <option>Elaboración de maquetas y álbumes</option>
+                <option>Mapas conceptuales</option>
+                <option>Cápsulas científicas</option>
+                <option>Diccionario científico</option>
+              </optgroup>
+              <optgroup label="Geografía e Historia">
+                <option>Recorridos y visitas</option>
+                <option>Línea del tiempo</option>
+                <option>Cartas a personajes del pasado</option>
+                <option>Noticiero histórico</option>
+                <option>Escenificación y teatro guiñol</option>
+                <option>Historieta</option>
+                <option>Mapas históricos</option>
+                <option>Lectura de mapas</option>
+                <option>Maquetas, dioramas y modelos</option>
+                <option>Registro climático</option>
+                <option>Uso de gráficas</option>
+                <option>Recorrido por la comunidad</option>
+                <option>Uso de la fotografía</option>
+                <option>Uso de mapas y croquis</option>
+              </optgroup>
+              <optgroup label="Formación Cívica y Ética">
+                <option>Juicio crítico a los medios</option>
+                <option>Juego de roles</option>
+                <option>Artículos de opinión</option>
+                <option>Debate</option>
+                <option>Asamblea escolar</option>
+                <option>Dilemas morales</option>
+              </optgroup>
+              <optgroup label="Educación Física">
+                <option>Juego con reglas</option>
+                <option>Juegos modificados</option>
+                <option>Circuitos de acción motriz</option>
+                <option>Actividades alternativas</option>
+                <option>Juegos naturales</option>
+              </optgroup>
+              <optgroup label="Artes">
+                <option>Elaboración de títeres y máscaras</option>
+                <option>Presentación de bailes y danzas</option>
+                <option>Muestras y exposiciones</option>
+                <option>Apreciación y exploración musical</option>
+                <option>Escenificaciones</option>
+                <option>¿Cómo mirar el teatro?</option>
+                <option>Lectura de imagen</option>
+              </optgroup>
+            </select>
+          </div>
+          <div class="momentos-clave" style="font-size:13px; margin-bottom:4px; color:#333;"></div>
+          <div style="display:flex; gap:4px;">
+            <textarea class="auto-grow" style="flex:1; width:100%; min-height:60px; padding:6px; border:1px solid #ddd; border-radius:4px; resize:vertical;"></textarea>
+            <button type="button" title="Reemplazar momentos" disabled style="padding:0 8px; font-size:16px; background:none; border:1px solid #ddd; border-radius:4px; cursor:pointer; align-self:flex-start;" onclick="reemplazarMomentos(this)">♻️</button>
+          </div>
+        </td></tr>`;
       }
       
-      html += `<td style="border:1px solid #ddd; padding:8px; ${!window.estrategiaImprimir ? 'width:60%;' : ''}">
-        <div class="momentos-clave" style="font-size:13px; margin-bottom:4px; color:#333;"></div>
-        <div style="display:flex; gap:4px;">
-          <textarea disabled class="auto-grow" style="flex:1; width:100%; min-height:60px; padding:6px; border:1px solid #ddd; border-radius:4px; resize:vertical;"></textarea>
-          <button type="button" title="Reemplazar momentos" disabled style="padding:0 8px; font-size:16px; background:none; border:1px solid #ddd; border-radius:4px; cursor:pointer; align-self:flex-start;">♻️</button>
-        </div>
-      </td></tr>`;
+      const key = getRowKey(fila || {}, idx);
+      let actividadesVal = '';
+try {
+  // Intenta restaurar desde localStorage
+  const saved = JSON.parse(localStorage.getItem('secuenciaTableState') || '{}');
+  if (saved[key] && typeof saved[key].actividades !== 'undefined') {
+    actividadesVal = saved[key].actividades;
+  } else if (window.secuenciaTableState && window.secuenciaTableState[key] && typeof window.secuenciaTableState[key].actividades !== 'undefined') {
+    actividadesVal = window.secuenciaTableState[key].actividades;
+  }
+} catch (e) {
+  actividadesVal = (window.secuenciaTableState && window.secuenciaTableState[key] && window.secuenciaTableState[key].actividades) ? window.secuenciaTableState[key].actividades : '';
+}
+      
     });
   } else {
     const colspan = tieneEtapa ? (window.estrategiaImprimir ? 4 : 3) : (window.estrategiaImprimir ? 3 : 2);
@@ -334,16 +334,7 @@ function construirTablaSecuencia(metodologia) {
   html += '</table>';
   container.innerHTML = html;
 
-  // Configurar botón de toggle
-  const toggleBtn = container.querySelector('#toggleEstrategiaBtn');
-  if (toggleBtn) {
-    toggleBtn.addEventListener('click', function(e) {
-      e.preventDefault();
-      window.estrategiaImprimir = !window.estrategiaImprimir;
-      construirTablaSecuencia(metodologia); // Reconstruir tabla completa
-    });
-  }
-
+  
   // Inicializar textareas con autoajuste
   container.querySelectorAll('.auto-grow').forEach(textarea => {
     textarea.style.height = 'auto';
@@ -351,6 +342,18 @@ function construirTablaSecuencia(metodologia) {
     textarea.addEventListener('input', function() {
       this.style.height = 'auto';
       this.style.height = (this.scrollHeight) + 'px';
+      const key = this.getAttribute('data-key');
+      if (key) {
+        if (!window.secuenciaTableState[key]) window.secuenciaTableState[key] = {};
+        window.secuenciaTableState[key].actividades = this.value;
+        // Además, guarda en localStorage
+        try {
+          const current = JSON.parse(localStorage.getItem('secuenciaTableState') || '{}');
+          if (!current[key]) current[key] = {};
+          current[key].actividades = this.value;
+          localStorage.setItem('secuenciaTableState', JSON.stringify(current));
+        } catch(e) {}
+      }
     });
   });
 
@@ -410,19 +413,31 @@ function construirTablaSecuencia(metodologia) {
         }
       }
       // Actividades
-      const textarea = tr.querySelector('textarea');
-      // Always restore from state if present, never overwrite with default
-      if (textarea && window.secuenciaTableState[key] && typeof window.secuenciaTableState[key].actividades !== 'undefined') {
-        textarea.value = window.secuenciaTableState[key].actividades;
+      const actividadesTd = tr.querySelector('td:last-child');
+      let restoredContent = '';
+      if (window.secuenciaTempState && window.secuenciaTempState[rowIdx]) {
+        const temp = window.secuenciaTempState[rowIdx];
+        if (temp) {
+          if (typeof temp.estrategia === 'string' && temp.estrategia.trim() !== '') {
+            restoredContent = 'La estrategia: ' + temp.estrategia + '\n' + (temp.actividades || '');
+          } else {
+            restoredContent = temp.actividades || '';
+          }
+        }
       }
-      // Only update state on user input or ♻️
-      if (textarea) {
-        textarea.addEventListener('input', function() {
-          if (!window.secuenciaTableState[key]) window.secuenciaTableState[key] = {};
-          window.secuenciaTableState[key].actividades = this.value;
-          try { localStorage.setItem('secuenciaTableState', JSON.stringify(window.secuenciaTableState)); } catch (e) {}
-        });
+      if (!window.estrategiaImprimir && actividadesTd) {
+        // Si Estrategia está oculta, elimina el textarea y coloca el texto plano
+        actividadesTd.innerHTML = 'Hola mundo';
+      } else if (window.estrategiaImprimir && actividadesTd) {
+        // Si Estrategia está visible, restaura en el textarea si existe
+        const textarea = actividadesTd.querySelector('textarea');
+        if (textarea && restoredContent) textarea.value = restoredContent;
       }
+      // Limpiar el estado temporal después de restaurar la tabla
+      if (rowIdx === (tbodyRows.length - 1)) {
+        window.secuenciaTempState = null;
+      }
+
       rowIdx++;
     });
   }
@@ -552,9 +567,11 @@ function construirTablaSecuencia(metodologia) {
 
 // Helper to get unique key for each row
 function getRowKey(row, idx) {
-  // Use fase + etapa if present, otherwise fallback to idx
-  let key = (row.fase||'') + '|' + (row.etapa||'');
-  if (!row.fase && !row.etapa) key = 'row_' + idx;
+  // Usa fase y etapa en minúsculas y sin espacios extra
+  let fase = (row.fase||'').toString().trim().toLowerCase();
+  let etapa = (row.etapa||'').toString().trim().toLowerCase();
+  let key = fase + '|' + etapa;
+  if (!fase && !etapa) key = 'row_' + idx;
   return key;
 }
 
@@ -562,22 +579,314 @@ function getRowKey(row, idx) {
 function actualizarMomento(selectElem) {
   const tr = selectElem.closest('tr');
   const momentoTd = tr.querySelector('td:last-child');
-  
   if (momentoTd) {
     const momentosClaveDiv = momentoTd.querySelector('.momentos-clave');
     const textarea = momentoTd.querySelector('textarea');
     const btn = momentoTd.querySelector('button');
     const estrategia = selectElem.value;
-    
     if (momentosClaveDiv) {
       momentosClaveDiv.textContent = momentosPorEstrategia[estrategia] || '';
     }
-    
     if (textarea && btn) {
+      // Bloqueo robusto para cuentas básicas: el click NUNCA llega al handler IA
+      btn.addEventListener('click', function(e) {
+        try {
+          const userData = JSON.parse(localStorage.getItem('userData'));
+          if (!userData || userData.membership !== 'premium') {
+            alert('Solo usuarios premium pueden usar la IA.');
+            e.preventDefault();
+            e.stopImmediatePropagation();
+            return false;
+          }
+        } catch(err) {
+          alert('Solo usuarios premium pueden usar la IA.');
+          e.preventDefault();
+          e.stopImmediatePropagation();
+          return false;
+        }
+        // Si es premium, el handler IA se ejecutará normalmente
+    }, true);
+      // Handler IA (solo si es premium y con crédito)
+      btn.addEventListener('click', async function(e) {
+        try {
+          const userData = JSON.parse(localStorage.getItem('userData'));
+          if (!userData || userData.membership !== 'premium') return; // Ya bloqueado arriba
+          if (typeof descontarCreditoUsuario === 'function') {
+            const creditosRestantes = await descontarCreditoUsuario();
+            if (creditosRestantes <= 0) {
+              alert('No tienes créditos suficientes para usar la IA.');
+              e.preventDefault();
+              return;
+            }
+          }
+        } catch(err) { return; }
+        // Aquí sigue el flujo IA normal
+        if (btn.disabled) return;
+        btn.disabled = true;
+        btn.textContent = '...';
+        textarea.value = '';
+        // Obtener datos de la fila actual
+        const estrategia = estrategiaSelect.value;
+        // Obtener datos de Ubicación Curricular
+        let ubicacion = { problema: '', campos: '', contenidos: '', pda: '' };
+        try {
+          const ubicacionTable = document.getElementById('ubicacionTable');
+          if (ubicacionTable) {
+            const row = ubicacionTable.querySelector('tbody tr');
+            if (row) {
+              const cells = row.querySelectorAll('td');
+              ubicacion.problema = cells[0]?.innerText.trim() || '';
+              ubicacion.campos = cells[1]?.innerText.trim() || '';
+              ubicacion.contenidos = cells[2]?.innerText.trim() || '';
+              ubicacion.pda = cells[3]?.innerText.trim() || '';
+            }
+          }
+        } catch(e) {}
+        // Filtrar y lematizar textos
+        function filtrarYLematizar(texto) {
+          const articulos = ["el", "la", "los", "las", "un", "una", "unos", "unas"];
+          const preposiciones = [
+            "a", "ante", "bajo", "cabe", "con", "contra", "de", "desde", "en", "entre", "hacia",
+            "hasta", "para", "por", "según", "sin", "sobre", "tras"
+          ];
+          const pronombres = [
+            "yo", "tú", "él", "ella", "nosotros", "nosotras", "vosotros", "ustedes", "ellos", "ellas",
+            "me", "te", "se", "nos", "os", "lo", "la", "le", "les", "mi", "tu", "su", "nuestro", "vuestro"
+          ];
+          const auxiliaresYModales = [
+            "ser", "soy", "eres", "es", "somos", "son", "fui", "fue", "eran",
+            "estar", "estoy", "estás", "está", "estamos", "están", "estuvo",
+            "haber", "he", "has", "ha", "hemos", "han", "había", "hubo",
+            "tener", "tengo", "tiene", "tenía", "tuvo", "tenemos",
+            "poder", "puedo", "puede", "pueden", "podía", "podemos",
+            "deber", "debo", "debe", "deben", "debía",
+            "soler", "suelo", "suele", "solían",
+            "querer", "quiero", "quiere", "quieren", "quería",
+            "necesitar", "necesito", "necesita", "necesitan"
+          ];
+          const lemas = {
+            "cultivos": "cultivo",
+            "ubicado": "ubicar",
+            "ubicada": "ubicar",
+            "tenemos": "tener",
+            "necesitamos": "necesitar",
+            "aprovechar": "aprovechamiento",
+            "tiene": "tener",
+            "faltan": "faltar",
+            "falta": "faltar",
+            "llueve": "llover",
+            "lluvia": "precipitación",
+            "precipitación": "precipitación",
+            "agua": "agua",
+            "comunidad": "comunidad",
+            "sistema": "sistema",
+            "tema": "tema",
+            "problema": "problema",
+            "manera": "modo",
+            "forma": "modo",
+            "eficiente": "eficiente",
+            "eficiencia": "eficiente",
+            "cultivos": "cultivo",
+            "recursos": "recurso",
+            "zonas": "zona",
+            "lugares": "lugar",
+            "región": "región",
+            "anual": "anual"
+          };
+          const stopwords = new Set([
+            ...articulos,
+            ...preposiciones,
+            ...pronombres,
+            ...auxiliaresYModales
+          ]);
+          return texto
+            .toLowerCase()
+            .replace(/[.,;:()¿?!¡"]/g, "")
+            .split(/\s+/)
+            .filter(palabra => !stopwords.has(palabra))
+            .map(palabra => lemas[palabra] || palabra)
+            .join(" ");
+        }
+        // Construir prompt optimizado
+        const prompt = `Eres experto en didáctica. Desarrolla los momentos para aplicar la estrategia seleccionada en la secuencia didáctica, indicando qué hacer y qué material recomendarías. Usa la información curricular y limita la respuesta a máximo 120 palabras. Formato: solo texto plano.\n\nEstrategia: ${filtrarYLematizar(estrategia)}\nProblema: ${filtrarYLematizar(ubicacion.problema).substring(0,120)}\nCampos: ${filtrarYLematizar(ubicacion.campos).substring(0,120)}\nContenidos: ${filtrarYLematizar(ubicacion.contenidos).substring(0,120)}\nPDA: ${filtrarYLematizar(ubicacion.pda).substring(0,120)}\n`;
+        try {
+          const res = await fetch('/api/ia/generatePlan', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ prompt: prompt, max_tokens: 400 })
+          });
+          if (!res.ok) throw new Error('Error IA: ' + res.statusText);
+          const data = await res.json();
+          if (typeof descontarCredito === 'function') descontarCredito();
+          let txt = data.response || data.result || data.choices?.[0]?.text || JSON.stringify(data);
+          textarea.value = txt.trim();
+          textarea.style.height = 'auto';
+          textarea.style.height = (textarea.scrollHeight) + 'px';
+        } catch(e) {
+          textarea.value = 'Error al generar momentos: ' + (e.message||e);
+        }
+        btn.textContent = '♻️';
+        btn.disabled = false;
+      });
       const habilitar = estrategia && estrategia !== '';
       textarea.disabled = !habilitar;
       btn.disabled = !habilitar;
+      // Autoajustar alto del textarea al contenido
+      textarea.style.height = 'auto';
+      textarea.style.height = (textarea.scrollHeight) + 'px';
+      // Agregar event listener para autoajuste en edición manual
+      if (!textarea._autoGrowListener) {
+        textarea.addEventListener('input', function() {
+          this.style.height = 'auto';
+          this.style.height = (this.scrollHeight) + 'px';
+        });
+        textarea._autoGrowListener = true;
+      }
     }
+  }
+}
+
+// Función para reemplazar el contenido del textarea con los momentos sugeridos
+async function reemplazarMomentos(btnElem) {
+  const momentoTd = btnElem.closest('td');
+  const select = momentoTd.querySelector('select');
+  const textarea = momentoTd.querySelector('textarea');
+  if (select && textarea) {
+    const estrategia = select.value;
+    if (!estrategia) return;
+    // Mostrar animación de espera
+    btnElem.disabled = true;
+    btnElem.textContent = '⏳';
+    textarea.value = 'Consultando IA...';
+    textarea.style.height = 'auto';
+    textarea.style.height = (textarea.scrollHeight) + 'px';
+
+    // Obtener datos de la fila (ajusta según tu estructura de tabla)
+    const tr = btnElem.closest('tr');
+    let ubicacion = {
+      problema: '',
+      campos: '',
+      contenidos: '',
+      pda: ''
+    };
+    const celdas = tr.querySelectorAll('td');
+    if (celdas.length >= 4) {
+      ubicacion.problema = celdas[0]?.textContent?.trim() || '';
+      ubicacion.campos = celdas[1]?.textContent?.trim() || '';
+      ubicacion.contenidos = celdas[2]?.textContent?.trim() || '';
+      ubicacion.pda = celdas[3]?.textContent?.trim() || '';
+    }
+
+    // Función auxiliar para filtrar y lematizar (igual que en tu código)
+    function filtrarYLematizar(texto) {
+      if (!texto) return '';
+      const articulos = ["el", "la", "los", "las", "un", "una", "unos", "unas"];
+      const preposiciones = [
+        "a", "ante", "bajo", "cabe", "con", "contra", "de", "desde", "en", "entre", "hacia",
+        "hasta", "para", "por", "según", "sin", "sobre", "tras"
+      ];
+      const pronombres = [
+        "yo", "tú", "él", "ella", "nosotros", "nosotras", "vosotros", "ustedes", "ellos", "ellas",
+        "me", "te", "se", "nos", "os", "lo", "la", "le", "les", "mi", "tu", "su", "nuestro", "vuestro"
+      ];
+      const auxiliaresYModales = [
+        "ser", "estar", "haber", "tener", "poder", "deber", "querer", "ir", "venir", "ver", "dar", "decir", "hacer", "gustar", "soler"
+      ];
+      // Ampliar stopwords con conectores y palabras comunes irrelevantes
+      const conectores = ["y", "o", "u", "e", "pero", "aunque", "sino", "también", "además", "incluso", "solo", "sólo", "ya", "aquí", "allí", "así", "cada", "otro", "otra", "otros", "otras", "más", "menos", "muy", "poco", "mucho", "casi", "siempre", "nunca", "antes", "después", "nuevo", "nueva", "nuevos", "nuevas"];
+      const lemas = {
+        "problema": "problema",
+        "manera": "modo",
+        "forma": "modo",
+        "eficiente": "eficiente",
+        "eficiencia": "eficiente",
+        "cultivos": "cultivo",
+        "recursos": "recurso",
+        "zonas": "zona",
+        "lugares": "lugar",
+        "región": "región",
+        "anual": "anual"
+      };
+      const stopwords = new Set([
+        ...articulos,
+        ...preposiciones,
+        ...pronombres,
+        ...auxiliaresYModales,
+        ...conectores
+      ]);
+      // Filtrado avanzado: quitar stopwords, números, palabras <=2 letras, duplicados
+      const palabras = texto
+        .toLowerCase()
+        .replace(/[.,;:()¿?!¡"\d]/g, "")
+        .split(/\s+/)
+        .filter(palabra => palabra.length > 2 && !stopwords.has(palabra));
+      const lematizadas = palabras.map(palabra => lemas[palabra] || palabra);
+      // Eliminar duplicados conservando orden
+      return [...new Set(lematizadas)].join(" ");
+    }
+
+    // Construir prompt optimizado y eficiente en tokens
+    // 1. Comprime los textos de entrada eliminando palabras vacías y truncando a lo esencial
+    // 2. Usa etiquetas cortas y claras
+    // 3. Pide formato de respuesta estructurado y breve
+
+    // Utilidad para truncar a X palabras
+    function truncarPalabras(texto, maxPalabras) {
+      if (!texto) return '';
+      const palabras = texto.split(/\s+/);
+      return palabras.slice(0, maxPalabras).join(' ');
+    }
+
+    // Compactar entradas y etiquetar
+    const datosCurriculares = [
+      `PROBLEMA: ${truncarPalabras(filtrarYLematizar(ubicacion.problema), 20)}`,
+      `CAMPOS: ${truncarPalabras(filtrarYLematizar(ubicacion.campos), 10)}`,
+      `CONTENIDOS: ${truncarPalabras(filtrarYLematizar(ubicacion.contenidos), 10)}`,
+      `PDA: ${truncarPalabras(filtrarYLematizar(ubicacion.pda), 10)}`
+    ].join('\n');
+
+    // Prompt optimizado para la IA
+    const prompt = `Eres experto en didáctica.\nCon base en los siguientes datos curriculares comprimidos, redacta actividades muy específicas y estructuradas para cada momento de la estrategia seleccionada.\nExplica cada momento en una sola frase clara y concreta, usando el contexto proporcionado.\nIncluye una lista breve de materiales sugeridos y referencias (índices de libros de texto de primaria).\nEvita repeticiones, no agregues introducción ni cierre.\nResponde en formato estructurado:\nMOMENTOS: lista numerada (máx 5)\nMATERIALES: lista corta\nREFERENCIAS: lista corta\n\nEstrategia: ${filtrarYLematizar(estrategia)}\n${datosCurriculares}`;
+
+    // Solo premium puede usar IA
+    if (typeof isPremiumUser === 'function' && !isPremiumUser()) {
+      if (typeof mostrarMensajeSoloPremium === 'function') mostrarMensajeSoloPremium();
+      textarea.value = 'Solo usuarios premium pueden usar la IA.';
+      btnElem.textContent = '♻️';
+      btnElem.disabled = false;
+      return;
+    }
+    // Descontar crédito antes de la solicitud IA
+    try {
+      if (typeof descontarCreditoUsuario === 'function') {
+        const creditosRestantes = await descontarCreditoUsuario();
+        if (creditosRestantes <= 0) {
+          textarea.value = 'Sin créditos disponibles.';
+          btnElem.textContent = '♻️';
+          btnElem.disabled = false;
+          alert('No tienes créditos disponibles para solicitar a la IA.');
+          return;
+        }
+      }
+      const res = await fetch('/api/ia/generatePlan', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ prompt: prompt, max_tokens: 400 })
+      });
+      if (!res.ok) throw new Error('Error IA: ' + res.statusText);
+      const data = await res.json();
+      let txt = data.response || data.result || data.choices?.[0]?.text || JSON.stringify(data);
+      textarea.value = txt.trim();
+      textarea.style.height = 'auto';
+      textarea.style.height = (textarea.scrollHeight) + 'px';
+    } catch(e) {
+      // Si falla la IA, usar sugerencia local si existe
+      textarea.value = momentosPorEstrategia[estrategia] || 'Error al generar momentos: ' + (e.message||e);
+      textarea.style.height = 'auto';
+      textarea.style.height = (textarea.scrollHeight) + 'px';
+    }
+    btnElem.textContent = '♻️';
+    btnElem.disabled = false;
   }
 }
 

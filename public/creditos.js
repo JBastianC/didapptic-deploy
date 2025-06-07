@@ -27,6 +27,15 @@ function descontarCredito() {
 }
 
 function mostrarCreditos() {
+  try {
+    const userData = JSON.parse(localStorage.getItem('userData'));
+    if (!userData || userData.membership !== 'premium') {
+      // Oculta si no es premium
+      const scoreDiv = document.getElementById('creditos-score');
+      if (scoreDiv) scoreDiv.style.display = 'none';
+      return;
+    }
+  } catch(e) { return; }
   let scoreDiv = document.getElementById('creditos-score');
   if (!scoreDiv) {
     scoreDiv = document.createElement('div');
