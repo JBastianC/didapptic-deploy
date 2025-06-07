@@ -126,7 +126,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         grado.innerHTML = '<option value="">Seleccione...</option>';
 
         if (nivelEducativo.value === 'Primaria') {
-            ['Fase 1', 'Fase 2'].forEach(f => {
+            ['Fase 1', 'Fase 2','Fase 3', 'Fase 4','Fase 5', 'Fase 6'].forEach(f => {
                 const option = document.createElement('option');
                 option.value = f;
                 option.textContent = f;
