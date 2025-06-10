@@ -30,6 +30,120 @@ document.addEventListener('DOMContentLoaded', async function() {
       .normalize("NFD").replace(/[\u0300-\u036f]/g, "");
   }
 
+  // === Diccionario de lemas y sinónimos global ===
+  window.diccionarioLemas = window.diccionarioLemas || {
+      // ejemplo: "aprendizajes": "aprendizaje"
+  };
+  window.sinonimos = window.sinonimos || {
+      // ejemplo: "habilidad": ["destreza", "aptitud"]
+  };
+
+  // === Stopwords español ===
+  const STOPWORDS = [
+    "de", "la", "que", "el", "en", "y", "a", "los", "del", "se", "las", "por", "un", "para", "con", "no", "una", "su", "al", "lo", "como", "más", "pero", "sus", "le", "ya", "o", "este", "sí", "porque", "esta", "entre", "cuando", "muy", "sin", "sobre", "también", "me", "hasta", "hay", "donde", "quien", "desde", "todo", "nos", "durante", "todos", "uno", "les", "ni", "contra", "otros", "ese", "eso", "ante", "ellos", "e", "esto", "mí", "antes", "algunos", "qué", "unos", "yo", "otro", "otras", "otra", "él", "tanto", "esa", "estos", "mucho", "quienes", "nada", "muchos", "cual", "poco", "ella", "estar", "estas", "algunas", "algo", "nosotros", "mi", "mis", "tú", "te", "ti", "tu", "tus", "ellas", "nosotras", "vosostros", "vosostras", "os", "mío", "mía", "míos", "mías", "tuyo", "tuya", "tuyos", "tuyas", "suyo", "suya", "suyos", "suyas", "nuestro", "nuestra", "nuestros", "nuestras", "vuestro", "vuestra", "vuestros", "vuestras", "esos", "esas", "estoy", "estás", "está", "estamos", "estáis", "están", "esté", "estés", "estemos", "estéis", "estén", "estaré", "estarás", "estará", "estaremos", "estaréis", "estarán", "estaría", "estarías", "estaríamos", "estaríais", "estarían", "estaba", "estabas", "estábamos", "estabais", "estaban", "estuve", "estuviste", "estuvo", "estuvimos", "estuvisteis", "estuvieron", "estuviera", "estuvieras", "estuviéramos", "estuvierais", "estuvieran", "estuviese", "estuvieses", "estuviésemos", "estuvieseis", "estuviesen", "estando", "estado", "estada", "estados", "estadas", "estad"];
+
+  // === Helpers de procesamiento ===
+  function normalizarTexto(texto) {
+      return texto
+          .toLowerCase()
+          .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+          .replace(/[^a-zA-Z0-9áéíóúüñ\s]/g, " ")
+          .replace(/\s+/g, " ").trim();
+  }
+
+  function lematizarPalabra(palabra) {
+      if (window.diccionarioLemas[palabra]) return window.diccionarioLemas[palabra];
+      for (const lema in window.sinonimos) {
+          if (window.sinonimos[lema].includes(palabra)) return lema;
+      }
+      return palabra;
+  }
+
+  function extraerPalabrasClave(texto) {
+      const palabras = normalizarTexto(texto).split(' ');
+      return palabras
+          .filter(p => p.length > 3 && !STOPWORDS.includes(p) && isNaN(p))
+          .map(lematizarPalabra);
+  }
+
+  function generarNGramas(palabras, n=2) {
+      const ngramas = [];
+      for (let i = 0; i <= palabras.length - n; i++) {
+          ngramas.push(palabras.slice(i, i+n).join(' '));
+      }
+      return ngramas;
+  }
+
+  function calcularScore(problemaKw, contenidoKw, pdaKw, campo, rowCampo) {
+      let score = 0;
+      let motivos = [];
+      // Coincidencia exacta de lema
+      problemaKw.forEach(kw => {
+          if (contenidoKw.includes(kw) || pdaKw.includes(kw)) {
+              score += 10;
+              motivos.push(`Coincidencia exacta: ${kw}`);
+          }
+      });
+      // Coincidencia por sinónimo
+      problemaKw.forEach(kw => {
+          for (const lema in window.sinonimos) {
+              if (window.sinonimos[lema].includes(kw) && (contenidoKw.includes(lema) || pdaKw.includes(lema))) {
+                  score += 7;
+                  motivos.push(`Sinónimo: ${kw}→${lema}`);
+              }
+          }
+      });
+      // Coincidencia de n-grama
+      const ngramasProb = generarNGramas(problemaKw, 2).concat(generarNGramas(problemaKw, 3));
+      const ngramasCont = generarNGramas(contenidoKw, 2).concat(generarNGramas(contenidoKw, 3));
+      const ngramasPda = generarNGramas(pdaKw, 2).concat(generarNGramas(pdaKw, 3));
+      ngramasProb.forEach(ng => {
+          if (ngramasCont.includes(ng) || ngramasPda.includes(ng)) {
+              score += 5;
+              motivos.push(`N-grama: ${ng}`);
+          }
+      });
+      // Coincidencia parcial (subcadena)
+      problemaKw.forEach(kw => {
+          if (contenidoKw.some(c => c.includes(kw)) || pdaKw.some(p => p.includes(kw))) {
+              score += 3;
+              motivos.push(`Parcial: ${kw}`);
+          }
+      });
+      // Coincidencia solo de campo
+      if (campo && rowCampo && campo === rowCampo) {
+          score += 1;
+          motivos.push('Coincidencia de campo');
+      }
+      return {score, motivos};
+  }
+
+  // === UI: Modal para motivos ===
+  function mostrarMotivoSugerencia(rowId, motivos, score) {
+      let modal = document.getElementById('motivo-modal');
+      if (!modal) {
+          modal = document.createElement('div');
+          modal.id = 'motivo-modal';
+          modal.style.position = 'fixed';
+          modal.style.top = '20%';
+          modal.style.left = '50%';
+          modal.style.transform = 'translate(-50%, -20%)';
+          modal.style.background = '#fff';
+          modal.style.padding = '24px';
+          modal.style.border = '2px solid #0077cc';
+          modal.style.borderRadius = '12px';
+          modal.style.zIndex = '99999';
+          modal.style.boxShadow = '0 4px 24px rgba(0,0,0,0.2)';
+          modal.innerHTML = `<h3>Motivo de la sugerencia</h3><div id="motivo-list"></div><button id="cerrar-motivo">Cerrar</button>`;
+          document.body.appendChild(modal);
+          document.getElementById('cerrar-motivo').onclick = () => {
+              modal.style.display = 'none';
+          };
+      }
+      document.getElementById('motivo-list').innerHTML = motivos.map(m => `<li>${m}</li>`).join('')+`<br><b>Puntaje:</b> ${score}`;
+      modal.style.display = 'block';
+  }
+
   // Agregar al inicio del script3.js
   function setupPdaSelectionHandlers() {
     const pdasList = document.getElementById('pdasList');
@@ -712,7 +826,47 @@ function updateSelectedPdas(checkbox) {
           }
         }
 
-        window.open('plano-contextual-viewer.html', '_blank');
+        // --- EXPORTACIÓN PLANA Y RELACIONAL DE PROBLEMAS ---
+    function exportProblemasPlanos() {
+      // Tomar todos los rows completos
+      const problemasExport = Object.values(rowsState).map(row => {
+        // Deduplicar y limpiar
+        const campos = Array.isArray(row.campos) ? row.campos.filter(Boolean) : [];
+        const contenidos = Array.isArray(row.contenidos) ? row.contenidos.filter(Boolean) : [];
+        const pdas = Array.isArray(row.pda) ? row.pda.filter(Boolean) : [];
+        // Relaciones campo-contenido
+        const conexionesCampoContenido = [];
+        campos.forEach(campo => {
+          contenidos.forEach(contenido => {
+            conexionesCampoContenido.push({ campo, contenido });
+          });
+        });
+        // Relaciones contenido-pda
+        const conexionesContenidoPda = [];
+        contenidos.forEach(contenido => {
+          pdas.forEach(pda => {
+            conexionesContenidoPda.push({ contenido, pda });
+          });
+        });
+        return {
+          problemas: row.problemas,
+          fase: row.fase,
+          campos: [...new Set(campos)],
+          contenidos: [...new Set(contenidos)],
+          pdas: [...new Set(pdas)],
+          conexiones: [
+            ...conexionesCampoContenido,
+            ...conexionesContenidoPda
+          ],
+          eje: row.eje || ''
+        };
+      });
+      return problemasExport;
+    }
+
+    // Al exportar, usar esta función para guardar el JSON plano
+    window.exportProblemasPlanos = exportProblemasPlanos;
+    window.open('plano-contextual-viewer.html', '_blank');
       } catch (err) {
         console.error('No se pudo generar ni enviar el JSON al visor contextual', err);
       }
@@ -1139,6 +1293,116 @@ function updateSelectedPdas(checkbox) {
     }
     tr.checkCompletion = checkCompletion;
     checkCompletion();
+  }
+
+  // === Diccionario de lemas y sinónimos global ===
+  window.diccionarioLemas = window.diccionarioLemas || {
+      // ejemplo: "aprendizajes": "aprendizaje"
+  };
+  window.sinonimos = window.sinonimos || {
+      // ejemplo: "habilidad": ["destreza", "aptitud"]
+  };
+
+  // === Helpers de procesamiento ===
+  function normalizarTexto(texto) {
+      return texto
+          .toLowerCase()
+          .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+          .replace(/[^a-zA-Z0-9áéíóúüñ\s]/g, " ")
+          .replace(/\s+/g, " ").trim();
+  }
+
+  function lematizarPalabra(palabra) {
+      if (window.diccionarioLemas[palabra]) return window.diccionarioLemas[palabra];
+      for (const lema in window.sinonimos) {
+          if (window.sinonimos[lema].includes(palabra)) return lema;
+      }
+      return palabra;
+  }
+
+  function extraerPalabrasClave(texto) {
+      const palabras = normalizarTexto(texto).split(' ');
+      return palabras
+          .filter(p => p.length > 3 && !STOPWORDS.includes(p) && isNaN(p))
+          .map(lematizarPalabra);
+  }
+
+  function generarNGramas(palabras, n=2) {
+      const ngramas = [];
+      for (let i = 0; i <= palabras.length - n; i++) {
+          ngramas.push(palabras.slice(i, i+n).join(' '));
+      }
+      return ngramas;
+  }
+
+  function calcularScore(problemaKw, contenidoKw, pdaKw, campo, rowCampo) {
+      let score = 0;
+      let motivos = [];
+      // Coincidencia exacta de lema
+      problemaKw.forEach(kw => {
+          if (contenidoKw.includes(kw) || pdaKw.includes(kw)) {
+              score += 10;
+              motivos.push(`Coincidencia exacta: ${kw}`);
+          }
+      });
+      // Coincidencia por sinónimo
+      problemaKw.forEach(kw => {
+          for (const lema in window.sinonimos) {
+              if (window.sinonimos[lema].includes(kw) && (contenidoKw.includes(lema) || pdaKw.includes(lema))) {
+                  score += 7;
+                  motivos.push(`Sinónimo: ${kw}→${lema}`);
+              }
+          }
+      });
+      // Coincidencia de n-grama
+      const ngramasProb = generarNGramas(problemaKw, 2).concat(generarNGramas(problemaKw, 3));
+      const ngramasCont = generarNGramas(contenidoKw, 2).concat(generarNGramas(contenidoKw, 3));
+      const ngramasPda = generarNGramas(pdaKw, 2).concat(generarNGramas(pdaKw, 3));
+      ngramasProb.forEach(ng => {
+          if (ngramasCont.includes(ng) || ngramasPda.includes(ng)) {
+              score += 5;
+              motivos.push(`N-grama: ${ng}`);
+          }
+      });
+      // Coincidencia parcial (subcadena)
+      problemaKw.forEach(kw => {
+          if (contenidoKw.some(c => c.includes(kw)) || pdaKw.some(p => p.includes(kw))) {
+              score += 3;
+              motivos.push(`Parcial: ${kw}`);
+          }
+      });
+      // Coincidencia solo de campo
+      if (campo && rowCampo && campo === rowCampo) {
+          score += 1;
+          motivos.push('Coincidencia de campo');
+      }
+      return {score, motivos};
+  }
+
+  // === UI: Modal para motivos ===
+  function mostrarMotivoSugerencia(rowId, motivos, score) {
+      let modal = document.getElementById('motivo-modal');
+      if (!modal) {
+          modal = document.createElement('div');
+          modal.id = 'motivo-modal';
+          modal.style.position = 'fixed';
+          modal.style.top = '20%';
+          modal.style.left = '50%';
+          modal.style.transform = 'translate(-50%, -20%)';
+          modal.style.background = '#fff';
+          modal.style.padding = '24px';
+          modal.style.border = '2px solid #0077cc';
+          modal.style.borderRadius = '12px';
+          modal.style.zIndex = '99999';
+          modal.style.boxShadow = '0 4px 24px rgba(0,0,0,0.2)';
+          modal.innerHTML = `<h3>Motivo de la sugerencia</h3><div id="motivo-list"></div><button id="cerrar-motivo">Cerrar</button>`;
+          document.body.appendChild(modal);
+          document.getElementById('cerrar-motivo').onclick = () => {
+              modal.style.display = 'none';
+          };
+      }
+      document.getElementById('motivo-list').innerHTML = motivos.map(m => `<li>${m}</li>`).join('')+`<br><b>Puntaje:</b> ${score}`;
+      modal.style.display = 'block';
   }
 
   // Nueva función para generar ubicación automática

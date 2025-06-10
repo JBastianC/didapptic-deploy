@@ -489,78 +489,150 @@ document.addEventListener('DOMContentLoaded', async function() {
     problemsDropdown.classList.toggle('hidden');
   });
 
-  // Cargar problema al canvas
-  function loadProblemToCanvas(problemData) {
-      problemsDropdown.classList.add('hidden');
-      
-      if (confirm('¿Deseas limpiar el canvas actual antes de cargar este problema?')) {
-          instance.deleteEveryConnection();
-          document.querySelectorAll('#canvas .node').forEach(node => node.remove());
-          idCnt = 0;
-      }
-      
-      // Posiciones de los nodos
-      const nodePositions = {
-          'Entrada': { x: 100, y: 100 },
-          'Metodología': { x: 100, y: 250 },
-          'Fase': { x: 300, y: 100 },
-          'Campos Formativos': { x: 300, y: 250 },
-          'Contenido': { x: 500, y: 250 },
-          'PDA': { x: 700, y: 250 },
-          'Nodo IA': { x: 700, y: 100 }
-      };
-      
-      // Crear nodos
-      const entradaNode = createNode('Entrada', nodePositions['Entrada'].x, nodePositions['Entrada'].y);
-      entradaNode.dataset.text = problemData.problemas;
-      
-      const metodologiaNode = createNode('Metodología', nodePositions['Metodología'].x, nodePositions['Metodología'].y);
-      metodologiaNode.dataset.value = problemData.eje;
-      
-      const faseNode = createNode('Fase', nodePositions['Fase'].x, nodePositions['Fase'].y);
-      faseNode.dataset.fase = problemData.fase;
-      
-      const camposNode = createNode('Campos Formativos', nodePositions['Campos Formativos'].x, nodePositions['Campos Formativos'].y);
-      camposNode.dataset.fase = problemData.fase;
-      camposNode.dataset.campo = problemData.campos.join(', ');
-      
-      const contenidoNode = createNode('Contenido', nodePositions['Contenido'].x, nodePositions['Contenido'].y);
-      contenidoNode.dataset.contenido = Array.isArray(problemData.contenidos) 
-          ? problemData.contenidos.join(', ') 
-          : problemData.contenidos;
-      
-      const pdaNode = createNode('PDA', nodePositions['PDA'].x, nodePositions['PDA'].y);
-      pdaNode.dataset.pdas = Array.isArray(problemData.pda) 
-          ? problemData.pda.join(', ') 
-          : problemData.pda;
-      
-      const iaNode = createNode('Nodo IA', nodePositions['Nodo IA'].x, nodePositions['Nodo IA'].y);
-      
-      // Conectar nodos según el flujo especificado
-      setTimeout(() => {
-          // 1. Entrada → Nodo IA
-          instance.connect({ source: entradaNode, target: iaNode });
-          
-          // 2. Metodología → Nodo IA
-          instance.connect({ source: metodologiaNode, target: iaNode });
-          
-          // 3. Fase → Campos Formativos
-          instance.connect({ source: faseNode, target: camposNode });
-          
-          // 4. Campos Formativos → Contenido
-          instance.connect({ source: camposNode, target: contenidoNode });
-          
-          // 5. Contenido → PDA
-          instance.connect({ source: contenidoNode, target: pdaNode });
-          
-          // 6. PDA → Nodo IA
-          instance.connect({ source: pdaNode, target: iaNode });
-          
-          // Actualizar estado y guardar
-          updateNodeIAStatus();
-          saveCanvasState();
-      }, 200);
-  }
+  // Cargar problema al canvas (versión jerárquica)
+async function loadProblemToCanvas(problemData) {
+    problemsDropdown.classList.add('hidden');
+
+    if (confirm('¿Deseas limpiar el canvas actual antes de cargar este problema?')) {
+        instance.deleteEveryConnection();
+        document.querySelectorAll('#canvas .node').forEach(node => node.remove());
+        idCnt = 0;
+    }
+
+    // 1. Crear bloque Entrada (selección automática)
+    const entradaNode = createNode('Entrada', 100, 100);
+    entradaNode.dataset.text = problemData.problemas;
+    const entradaLabel = entradaNode.querySelector('.label');
+    if (entradaLabel) entradaLabel.textContent = problemData.problemas;
+
+    // 2. Crear bloque Metodología (sin seleccionar nada)
+    const metodologiaNode = createNode('Metodología', 100, 250);
+    metodologiaNode.dataset.value = '';
+    const metodologiaLabel = metodologiaNode.querySelector('.label');
+    if (metodologiaLabel) metodologiaLabel.textContent = 'Metodología';
+
+    // 3. Crear bloque Fase (seleccionado)
+    const faseNode = createNode('Fase', 300, 100);
+    faseNode.dataset.fase = problemData.fase;
+    const faseLabel = faseNode.querySelector('.label');
+    if (faseLabel) faseLabel.textContent = problemData.fase;
+
+    // 4. Crear bloque Nodo IA
+    const iaNode = createNode('Nodo IA', 700, 100);
+
+    // 5. Conectar Entrada y Metodología a Nodo IA
+    setTimeout(() => {
+        instance.connect({ source: entradaNode, target: iaNode });
+        instance.connect({ source: metodologiaNode, target: iaNode });
+    }, 100);
+
+    // 6. Crear bloques y conexiones a partir de los datos jerárquicos del problema
+    // Si existe estructura jerárquica en problemData, úsala
+    if (Array.isArray(problemData.campos) && problemData.campos.length && typeof problemData.campos[0] === 'object' && problemData.campos[0].contenidos) {
+        // Estructura: campos[{nombre, contenidos:[{nombre, pdas:[]}]}]
+        let xCampo = 300;
+        let yCampo = 250;
+        // Maps para nodos únicos
+        const campoNodeMap = new Map();
+        const contenidoNodeMap = new Map();
+        const pdaNodeMap = new Map();
+        let campoVisualIndex = 0;
+        let contenidoVisualIndex = 0;
+        let pdaVisualIndex = 0;
+
+        problemData.campos.forEach((campoObj) => {
+            const campoKey = campoObj.nombre || campoObj.campo || '';
+            let campoNode = campoNodeMap.get(campoKey);
+            if (!campoNode) {
+                campoNode = createNode('Campos Formativos', xCampo, yCampo + campoVisualIndex * 120);
+                campoNode.dataset.fase = problemData.fase;
+                campoNode.dataset.campo = campoKey;
+                const campoLabel = campoNode.querySelector('.label');
+                if (campoLabel) campoLabel.textContent = campoKey;
+                campoNodeMap.set(campoKey, campoNode);
+                setTimeout(() => instance.connect({ source: faseNode, target: campoNode }), 120);
+                campoVisualIndex++;
+            }
+
+            let xContenido = xCampo + 200;
+            let yContenido = yCampo + campoVisualIndex * 120;
+            (campoObj.contenidos || []).forEach((contenidoObj) => {
+                const contenidoKey = contenidoObj.nombre || contenidoObj.contenido || '';
+                let contenidoNode = contenidoNodeMap.get(contenidoKey);
+                if (!contenidoNode) {
+                    contenidoNode = createNode('Contenido', xContenido, yContenido + contenidoVisualIndex * 80);
+                    contenidoNode.dataset.contenido = contenidoKey;
+                    const contenidoLabel = contenidoNode.querySelector('.label');
+                    if (contenidoLabel) contenidoLabel.textContent = contenidoKey;
+                    contenidoNodeMap.set(contenidoKey, contenidoNode);
+                    contenidoVisualIndex++;
+                }
+                setTimeout(() => instance.connect({ source: campoNode, target: contenidoNode }), 140);
+
+                let xPda = xContenido + 200;
+                let yPda = yContenido + contenidoVisualIndex * 80;
+                (contenidoObj.pdas || contenidoObj.pda || []).forEach((pda) => {
+                    let pdaNode = pdaNodeMap.get(pda);
+                    if (!pdaNode) {
+                        pdaNode = createNode('PDA', xPda, yPda + pdaVisualIndex * 60);
+                        pdaNode.dataset.pdas = pda;
+                        const pdaLabel = pdaNode.querySelector('.label');
+                        if (pdaLabel) pdaLabel.textContent = pda;
+                        pdaNodeMap.set(pda, pdaNode);
+                        setTimeout(() => instance.connect({ source: pdaNode, target: iaNode }), 180);
+                        pdaVisualIndex++;
+                    }
+                    setTimeout(() => instance.connect({ source: contenidoNode, target: pdaNode }), 160);
+                });
+            });
+        });
+    } else {
+        // Estructura plana: usar los arrays/strings de campos, contenidos, pdas
+        let xCampo = 300;
+        let yCampo = 250;
+        const campos = Array.isArray(problemData.campos) ? problemData.campos : [problemData.campos];
+        const contenidos = Array.isArray(problemData.contenidos) ? problemData.contenidos : [problemData.contenidos];
+        const pdas = Array.isArray(problemData.pda) ? problemData.pda : [problemData.pda];
+        campos.forEach((campo, idxCampo) => {
+            const campoNode = createNode('Campos Formativos', xCampo, yCampo + idxCampo * 120);
+            campoNode.dataset.fase = problemData.fase;
+            campoNode.dataset.campo = campo;
+            const campoLabel = campoNode.querySelector('.label');
+            if (campoLabel) campoLabel.textContent = campo;
+            setTimeout(() => instance.connect({ source: faseNode, target: campoNode }), 120);
+
+            let xContenido = xCampo + 200;
+            let yContenido = yCampo + idxCampo * 120;
+            contenidos.forEach((contenido, idxCont) => {
+                const contenidoNode = createNode('Contenido', xContenido, yContenido + idxCont * 80);
+                contenidoNode.dataset.contenido = contenido;
+                const contenidoLabel = contenidoNode.querySelector('.label');
+                if (contenidoLabel) contenidoLabel.textContent = contenido;
+                setTimeout(() => instance.connect({ source: campoNode, target: contenidoNode }), 140);
+
+                let xPda = xContenido + 200;
+                let yPda = yContenido + idxCont * 80;
+                pdas.forEach((pda, idxPda) => {
+                    const pdaNode = createNode('PDA', xPda, yPda + idxPda * 60);
+                    pdaNode.dataset.pdas = pda;
+                    const pdaLabel = pdaNode.querySelector('.label');
+                    if (pdaLabel) pdaLabel.textContent = pda;
+                    setTimeout(() => instance.connect({ source: contenidoNode, target: pdaNode }), 160);
+                    setTimeout(() => instance.connect({ source: pdaNode, target: iaNode }), 180);
+                });
+            });
+        });
+    }
+
+
+
+    // Actualizar estado y guardar
+    setTimeout(() => {
+        updateNodeIAStatus();
+        saveCanvasState();
+    }, 300);
+}
+
 
   // Actualiza las conexiones permitidas para reflejar el nuevo flujo
   const allowedConnections = {

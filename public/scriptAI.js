@@ -148,6 +148,20 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // Generar plan de clase
+// ---
+// Función para actualizar créditos en la UI usando el sistema API
+async function actualizarCreditosUI() {
+    if (window.getCreditosUsuario && window.actualizarCreditosScore) {
+        try {
+            const creditos = await getCreditosUsuario();
+            window.actualizarCreditosScore(creditos);
+        } catch (e) {
+            const scoreDiv = document.getElementById('creditos-score');
+            if (scoreDiv) scoreDiv.textContent = 'Créditos: ?';
+        }
+    }
+}
+// ---
     planClaseForm.addEventListener('submit', async (e) => {
         e.preventDefault();
         
@@ -158,29 +172,72 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const nivel = document.getElementById('nivel').value;
         const materia = document.getElementById('materia').value;
-        const tema = document.getElementById('tema').value;
+        const temaInput = document.getElementById('tema').value.trim();
         const duracion = document.getElementById('duracion').value;
         const objetivos = document.getElementById('objetivos').value;
+        // Nuevo: grado
+        let grado = '';
+        if (!document.getElementById('grado')) {
+            // Crear select dinámico si no existe
+            const gradoGroup = document.createElement('div');
+            gradoGroup.className = 'form-group';
+            gradoGroup.innerHTML = `<label for="grado">Grado</label><select id="grado" required style="margin-left:8px;">${[...Array(6).keys()].map(i => `<option value='${i+1}ro'>${i+1}ro</option>`).join('')}</select>`;
+            document.querySelector('#planClaseForm .form-row').appendChild(gradoGroup);
+        }
+        grado = document.getElementById('grado') ? document.getElementById('grado').value : '1ro';
+
+        // Sugerencias de temas comunes por materia
+        const temasSugeridos = {
+            'Matemáticas': 'Números, Operaciones básicas, Geometría, Fracciones, Álgebra, Estadística',
+            'Ciencias': 'El ciclo del agua, Estados de la materia, Energía, Ecosistemas, Sistema solar',
+            'Lenguaje': 'Comprensión lectora, Gramática, Redacción, Literatura, Ortografía',
+            'Sociales': 'Historia local, Geografía, Ciudadanía, Cultura, Derechos humanos',
+            'Artes': 'Colores primarios, Dibujo, Música, Teatro, Expresión corporal',
+            'Tecnología': 'Herramientas digitales, Robótica, Internet seguro, Programación básica',
+        };
+        // Si el campo tema está vacío, asignar uno sugerido
+        let tema = temaInput;
+        if (!tema) {
+            tema = (temasSugeridos[materia]||'').split(',')[0] || 'Tema general';
+        }
+
+        // Lematización simple (simulada)
+        function lematizar(texto) {
+            return texto.toLowerCase().replace(/(es|as|os|is|s)\b/g, '');
+        }
+        const nivelLem = lematizar(nivel);
+        const materiaLem = lematizar(materia);
+        const temaLem = lematizar(tema);
+        const objetivosLem = lematizar(objetivos);
+        const gradoLem = lematizar(grado);
+
 
         resultadoPlan.textContent = "Generando plan de clase...";
         exportPdfBtn.disabled = true;
 
         try {
-            const prompt = `Genera un plan de clase para:
-- Nivel: ${nivel}
-- Materia: ${materia}
-- Tema: ${tema}
-- Duración: ${duracion} minutos
-- Objetivos: ${objetivos}
+            // Prompt optimizado y extenso
+            const prompt = `Plan de clase extenso, funcional y profesional.
+Nivel: ${nivelLem}
+Grado: ${gradoLem}
+Materia: ${materiaLem}
+Tema: ${temaLem}
+Duración: ${duracion} minutos.
+Objetivos: ${objetivosLem}.
 
 Estructura requerida:
-1. Título (máx. 8 palabras)
-2. Objetivos de aprendizaje (3-5 puntos)
-3. Desarrollo de la clase (inicio, desarrollo, cierre)
-4. Evaluación (2-3 métodos)
-5. Recursos necesarios
+- Título claro y atractivo.
+- Objetivos de aprendizaje (detallados y medibles).
+- Introducción motivacional.
+- Explicación conceptual profunda y ejemplos prácticos.
+- Actividades diferenciadas y colaborativas (inicio, desarrollo, cierre).
+- Recursos didácticos y materiales sugeridos.
+- Estrategias de inclusión y atención a la diversidad.
+- Evaluación formativa y sumativa (rúbricas, instrumentos, criterios).
+- Recomendaciones didácticas y posibles adaptaciones.
+- Conclusión y sugerencias para el docente.
 
-Formato: texto plano, sin introducciones. Máximo 250 palabras.`;
+Explica cada sección con claridad y profundidad, usando lenguaje profesional docente. No incluyas introducción general ni despedidas. Usa formato de lista o secciones claras. Sé muy detallado, extenso y evita redundancias. Responde solo el plan, sin texto adicional. Usa máximo de tokens posibles en la respuesta, pero optimiza el prompt para que la entrada sea compacta y semánticamente rica.`;
 
             const response = await fetch('/api/ia/generatePlan', {
                 method: 'POST',
@@ -201,7 +258,7 @@ Formato: texto plano, sin introducciones. Máximo 250 palabras.`;
             // Descontar crédito (nuevo sistema API)
             if (window.isPremiumUser && isPremiumUser() && window.descontarCreditoUsuario) {
                 const creditosRestantes = await descontarCreditoUsuario();
-                if (typeof actualizarCreditosUI === 'function') actualizarCreditosUI();
+                if (typeof actualizarCreditosUI === 'function') await actualizarCreditosUI();
                 if (creditosRestantes <= 0) {
                     resultadoPlan.textContent = '❌ No tienes créditos suficientes para usar la IA.';
                     exportPdfBtn.disabled = true;

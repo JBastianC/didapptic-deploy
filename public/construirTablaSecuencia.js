@@ -825,11 +825,6 @@ async function reemplazarMomentos(btnElem) {
       return [...new Set(lematizadas)].join(" ");
     }
 
-    // Construir prompt optimizado y eficiente en tokens
-    // 1. Comprime los textos de entrada eliminando palabras vacías y truncando a lo esencial
-    // 2. Usa etiquetas cortas y claras
-    // 3. Pide formato de respuesta estructurado y breve
-
     // Utilidad para truncar a X palabras
     function truncarPalabras(texto, maxPalabras) {
       if (!texto) return '';
@@ -837,16 +832,52 @@ async function reemplazarMomentos(btnElem) {
       return palabras.slice(0, maxPalabras).join(' ');
     }
 
-    // Compactar entradas y etiquetar
+    // Buscar o crear selector de nivel de redacción IA
+    let nivelRedaccion = 'frase'; // valor por defecto
+    let selectorNivel = document.getElementById('iaNivelRedaccion');
+    if (!selectorNivel) {
+      // Crear el selector en la primera celda de la fila de botones IA (una sola vez)
+      const filaBotones = document.querySelector('#secuenciaTable thead') || document.querySelector('#secuenciaTable');
+      if (filaBotones) {
+        const div = document.createElement('div');
+        div.style.marginBottom = '8px';
+        div.innerHTML = `<label style='font-size:13px;margin-right:4px;'>Nivel de redacción IA:</label>
+          <select id='iaNivelRedaccion' style='font-size:13px;padding:2px 6px;'>
+            <option value='frase'>Frase concreta</option>
+            <option value='parrafo'>Párrafo desarrollado</option>
+          </select>`;
+        filaBotones.parentNode.insertBefore(div, filaBotones);
+        selectorNivel = document.getElementById('iaNivelRedaccion');
+      }
+    }
+    if (selectorNivel) {
+      nivelRedaccion = selectorNivel.value;
+    }
+
+    // Compactar y lematizar entradas para máxima eficiencia de tokens
+    const problemaLem = truncarPalabras(filtrarYLematizar(ubicacion.problema), 20);
+    const camposLem = truncarPalabras(filtrarYLematizar(ubicacion.campos), 10);
+    const contenidosLem = truncarPalabras(filtrarYLematizar(ubicacion.contenidos), 10);
+    const pdaLem = truncarPalabras(filtrarYLematizar(ubicacion.pda), 10);
+    const estrategiaLem = truncarPalabras(filtrarYLematizar(estrategia), 8);
+
+    // Etiquetas compactas para el prompt
     const datosCurriculares = [
-      `PROBLEMA: ${truncarPalabras(filtrarYLematizar(ubicacion.problema), 20)}`,
-      `CAMPOS: ${truncarPalabras(filtrarYLematizar(ubicacion.campos), 10)}`,
-      `CONTENIDOS: ${truncarPalabras(filtrarYLematizar(ubicacion.contenidos), 10)}`,
-      `PDA: ${truncarPalabras(filtrarYLematizar(ubicacion.pda), 10)}`
+      `PROBLEMA: ${problemaLem}`,
+      `CAMPOS: ${camposLem}`,
+      `CONTENIDOS: ${contenidosLem}`,
+      `PDA: ${pdaLem}`
     ].join('\n');
 
-    // Prompt optimizado para la IA
-    const prompt = `Eres experto en didáctica.\nCon base en los siguientes datos curriculares comprimidos, redacta actividades muy específicas y estructuradas para cada momento de la estrategia seleccionada.\nExplica cada momento en una sola frase clara y concreta, usando el contexto proporcionado.\nIncluye una lista breve de materiales sugeridos y referencias (índices de libros de texto de primaria).\nEvita repeticiones, no agregues introducción ni cierre.\nResponde en formato estructurado:\nMOMENTOS: lista numerada (máx 5)\nMATERIALES: lista corta\nREFERENCIAS: lista corta\n\nEstrategia: ${filtrarYLematizar(estrategia)}\n${datosCurriculares}`;
+    // Prompt IA según nivel de redacción
+    let prompt = '';
+    if (nivelRedaccion === 'parrafo') {
+      prompt = `Contexto:\n${datosCurriculares}\nESTRATEGIA: ${estrategiaLem}\n\nGenera actividades didácticas muy específicas alineadas a los momentos de la estrategia y al contexto. Cada actividad debe estar redactada como un párrafo breve, claro y detallado, explicando el propósito y la dinámica de la actividad, no solo enunciando la acción.\nIncluye:\n- MOMENTOS: lista numerada (máx 5, cada uno redactado como párrafo breve y explicativo)\n- MATERIALES: lista corta\n- REFERENCIAS: lista corta\nEvita introducción, cierre y repeticiones.`;
+    } else {
+      prompt = `Contexto:\n${datosCurriculares}\nESTRATEGIA: ${estrategiaLem}\n\nGenera actividades didácticas muy específicas alineadas a los momentos de la estrategia y al contexto. Cada actividad debe ser una frase clara y concreta.\nIncluye:\n- MOMENTOS: lista numerada (máx 5, una frase cada uno)\n- MATERIALES: lista corta\n- REFERENCIAS: lista corta\nEvita introducción, cierre y repeticiones.`;
+    }
+
+
 
     // Solo premium puede usar IA
     if (typeof isPremiumUser === 'function' && !isPremiumUser()) {

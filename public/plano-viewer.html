@@ -756,6 +756,7 @@ window.addEventListener('DOMContentLoaded', () => {
       <button class="btn-yellow" id="addAlumnoBtn" onclick="addNewAlumno()">Añadir Alumno</button>
       <button class="btn-yellow" id="saveAlumnosBtn" onclick="saveAlumnosData()">Guardar</button>
       <button class="btn-yellow" onclick="closeAlumnosModal()">Cerrar</button>
+<button class="btn-download" id="exportAlumnosExcelBtn" onclick="exportAlumnosToExcel()">Tabla Excel</button>
     </div>
   </div>
 </div>
@@ -1421,6 +1422,28 @@ window.addEventListener('DOMContentLoaded', function() {
       }
     }
   });
+
+// Exporta la tabla de alumnos a Excel, con las selecciones de nivel
+function exportAlumnosToExcel() {
+  if (!Array.isArray(alumnosData) || alumnosData.length === 0) {
+    alert('No hay alumnos para exportar.');
+    return;
+  }
+  const niveles = ['recordar', 'comprender', 'analizar', 'aplicar', 'valorar', 'crear'];
+  const header = ['Nombre', ...niveles.map(n => n.charAt(0).toUpperCase() + n.slice(1))];
+  const data = alumnosData.map(alumno => {
+    const row = [alumno.nombre];
+    niveles.forEach(nivel => {
+      row.push(alumno.nivel === nivel ? 'X' : '');
+    });
+    return row;
+  });
+  const wsData = [header, ...data];
+  const wb = XLSX.utils.book_new();
+  const ws = XLSX.utils.aoa_to_sheet(wsData);
+  XLSX.utils.book_append_sheet(wb, ws, 'Alumnos');
+  XLSX.writeFile(wb, 'Lista_Alumnos.xlsx');
+}
 
 // --- UBICACIÓN CURRICULAR: RECOLECCIÓN Y TABLA DESDE EL CANVAS ---
 function buildUbicacionTableFromCanvas() {

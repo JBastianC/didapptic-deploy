@@ -301,6 +301,72 @@
     background: #2563eb;
 }
 
+.notify-multi-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: #229ED9;
+    color: #fff;
+    font-size: 0.93rem;
+    font-weight: 500;
+    padding: 6px 16px;
+    border: none;
+    border-radius: 18px;
+    box-shadow: 0 1px 4px rgba(34,158,217,0.10);
+    margin-bottom: 14px;
+    margin-top: 5px;
+    transition: background 0.18s, box-shadow 0.18s;
+    cursor: pointer;
+    outline: none;
+}
+
+.notify-multi-btn i {
+    font-size: 1.05em;
+    margin-right: 3px;
+    vertical-align: middle;
+}
+
+.notify-multi-btn:hover {
+    background: #176cae;
+    box-shadow: 0 2px 8px rgba(34,158,217,0.16);
+}
+
+
+/* Puedes agregar estilos personalizados aquí */
+
+#telegram-message-editor {
+    background: #fff;
+    border-radius: 6px;
+    border: 1px solid #e2e8f0;
+    min-height: 120px;
+    margin-bottom: 1rem;
+}
+
+.ql-toolbar.ql-snow {
+    border-radius: 6px 6px 0 0;
+}
+
+.ql-container.ql-snow {
+    border-radius: 0 0 6px 6px;
+}
+
+
+.telegram-ok {
+    color: #229ED9;
+    font-size: 1.4em;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.telegram-no {
+    color: #ef4444;
+    font-size: 1.4em;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
 /* Estilos para el temporizador de inactividad */
 .inactivity-warning {
     position: fixed;
